@@ -17,6 +17,30 @@ TEST_CASE("Add positive 8-bit signed integer with 1")
     }
 }
 
+TEST_CASE("Positive 8-bit signed integer add -- exhaustive")
+{
+    for (int i = -128; i <= 127; ++i) {
+        for (int j = -128; j < 127; ++j) {
+            int8_t a = i;
+            int8_t b = j;
+
+            SECTION("a + b")
+            {
+                int8_t expect = a + b;
+                int8_t result = intalu_adds8(a, b);
+                REQUIRE(result == expect);
+            }
+
+            SECTION("b + a")
+            {
+                int8_t expect = b + a;
+                int8_t result = intalu_adds8(b, a);
+                REQUIRE(result == expect);
+            }
+        }
+    }
+}
+
 TEST_CASE("Positive 8-bit signed integer overflow -- 2s compliment overflow behavior")
 {
 
