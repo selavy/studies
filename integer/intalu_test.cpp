@@ -5,6 +5,15 @@
 #include <limits>
 #include <random>
 
+TEST_CASE("Negative 8-bit signed integer -- exhaustive")
+{
+    for (int i = -128; i <= 127; ++i) {
+        int8_t a = i;
+        int8_t expect = -a;
+        int8_t result = intalu_negs8(a);
+        REQUIRE(result == expect);
+    }
+}
 
 TEST_CASE("Add positive 8-bit signed integer with 1")
 {
