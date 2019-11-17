@@ -33,7 +33,12 @@ int8_t intalu_adds8(int8_t x, int8_t y)
     return intalu_addu8(x, y);
 }
 
-int8_t intalu_subs8(int8_t x, int8_t y)
+uint8_t intalu_subu8(uint8_t x, uint8_t y)
 {
     return intalu_adds8(x, intalu_negs8(y));
+}
+
+int8_t intalu_subs8(int8_t x, int8_t y)
+{
+    return intalu_subu8(x, y);
 }
