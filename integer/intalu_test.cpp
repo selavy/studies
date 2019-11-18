@@ -7,7 +7,7 @@
 
 TEST_CASE("Negative 8-bit signed integer -- exhaustive")
 {
-    for (int i = -128; i <= 127; ++i) {
+    for (int i = -128; i < 128; ++i) {
         int8_t a = i;
         int8_t expect = -a;
         int8_t result = intalu_negs8(a);
@@ -28,8 +28,8 @@ TEST_CASE("Add positive 8-bit signed integer with 1")
 
 TEST_CASE("Positive 8-bit signed integer add -- exhaustive")
 {
-    for (int i = -128; i <= 127; ++i) {
-        for (int j = -128; j < 127; ++j) {
+    for (int i = -128; i < 128; ++i) {
+        for (int j = -128; j < 128; ++j) {
             int8_t a = i;
             int8_t b = j;
 
@@ -222,52 +222,79 @@ TEST_CASE("Randomized 8-bit add and sub")
 
 TEST_CASE("Positive 8-bit unsigned multiply")
 {
-    // std::vector<std::pair<uint8_t, uint8_t>> vs = {
-    //     { 1, 1 },
-    //     { 2, 3 },
-    //     { 10, 4 },
-    //     { 127, 1 },
-    //     { 127, 2 },
-    //     { 127, 3 },
-    //     { 127, 4 },
-    //     { 127, 127 },
-    //     { 255, 255 },
-    // };
-
-    // for (auto [a, b] : vs) {
-    //     SECTION("a * b")
-    //     {
-    //         int8_t expect = a * b;
-    //         int8_t result = intalu_mulu8(a, b);
-    //         INFO("a = " << ((int)a) << ", b = " << ((int) b));
-    //         REQUIRE((int)expect == (int)result);
-    //     }
-
-    //     SECTION("b * a")
-    //     {
-    //         int8_t expect = b * a;
-    //         int8_t result = intalu_mulu8(b, a);
-    //         INFO("a = " << ((int)a) << ", b = " << ((int) b));
-    //         REQUIRE((int)expect == (int)result);
-    //     }
-    // }
-
     for (int i = 0; i < 256; ++i) {
         for (int j = 0; j < 256; ++j) {
+            uint8_t a = i;
+            uint8_t b = j;
+
+            SECTION("a * b")
+            {
+                uint8_t expect = a*b;
+                uint8_t result = intalu_mulu8(a, b);
+                REQUIRE((int)expect == (int)result);
+            }
+
+            SECTION("b * a")
+            {
+                uint8_t expect = b*a;
+                uint8_t result = intalu_mulu8(b, a);
+                REQUIRE((int)expect == (int)result);
+            }
+        }
+    }
+}
+
+TEST_CASE("Positive 8-bit signed multiply")
+{
+    std::vector<std::pair<int8_t, int8_t>> vs = {
+        { 1, 1 },
+        { 2, 3 },
+        { 10, 4 },
+        { 127, 1 },
+        { 127, 2 },
+        { 127, 3 },
+        { 127, 4 },
+        { 127, 127 },
+        { -128, 1 },
+        { -128, 0 },
+        { -128, -1 },
+        { -128, -128 },
+    };
+
+    for (auto [a, b] : vs) {
+        SECTION("a * b")
+        {
+            int8_t expect = a * b;
+            int8_t result = intalu_muls8(a, b);
+            INFO("a = " << ((int)a) << ", b = " << ((int) b));
+            REQUIRE((int)expect == (int)result);
+        }
+
+        SECTION("b * a")
+        {
+            int8_t expect = b * a;
+            int8_t result = intalu_muls8(b, a);
+            INFO("a = " << ((int)a) << ", b = " << ((int) b));
+            REQUIRE((int)expect == (int)result);
+        }
+    }
+
+    for (int i = -128; i < 128; ++i) {
+        for (int j = -128; j < 128; ++j) {
             int8_t a = i;
             int8_t b = j;
 
             SECTION("a * b")
             {
                 int8_t expect = a*b;
-                int8_t result = intalu_mulu8(a, b);
+                int8_t result = intalu_muls8(a, b);
                 REQUIRE((int)expect == (int)result);
             }
 
             SECTION("b * a")
             {
                 int8_t expect = b*a;
-                int8_t result = intalu_mulu8(b, a);
+                int8_t result = intalu_muls8(b, a);
                 REQUIRE((int)expect == (int)result);
             }
         }

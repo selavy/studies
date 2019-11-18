@@ -43,40 +43,51 @@ int8_t intalu_subs8(int8_t x, int8_t y)
     return intalu_subu8(x, y);
 }
 
-uint8_t intalu_mulu8(uint8_t x, uint8_t y)
+static uint16_t _mulu8_ext_u16(uint16_t x, uint16_t y)
 {
-    uint16_t a = x;
-    uint16_t b = y;
     uint16_t result = 0;
-    while (b > 0) {
-        result += a * !!(b & 1);
-        b     >>= 1;
-        a     <<= 1;
-    }
-    // TODO: handle overflow
+
+    // TODO: could do ctz to fastforward to 1s
+
+    // while (y > 0) {
+    //     result += x * !!(y & 1);
+    //     y     >>= 1;
+    //     x     <<= 1;
+    // }
+
+    // More hardware-ish:
+    result += (x <<  0) * ((y >>  0) & 1);
+    result += (x <<  1) * ((y >>  1) & 1);
+    result += (x <<  2) * ((y >>  2) & 1);
+    result += (x <<  3) * ((y >>  3) & 1);
+    result += (x <<  4) * ((y >>  4) & 1);
+    result += (x <<  5) * ((y >>  5) & 1);
+    result += (x <<  6) * ((y >>  6) & 1);
+    result += (x <<  7) * ((y >>  7) & 1);
+    result += (x <<  8) * ((y >>  8) & 1);
+    result += (x <<  9) * ((y >>  9) & 1);
+    result += (x << 10) * ((y >> 10) & 1);
+    result += (x << 11) * ((y >> 11) & 1);
+    result += (x << 12) * ((y >> 12) & 1);
+    result += (x << 13) * ((y >> 13) & 1);
+    result += (x << 14) * ((y >> 14) & 1);
+    result += (x << 15) * ((y >> 15) & 1);
+
     return result;
 }
 
-uint16_t intalu_mulu16(uint16_t x, uint16_t y)
+uint8_t intalu_mulu8(uint8_t x, uint8_t y)
 {
-    return x * y;
+    return _mulu8_ext_u16(x, y);
 }
 
 int8_t  intalu_muls8( int8_t x,  int8_t y)
 {
-    int16_t x_neg = x < 0;
-    int16_t y_neg = y < 0;
-    int16_t x_pos = x_neg ? -((int16_t)x) : x;
-    int16_t y_pos = y_neg ? -((int16_t)y) : y;
-    int16_t multu = intalu_mulu16(x_pos, y_pos);
-    int16_t result = x_neg ^ y_neg ? -multu : multu;
-    if (result > 127)
-        return 127;
-    else if (result < -128)
-        return x == -128 || y == -128 ? -128 : 0;
-    else
-        return result;
-
-    // uint16_t mask = x_neg ^ y_neg ? 0xFFFFu : 0x0000u;
-    // return (mask & -multu) | (~mask & multu);
+    uint16_t x_neg  = x < 0;
+    uint16_t y_neg  = y < 0;
+    uint16_t is_neg = !!(x_neg) ^ !!(y_neg);
+    uint16_t a      = x_neg ? -((int16_t)x) : x;
+    uint16_t b      = y_neg ? -((int16_t)y) : y;
+    uint16_t result = _mulu8_ext_u16(a, b);
+    return is_neg ? -result : result;
 }
