@@ -219,3 +219,57 @@ TEST_CASE("Randomized 8-bit add and sub")
         }
     }
 }
+
+TEST_CASE("Positive 8-bit unsigned multiply")
+{
+    // std::vector<std::pair<uint8_t, uint8_t>> vs = {
+    //     { 1, 1 },
+    //     { 2, 3 },
+    //     { 10, 4 },
+    //     { 127, 1 },
+    //     { 127, 2 },
+    //     { 127, 3 },
+    //     { 127, 4 },
+    //     { 127, 127 },
+    //     { 255, 255 },
+    // };
+
+    // for (auto [a, b] : vs) {
+    //     SECTION("a * b")
+    //     {
+    //         int8_t expect = a * b;
+    //         int8_t result = intalu_mulu8(a, b);
+    //         INFO("a = " << ((int)a) << ", b = " << ((int) b));
+    //         REQUIRE((int)expect == (int)result);
+    //     }
+
+    //     SECTION("b * a")
+    //     {
+    //         int8_t expect = b * a;
+    //         int8_t result = intalu_mulu8(b, a);
+    //         INFO("a = " << ((int)a) << ", b = " << ((int) b));
+    //         REQUIRE((int)expect == (int)result);
+    //     }
+    // }
+
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 256; ++j) {
+            int8_t a = i;
+            int8_t b = j;
+
+            SECTION("a * b")
+            {
+                int8_t expect = a*b;
+                int8_t result = intalu_mulu8(a, b);
+                REQUIRE((int)expect == (int)result);
+            }
+
+            SECTION("b * a")
+            {
+                int8_t expect = b*a;
+                int8_t result = intalu_mulu8(b, a);
+                REQUIRE((int)expect == (int)result);
+            }
+        }
+    }
+}

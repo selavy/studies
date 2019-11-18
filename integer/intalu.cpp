@@ -42,3 +42,41 @@ int8_t intalu_subs8(int8_t x, int8_t y)
 {
     return intalu_subu8(x, y);
 }
+
+uint8_t intalu_mulu8(uint8_t x, uint8_t y)
+{
+    uint16_t a = x;
+    uint16_t b = y;
+    uint16_t result = 0;
+    while (b > 0) {
+        result += a * !!(b & 1);
+        b     >>= 1;
+        a     <<= 1;
+    }
+    // TODO: handle overflow
+    return result;
+}
+
+uint16_t intalu_mulu16(uint16_t x, uint16_t y)
+{
+    return x * y;
+}
+
+int8_t  intalu_muls8( int8_t x,  int8_t y)
+{
+    int16_t x_neg = x < 0;
+    int16_t y_neg = y < 0;
+    int16_t x_pos = x_neg ? -((int16_t)x) : x;
+    int16_t y_pos = y_neg ? -((int16_t)y) : y;
+    int16_t multu = intalu_mulu16(x_pos, y_pos);
+    int16_t result = x_neg ^ y_neg ? -multu : multu;
+    if (result > 127)
+        return 127;
+    else if (result < -128)
+        return x == -128 || y == -128 ? -128 : 0;
+    else
+        return result;
+
+    // uint16_t mask = x_neg ^ y_neg ? 0xFFFFu : 0x0000u;
+    // return (mask & -multu) | (~mask & multu);
+}
