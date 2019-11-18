@@ -81,7 +81,7 @@ uint8_t intalu_mulu8(uint8_t x, uint8_t y)
     return _mulu8_ext_u16(x, y);
 }
 
-int8_t  intalu_muls8( int8_t x,  int8_t y)
+int8_t intalu_muls8( int8_t x,  int8_t y)
 {
     uint16_t x_neg  = x < 0;
     uint16_t y_neg  = y < 0;
@@ -90,4 +90,34 @@ int8_t  intalu_muls8( int8_t x,  int8_t y)
     uint16_t b      = y_neg ? -((int16_t)y) : y;
     uint16_t result = _mulu8_ext_u16(a, b);
     return is_neg ? -result : result;
+}
+
+uint8_t intalu_divu8(uint8_t n, uint8_t d)
+{
+    uint8_t quot = 0;
+    uint8_t rem  = 0;
+    for (int i = 7; i >= 0; --i) {
+        rem = (rem << 1) | ((n >> i) & 1);
+        if (rem >= d) {
+            rem  -= d;
+            quot |= 1u << i;
+        }
+    }
+    return quot;
+}
+
+uint8_t _absu8(int8_t x)
+{
+    if (x >= 0)
+        return x;
+    else if (x == -128)
+        return 128;
+    else
+        return intalu_negs8(x);
+}
+
+int8_t intalu_divs8(int8_t n, int8_t d)
+{
+    uint8_t quot = intalu_divu8(_absu8(n), _absu8(d));
+    return ((n < 0) ^ (d < 0)) ? -quot : quot;
 }

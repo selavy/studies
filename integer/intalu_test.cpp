@@ -300,3 +300,51 @@ TEST_CASE("Positive 8-bit signed multiply")
         }
     }
 }
+
+TEST_CASE("Positive 8-bit unsigned divide")
+{
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 256; ++j) {
+            if (i == 0 || j == 0)
+                continue;
+
+            uint8_t a = i;
+            uint8_t b = j;
+            uint8_t expect = a / b;
+            uint8_t result = intalu_divu8(a, b);
+            REQUIRE((int)expect == (int)result);
+        }
+    }
+}
+
+TEST_CASE("Positive 8-bit signed divide")
+{
+    for (int i = 0; i < 128; ++i) {
+        for (int j = 0; j < 128; ++j) {
+            if (i == 0 || j == 0)
+                continue;
+            int8_t a = i;
+            int8_t b = j;
+            int8_t expect = a / b;
+            int8_t result = intalu_divs8(a, b);
+            INFO("a = " << ((int)a) << ", b = " << ((int)b));
+            REQUIRE((int)expect == (int)result);
+        }
+    }
+}
+
+TEST_CASE("Negative 8-bit signed divide")
+{
+    for (int i = -128; i < 128; ++i) {
+        for (int j = -128; j < 128; ++j) {
+            if (i == 0 || j == 0)
+                continue;
+            int8_t a = i;
+            int8_t b = j;
+            int8_t expect = a / b;
+            int8_t result = intalu_divs8(a, b);
+            INFO("a = " << ((int)a) << ", b = " << ((int)b));
+            REQUIRE((int)expect == (int)result);
+        }
+    }
+}
