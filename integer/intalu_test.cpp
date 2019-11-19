@@ -188,8 +188,6 @@ TEST_CASE("Randomized 8-bit add and sub")
         int8_t a = rand();
         int8_t b = rand();
 
-        INFO("a = " << static_cast<int>(a) << ", b = " << static_cast<int>(b));
-
         SECTION("a + b")
         {
             int8_t expect = a + b;
@@ -266,7 +264,6 @@ TEST_CASE("Positive 8-bit signed multiply")
         {
             int8_t expect = a * b;
             int8_t result = intalu_muls8(a, b);
-            INFO("a = " << ((int)a) << ", b = " << ((int) b));
             REQUIRE((int)expect == (int)result);
         }
 
@@ -274,7 +271,6 @@ TEST_CASE("Positive 8-bit signed multiply")
         {
             int8_t expect = b * a;
             int8_t result = intalu_muls8(b, a);
-            INFO("a = " << ((int)a) << ", b = " << ((int) b));
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -327,7 +323,6 @@ TEST_CASE("Positive 8-bit signed divide")
             int8_t b = j;
             int8_t expect = a / b;
             int8_t result = intalu_divs8(a, b);
-            INFO("a = " << ((int)a) << ", b = " << ((int)b));
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -343,8 +338,23 @@ TEST_CASE("Negative 8-bit signed divide")
             int8_t b = j;
             int8_t expect = a / b;
             int8_t result = intalu_divs8(a, b);
-            INFO("a = " << ((int)a) << ", b = " << ((int)b));
             REQUIRE((int)expect == (int)result);
+        }
+    }
+}
+
+TEST_CASE("Fused multiply-add 8-bit unsigned")
+{
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 256; ++j) {
+            for(int k = 0; k < 256; ++k) {
+                uint8_t a = i;
+                uint8_t b = j;
+                uint8_t c = k;
+                uint8_t expect = a*b + c;
+                uint8_t result = intalu_fmau8(a, b, c);
+                REQUIRE((int)expect == (int)result);
+            }
         }
     }
 }
