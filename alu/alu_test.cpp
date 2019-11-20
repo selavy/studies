@@ -1,6 +1,6 @@
 // #include <cgreen/cgreen.h>
 #include <catch2/catch.hpp>
-#include "intalu.h"
+#include "alu.h"
 #include <vector>
 #include <limits>
 #include <random>
@@ -10,7 +10,7 @@ TEST_CASE("Negative 8-bit signed integer -- exhaustive")
     for (int i = -128; i < 128; ++i) {
         int8_t a = i;
         int8_t expect = -a;
-        int8_t result = intalu_neg_i8(a);
+        int8_t result = alu_neg_i8(a);
         REQUIRE(result == expect);
     }
 }
@@ -21,7 +21,7 @@ TEST_CASE("Add positive 8-bit signed integer with 1")
     for (int8_t a : vs) {
         int8_t b = 1;
         int8_t expect = a + b;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 }
@@ -36,14 +36,14 @@ TEST_CASE("Positive 8-bit signed integer add -- exhaustive")
             SECTION("a + b")
             {
                 int8_t expect = a + b;
-                int8_t result = intalu_add_i8(a, b);
+                int8_t result = alu_add_i8(a, b);
                 REQUIRE(result == expect);
             }
 
             SECTION("b + a")
             {
                 int8_t expect = b + a;
-                int8_t result = intalu_add_i8(b, a);
+                int8_t result = alu_add_i8(b, a);
                 REQUIRE(result == expect);
             }
         }
@@ -58,7 +58,7 @@ TEST_CASE("Positive 8-bit signed integer overflow -- 2s compliment overflow beha
         int8_t a = 127;
         int8_t b = 1;
         int8_t expect = -128;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 
@@ -67,7 +67,7 @@ TEST_CASE("Positive 8-bit signed integer overflow -- 2s compliment overflow beha
         int8_t a = 127;
         int8_t b = 5;
         int8_t expect = -124;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 
@@ -76,7 +76,7 @@ TEST_CASE("Positive 8-bit signed integer overflow -- 2s compliment overflow beha
         int8_t a = 127;
         int8_t b = 127;
         int8_t expect = -128 + 126; // == -2
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 }
@@ -87,7 +87,7 @@ TEST_CASE("Add positive 8-bit signed integers with -1")
     for (int8_t a : vs) {
         int8_t b = -1;
         int8_t expect = a + b;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 }
@@ -107,13 +107,13 @@ TEST_CASE("Add positive and negative 8-bit signed integers")
     for (auto [a, b] : vs) {
         SECTION("a + b") {
             int8_t expect = a + b;
-            int8_t result = intalu_add_i8(a, b);
+            int8_t result = alu_add_i8(a, b);
             REQUIRE(result == expect);
         }
 
         SECTION("b + a") {
             int8_t expect = b + a;
-            int8_t result = intalu_add_i8(b, a);
+            int8_t result = alu_add_i8(b, a);
             REQUIRE(result == expect);
         }
     }
@@ -126,7 +126,7 @@ TEST_CASE("8-bit signed integer underflow -- 2s compliment underflow behavior")
         int8_t a = -128;
         int8_t b = -1;
         int8_t expect = 127;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 
@@ -135,7 +135,7 @@ TEST_CASE("8-bit signed integer underflow -- 2s compliment underflow behavior")
         int8_t a = -128;
         int8_t b = -5;
         int8_t expect = 123;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 
@@ -144,7 +144,7 @@ TEST_CASE("8-bit signed integer underflow -- 2s compliment underflow behavior")
         int8_t a = -128;
         int8_t b = -128;
         int8_t expect = 0;
-        int8_t result = intalu_add_i8(a, b);
+        int8_t result = alu_add_i8(a, b);
         REQUIRE(result == expect);
     }
 }
@@ -169,14 +169,14 @@ TEST_CASE("Subtract 8-bit integers")
         SECTION("a - b")
         {
             int8_t expect = a - b;
-            int8_t result = intalu_sub_i8(a, b);
+            int8_t result = alu_sub_i8(a, b);
             REQUIRE(result == expect);
         }
 
         SECTION("b - a")
         {
             int8_t expect = b - a;
-            int8_t result = intalu_sub_i8(b, a);
+            int8_t result = alu_sub_i8(b, a);
             REQUIRE(result == expect);
         }
     }
@@ -191,28 +191,28 @@ TEST_CASE("Randomized 8-bit add and sub")
         SECTION("a + b")
         {
             int8_t expect = a + b;
-            int8_t result = intalu_add_i8(a, b);
+            int8_t result = alu_add_i8(a, b);
             REQUIRE(result == expect);
         }
 
         SECTION("b + a")
         {
             int8_t expect = b + a;
-            int8_t result = intalu_add_i8(b, a);
+            int8_t result = alu_add_i8(b, a);
             REQUIRE(result == expect);
         }
 
         SECTION("a - b")
         {
             int8_t expect = a - b;
-            int8_t result = intalu_sub_i8(a, b);
+            int8_t result = alu_sub_i8(a, b);
             REQUIRE(result == expect);
         }
 
         SECTION("b - a")
         {
             int8_t expect = b - a;
-            int8_t result = intalu_sub_i8(b, a);
+            int8_t result = alu_sub_i8(b, a);
             REQUIRE(result == expect);
         }
     }
@@ -228,14 +228,14 @@ TEST_CASE("Positive 8-bit unsigned multiply")
             SECTION("a * b")
             {
                 uint8_t expect = a*b;
-                uint8_t result = intalu_mul_u8(a, b);
+                uint8_t result = alu_mul_u8(a, b);
                 REQUIRE((int)expect == (int)result);
             }
 
             SECTION("b * a")
             {
                 uint8_t expect = b*a;
-                uint8_t result = intalu_mul_u8(b, a);
+                uint8_t result = alu_mul_u8(b, a);
                 REQUIRE((int)expect == (int)result);
             }
         }
@@ -263,14 +263,14 @@ TEST_CASE("Positive 8-bit signed multiply")
         SECTION("a * b")
         {
             int8_t expect = a * b;
-            int8_t result = intalu_mul_i8(a, b);
+            int8_t result = alu_mul_i8(a, b);
             REQUIRE((int)expect == (int)result);
         }
 
         SECTION("b * a")
         {
             int8_t expect = b * a;
-            int8_t result = intalu_mul_i8(b, a);
+            int8_t result = alu_mul_i8(b, a);
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -283,14 +283,14 @@ TEST_CASE("Positive 8-bit signed multiply")
             SECTION("a * b")
             {
                 int8_t expect = a*b;
-                int8_t result = intalu_mul_i8(a, b);
+                int8_t result = alu_mul_i8(a, b);
                 REQUIRE((int)expect == (int)result);
             }
 
             SECTION("b * a")
             {
                 int8_t expect = b*a;
-                int8_t result = intalu_mul_i8(b, a);
+                int8_t result = alu_mul_i8(b, a);
                 REQUIRE((int)expect == (int)result);
             }
         }
@@ -307,7 +307,7 @@ TEST_CASE("Positive 8-bit unsigned divide")
             uint8_t a = i;
             uint8_t b = j;
             uint8_t expect = a / b;
-            uint8_t result = intalu_div_u8(a, b);
+            uint8_t result = alu_div_u8(a, b);
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -322,7 +322,7 @@ TEST_CASE("Positive 8-bit signed divide")
             int8_t a = i;
             int8_t b = j;
             int8_t expect = a / b;
-            int8_t result = intalu_div_i8(a, b);
+            int8_t result = alu_div_i8(a, b);
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -337,7 +337,7 @@ TEST_CASE("Negative 8-bit signed divide")
             int8_t a = i;
             int8_t b = j;
             int8_t expect = a / b;
-            int8_t result = intalu_div_i8(a, b);
+            int8_t result = alu_div_i8(a, b);
             REQUIRE((int)expect == (int)result);
         }
     }
@@ -352,7 +352,7 @@ TEST_CASE("Fused multiply-add 8-bit unsigned")
                 uint8_t b = j;
                 uint8_t c = k;
                 uint8_t expect = a*b + c;
-                uint8_t result = intalu_fma_u8(a, b, c);
+                uint8_t result = alu_fma_u8(a, b, c);
                 REQUIRE((int)expect == (int)result);
             }
         }
