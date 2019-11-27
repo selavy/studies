@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <immintrin.h>
 #include <emmintrin.h>
+#include <stdint.h>
 
 #define IN_WORD  0
 #define OUT_WORD 1
@@ -13,20 +14,26 @@ char buf[4096];
 
 #define popcnt __builtin_popcount
 
+#define REP32(X) \
+    X, X, X, X, X, X, X, X, \
+    X, X, X, X, X, X, X, X, \
+    X, X, X, X, X, X, X, X, \
+    X, X, X, X, X, X, X, X
+
 int process(FILE* stream, const char* filename)
 {
     const size_t stride = 32;
     size_t read, i, j, extra;
     int lines = 0, words = 0, bytes = 0;
     int state = OUT_WORD;
-    __m256i m, r, newline;
+    __m256i result;
 
-    newline = _mm256_set_epi8(
-            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
-            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
-            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
-            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n'
-            );
+    const __m256i newline  = _mm256_set_epi8(REP32('\n'));
+    const __m256i hspace   = _mm256_set_epi8(REP32( ' '));
+    const __m256i formfeed = _mm256_set_epi8(REP32('\f'));
+    const __m256i carriage = _mm256_set_epi8(REP32('\r'));
+    const __m256i horztab  = _mm256_set_epi8(REP32('\t'));
+    const __m256i verttab  = _mm256_set_epi8(REP32('\v'));
 
     do {
         read = fread(&buf[0], 1, sizeof(buf), stream);
@@ -37,18 +44,40 @@ int process(FILE* stream, const char* filename)
         assert((bytes + extra) % stride == 0);
 
         for (i = 0; i < read; i += stride) {
-            m = _mm256_loadu_si256((const __m256i*)&buf[i]);
-            r = _mm256_cmpeq_epi8(m, newline);
-            lines += popcnt(_mm256_movemask_epi8(r));
-        }
+            // isspace()
+            //     checks  for white-space characters.  In the "C" and "POSIX" locales, these are: space,
+            //     form-feed ('\f'), newline ('\n'), carriage return ('\r'), horizontal tab ('\t'),
+            //     and vertical tab ('\v').
+            const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
+            const __m256i isnewline  = _mm256_cmpeq_epi8(data, newline);
+            const __m256i ishspace   = _mm256_cmpeq_epi8(data, hspace);
+            const __m256i isformfeed = _mm256_cmpeq_epi8(data, formfeed);
+            const __m256i iscarriage = _mm256_cmpeq_epi8(data, carriage);
+            const __m256i ishorztab  = _mm256_cmpeq_epi8(data, horztab);
+            const __m256i isverttab  = _mm256_cmpeq_epi8(data, verttab);
+            const __m256i isspace =
+                _mm256_or_si256(isnewline,
+                        _mm256_or_si256(ishspace,
+                            _mm256_or_si256(isformfeed,
+                                _mm256_or_si256(iscarriage,
+                                    _mm256_or_si256(ishorztab, isverttab)
+                                    )
+                                )
+                            )
+                        );
 
-        for (i = 0; i < read; ++i) {
-            if (!isspace(buf[i])) {
-                words += state == OUT_WORD;
-                state = IN_WORD;
-            } else {
-                state = OUT_WORD;
+            // trivial (stupid) version
+            uint32_t mask = _mm256_movemask_epi8(isspace);
+            for (int i = 0; i < stride; ++i) {
+                if ((mask & (1u << i)) != 0) {
+                    state = OUT_WORD;
+                } else {
+                    words += state == OUT_WORD;
+                    state = IN_WORD;
+                }
             }
+
+            lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
     } while (read > 0);
 
@@ -78,6 +107,7 @@ int run_file(const char* filename)
 
 int main(int argc, char** argv)
 {
+
     if (argc == 1) {
         process(stdin, "");
     } else {
