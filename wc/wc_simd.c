@@ -92,16 +92,16 @@ char buf[4096];
 
 int process(FILE* stream, const char* filename)
 {
-    size_t read, i, j;
+    size_t read, i, j, extra;
     int lines = 0, words = 0, bytes = 0;
     int state = OUT_WORD;
     // __mmask64 out;
     // __m512i newline;
-    __m128i newline = _mm_set_epi8(
+    __m256i newline = _mm256_set_epi8(
+            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
+            '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
             '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
             '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n'
-            // '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
-            // '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n'
             );
 
     do {
@@ -109,25 +109,48 @@ int process(FILE* stream, const char* filename)
         read = fread(&buf[0], 1, sizeof(buf), stream);
         bytes += read;
 
-        for (i = 0; i < read; i += (128 / 8)) {
-            __m128i m = _mm_loadu_si128((const __m128i*)&buf[i]);
-            __m128i r = _mm_cmpeq_epi8(m, newline);
-            lines += _mm_extract_epi8(r,  0) != 0;
-            lines += _mm_extract_epi8(r,  1) != 0;
-            lines += _mm_extract_epi8(r,  2) != 0;
-            lines += _mm_extract_epi8(r,  3) != 0;
-            lines += _mm_extract_epi8(r,  4) != 0;
-            lines += _mm_extract_epi8(r,  5) != 0;
-            lines += _mm_extract_epi8(r,  6) != 0;
-            lines += _mm_extract_epi8(r,  7) != 0;
-            lines += _mm_extract_epi8(r,  8) != 0;
-            lines += _mm_extract_epi8(r,  9) != 0;
-            lines += _mm_extract_epi8(r, 10) != 0;
-            lines += _mm_extract_epi8(r, 11) != 0;
-            lines += _mm_extract_epi8(r, 12) != 0;
-            lines += _mm_extract_epi8(r, 13) != 0;
-            lines += _mm_extract_epi8(r, 14) != 0;
-            lines += _mm_extract_epi8(r, 15) != 0;
+        extra = 32 - (bytes % 32);
+        bytes += extra;
+
+        for (i = 0; i < read; i += (256 / 8)) {
+            __m256i m = _mm256_loadu_si256((const __m256i*)&buf[i]);
+            __m256i r = _mm256_cmpeq_epi8(m, newline);
+            lines += _mm256_extract_epi8(r,  0) != 0;
+            lines += _mm256_extract_epi8(r,  1) != 0;
+            lines += _mm256_extract_epi8(r,  2) != 0;
+            lines += _mm256_extract_epi8(r,  3) != 0;
+            lines += _mm256_extract_epi8(r,  4) != 0;
+            lines += _mm256_extract_epi8(r,  5) != 0;
+            lines += _mm256_extract_epi8(r,  6) != 0;
+            lines += _mm256_extract_epi8(r,  7) != 0;
+
+            lines += _mm256_extract_epi8(r,  8) != 0;
+            lines += _mm256_extract_epi8(r,  9) != 0;
+            lines += _mm256_extract_epi8(r, 10) != 0;
+            lines += _mm256_extract_epi8(r, 11) != 0;
+            lines += _mm256_extract_epi8(r, 12) != 0;
+            lines += _mm256_extract_epi8(r, 13) != 0;
+            lines += _mm256_extract_epi8(r, 14) != 0;
+            lines += _mm256_extract_epi8(r, 15) != 0;
+
+            lines += _mm256_extract_epi8(r, 16) != 0;
+            lines += _mm256_extract_epi8(r, 17) != 0;
+            lines += _mm256_extract_epi8(r, 18) != 0;
+            lines += _mm256_extract_epi8(r, 19) != 0;
+            lines += _mm256_extract_epi8(r, 20) != 0;
+            lines += _mm256_extract_epi8(r, 21) != 0;
+            lines += _mm256_extract_epi8(r, 22) != 0;
+            lines += _mm256_extract_epi8(r, 23) != 0;
+
+            lines += _mm256_extract_epi8(r, 24) != 0;
+            lines += _mm256_extract_epi8(r, 25) != 0;
+            lines += _mm256_extract_epi8(r, 26) != 0;
+            lines += _mm256_extract_epi8(r, 27) != 0;
+            lines += _mm256_extract_epi8(r, 28) != 0;
+            lines += _mm256_extract_epi8(r, 29) != 0;
+            lines += _mm256_extract_epi8(r, 30) != 0;
+            lines += _mm256_extract_epi8(r, 31) != 0;
+
             // lines += popcountll(r);
         }
         // TODO: finish with non-SIMD or pack to be divisible by 64
