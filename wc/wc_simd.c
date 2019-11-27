@@ -1,3 +1,8 @@
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -6,6 +11,8 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 #include <stdint.h>
+
+// #define USE_FD
 
 char buf[4096];
 
@@ -17,13 +24,16 @@ char buf[4096];
     X, X, X, X, X, X, X, X, \
     X, X, X, X, X, X, X, X
 
+#ifdef USE_FD
+int process(int fd, const char* filename)
+#else
 int process(FILE* stream, const char* filename)
+#endif
 {
     const size_t stride = 32;
-    size_t read, i, j, extra;
+    size_t len, extra;
     int lines = 0, words = 0, bytes = 0;
     uint32_t prevchkmask = 0xFFFFFFFFu;
-    __m256i result;
 
     const __m256i newline  = _mm256_set_epi8(REP32('\n'));
     const __m256i hspace   = _mm256_set_epi8(REP32( ' '));
@@ -32,15 +42,18 @@ int process(FILE* stream, const char* filename)
     const __m256i horztab  = _mm256_set_epi8(REP32('\t'));
     const __m256i verttab  = _mm256_set_epi8(REP32('\v'));
 
-    do {
-        read = fread(&buf[0], 1, sizeof(buf), stream);
-        bytes += read;
+#ifdef USE_FD
+    while ((len = read(fd, &buf[0], sizeof(buf))) > 0) {
+#else
+    while ((len = fread(&buf[0], 1, sizeof(buf), stream)) > 0) {
+#endif
+        bytes += len;
 
         extra = stride - (bytes % stride);
-        memset(&buf[read], 0, extra);
+        memset(&buf[len], 0, extra);
         assert((bytes + extra) % stride == 0);
 
-        for (i = 0; i < read; i += stride) {
+        for (int i = 0; i < len; i += stride) {
             // isspace()
             //     checks for white-space characters.  In the "C" and "POSIX" locales,
             //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
@@ -71,12 +84,14 @@ int process(FILE* stream, const char* filename)
             words += popcnt(iswordmask);
             lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
-    } while (read > 0);
+    }
 
+#ifndef USE_FD
     if (ferror(stream)) {
         fprintf(stderr, "error: read error while reading input: %s\n", strerror(errno));
         return 1;
     }
+#endif
 
 	printf(" %7d %7d %7d %s\n", lines, words, bytes, filename);
 
@@ -86,14 +101,24 @@ int process(FILE* stream, const char* filename)
 int run_file(const char* filename)
 {
     int rc;
-    FILE* stream;
-    stream = fopen(filename, "rb");
+#ifdef USE_FD
+    int stream = open(filename, O_RDONLY);
+    if (stream < 0) {
+        fprintf(stderr, "error: unable to open input: %s\n", filename);
+        return 1;
+    }
+	posix_fadvise(stream, 0, 0, POSIX_FADV_SEQUENTIAL);
+#else
+    FILE* stream = fopen(filename, "rb");
     if (!stream) {
         fprintf(stderr, "error: unable to open input: %s\n", filename);
         return 1;
     }
+#endif
     rc = process(stream, filename);
+#ifndef USE_FD
     fclose(stream);
+#endif
     return rc;
 }
 
@@ -101,7 +126,11 @@ int main(int argc, char** argv)
 {
 
     if (argc == 1) {
+#ifdef USE_FD
+        process(STDIN_FILENO, "");
+#else
         process(stdin, "");
+#endif
     } else {
         for (int i = 1; i < argc; ++i) {
             run_file(argv[i]);
