@@ -209,7 +209,7 @@ int run_file(const char* filename)
 
 int main(int argc, char** argv)
 {
-    const char *ss = "This is an example sentence. abd";
+    const char *ss = "This is\nan example\tsentence.\rabd";
     __m256i *buf = aligned_alloc(sizeof(__m256i), BUFSIZE);
     memcpy(buf, ss, strlen(ss));
 

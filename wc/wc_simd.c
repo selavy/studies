@@ -23,14 +23,7 @@ int process(int fd, const char* filename)
     const size_t stride = 32;
     size_t len, extra;
     int lines = 0, words = 0, bytes = 0;
-    uint32_t prevchkmask = 0xFFFFFFFFu;
-
-    const __m256i newline  = _mm256_set1_epi8('\n');
-    const __m256i hspace   = _mm256_set1_epi8( ' ');
-    const __m256i formfeed = _mm256_set1_epi8('\f');
-    const __m256i carriage = _mm256_set1_epi8('\r');
-    const __m256i horztab  = _mm256_set1_epi8('\t');
-    const __m256i verttab  = _mm256_set1_epi8('\v');
+    uint32_t prevchk = 0xFFFFFFFFu;
 
     while ((len = read(fd, &buf[0], sizeof(buf))) > 0) {
         bytes += len;
@@ -45,29 +38,20 @@ int process(int fd, const char* filename)
             //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
             //     horizontal tab ('\t'), and vertical tab ('\v').
             const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
-            const __m256i isnewline  = _mm256_cmpeq_epi8(data, newline);
-            const __m256i ishspace   = _mm256_cmpeq_epi8(data, hspace);
-            const __m256i isformfeed = _mm256_cmpeq_epi8(data, formfeed);
-            const __m256i iscarriage = _mm256_cmpeq_epi8(data, carriage);
-            const __m256i ishorztab  = _mm256_cmpeq_epi8(data, horztab);
-            const __m256i isverttab  = _mm256_cmpeq_epi8(data, verttab);
-            const __m256i isspace =
-                _mm256_or_si256(isnewline,
-                        _mm256_or_si256(ishspace,
-                            _mm256_or_si256(isformfeed,
-                                _mm256_or_si256(iscarriage,
-                                    _mm256_or_si256(ishorztab, isverttab)
-                                    )
-                                )
-                            )
-                        );
-
-            const uint32_t isspacemask     = _mm256_movemask_epi8(isspace);
-            const uint32_t isprevspacemask = (isspacemask << 1) | ((prevchkmask & (1u << 31)) >> 31);
-            const uint32_t iswordmask      = ~isspacemask & isprevspacemask;
-            prevchkmask = isspacemask;
-
-            words += popcnt(iswordmask);
+            const __m256i shuffle = _mm256_set_epi64x(
+                        0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
+                        0x20,           // = ' '
+                        0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
+                        0x20            // = ' '
+                    );
+            const __m256i isnewline  = _mm256_cmpeq_epi8(data, _mm256_set1_epi8('\n'));
+            const __m256i a = _mm256_shuffle_epi8(shuffle, data);
+            const __m256i b = _mm256_cmpeq_epi8(a, data);
+            const uint32_t isspace = _mm256_movemask_epi8(b);
+            const uint32_t previsspace = (isspace << 1) | ((prevchk & (1u << 31)) >> 31);
+            const uint32_t isword  = ~isspace & previsspace;
+            prevchk = isspace;
+            words += popcnt(isword);
             lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
     }
