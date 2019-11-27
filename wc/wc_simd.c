@@ -7,8 +7,8 @@
 #include <emmintrin.h>
 #include <stdint.h>
 
-#define IN_WORD  0
-#define OUT_WORD 1
+// #define IN_WORD  0
+// #define OUT_WORD 1
 
 char buf[4096];
 
@@ -20,12 +20,15 @@ char buf[4096];
     X, X, X, X, X, X, X, X, \
     X, X, X, X, X, X, X, X
 
+#define ISWORD(m, i)  (((m) & (1u << (i))) == 0)
+#define ISSPACE(m, i) (((m) & (1u << (i))) != 0)
+
 int process(FILE* stream, const char* filename)
 {
     const size_t stride = 32;
     size_t read, i, j, extra;
     int lines = 0, words = 0, bytes = 0;
-    int state = OUT_WORD;
+    uint32_t prev = 0xFFFFFFFFu;
     __m256i result;
 
     const __m256i newline  = _mm256_set_epi8(REP32('\n'));
@@ -45,9 +48,9 @@ int process(FILE* stream, const char* filename)
 
         for (i = 0; i < read; i += stride) {
             // isspace()
-            //     checks  for white-space characters.  In the "C" and "POSIX" locales, these are: space,
-            //     form-feed ('\f'), newline ('\n'), carriage return ('\r'), horizontal tab ('\t'),
-            //     and vertical tab ('\v').
+            //     checks  for white-space characters.  In the "C" and "POSIX" locales,
+            //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
+            //     horizontal tab ('\t'), and vertical tab ('\v').
             const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
             const __m256i isnewline  = _mm256_cmpeq_epi8(data, newline);
             const __m256i ishspace   = _mm256_cmpeq_epi8(data, hspace);
@@ -66,17 +69,12 @@ int process(FILE* stream, const char* filename)
                             )
                         );
 
-            // trivial (stupid) version
             uint32_t mask = _mm256_movemask_epi8(isspace);
-            for (int i = 0; i < stride; ++i) {
-                if ((mask & (1u << i)) != 0) {
-                    state = OUT_WORD;
-                } else {
-                    words += state == OUT_WORD;
-                    state = IN_WORD;
-                }
+            words += ISWORD(mask, 0) && ISSPACE(prev, stride-1) ? 1 : 0;
+            for (int j = 1; j < stride; ++j) {
+                words += ISWORD(mask, j) && ISSPACE(mask, j-1) ? 1 : 0;
             }
-
+            prev = mask;
             lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
     } while (read > 0);
