@@ -78,7 +78,7 @@ int process(FILE* stream, const char* filename)
         return 1;
     }
 
-    printf(" %d\t%d\t%d\t%s\n", lines, words, bytes, filename);
+	printf(" %7d %7d %7d %s\n", lines, words, bytes, filename);
 
     return 0;
 }

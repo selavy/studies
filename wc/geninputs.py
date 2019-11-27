@@ -12,7 +12,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         max_size = int(sys.argv[1])
     else:
-        max_size = 100000000
+        max_size = 1 << 30
     letters = []
     for i in range(65, 91):
         letters.append(chr(i))
@@ -23,5 +23,7 @@ if __name__ == '__main__':
     letters.append('\n')
     shuffle(letters)
 
-    for i in range(max_size):
-        sys.stdout.write(choice(letters))
+    for i in range(int(max_size / len(letters)) + 1):
+        # sys.stdout.write(choice(letters))
+        sys.stdout.write(''.join(letters))
+        shuffle(letters)
