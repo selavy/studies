@@ -18,12 +18,6 @@ char buf[4096];
 
 #define popcnt __builtin_popcount
 
-#define REP32(X) \
-    X, X, X, X, X, X, X, X, \
-    X, X, X, X, X, X, X, X, \
-    X, X, X, X, X, X, X, X, \
-    X, X, X, X, X, X, X, X
-
 #ifdef USE_FD
 int process(int fd, const char* filename)
 #else
@@ -35,12 +29,12 @@ int process(FILE* stream, const char* filename)
     int lines = 0, words = 0, bytes = 0;
     uint32_t prevchkmask = 0xFFFFFFFFu;
 
-    const __m256i newline  = _mm256_set_epi8(REP32('\n'));
-    const __m256i hspace   = _mm256_set_epi8(REP32( ' '));
-    const __m256i formfeed = _mm256_set_epi8(REP32('\f'));
-    const __m256i carriage = _mm256_set_epi8(REP32('\r'));
-    const __m256i horztab  = _mm256_set_epi8(REP32('\t'));
-    const __m256i verttab  = _mm256_set_epi8(REP32('\v'));
+    const __m256i newline  = _mm256_set1_epi8('\n');
+    const __m256i hspace   = _mm256_set1_epi8( ' ');
+    const __m256i formfeed = _mm256_set1_epi8('\f');
+    const __m256i carriage = _mm256_set1_epi8('\r');
+    const __m256i horztab  = _mm256_set1_epi8('\t');
+    const __m256i verttab  = _mm256_set1_epi8('\v');
 
 #ifdef USE_FD
     while ((len = read(fd, &buf[0], sizeof(buf))) > 0) {
