@@ -7,9 +7,6 @@
 #include <emmintrin.h>
 #include <stdint.h>
 
-// #define IN_WORD  0
-// #define OUT_WORD 1
-
 char buf[4096];
 
 #define popcnt __builtin_popcount
@@ -19,9 +16,6 @@ char buf[4096];
     X, X, X, X, X, X, X, X, \
     X, X, X, X, X, X, X, X, \
     X, X, X, X, X, X, X, X
-
-#define ISWORD(m, i)  (((m) & (1u << (i))) == 0)
-#define ISSPACE(m, i) (((m) & (1u << (i))) != 0)
 
 int process(FILE* stream, const char* filename)
 {
@@ -69,9 +63,9 @@ int process(FILE* stream, const char* filename)
                             )
                         );
 
-            uint32_t isspacemask     = _mm256_movemask_epi8(isspace);
-            uint32_t isprevspacemask = (isspacemask << 1) | ((prevchkmask & (1u << 31)) >> 31);
-            uint32_t iswordmask      = ~isspacemask & isprevspacemask;
+            const uint32_t isspacemask     = _mm256_movemask_epi8(isspace);
+            const uint32_t isprevspacemask = (isspacemask << 1) | ((prevchkmask & (1u << 31)) >> 31);
+            const uint32_t iswordmask      = ~isspacemask & isprevspacemask;
             prevchkmask = isspacemask;
 
             words += popcnt(iswordmask);
