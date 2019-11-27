@@ -1,3 +1,5 @@
 add_executable(wc-serial wc_serial.c)
 add_executable(wc-simd   wc_simd.c)
+add_executable(wc-2      wc_2.c)
 target_compile_options(wc-simd PUBLIC -march=native)
+target_compile_options(wc-2    PUBLIC -march=native)
