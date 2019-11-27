@@ -28,7 +28,7 @@ int process(FILE* stream, const char* filename)
     const size_t stride = 32;
     size_t read, i, j, extra;
     int lines = 0, words = 0, bytes = 0;
-    uint32_t prev = 0xFFFFFFFFu;
+    uint32_t prevchkmask = 0xFFFFFFFFu;
     __m256i result;
 
     const __m256i newline  = _mm256_set_epi8(REP32('\n'));
@@ -48,7 +48,7 @@ int process(FILE* stream, const char* filename)
 
         for (i = 0; i < read; i += stride) {
             // isspace()
-            //     checks  for white-space characters.  In the "C" and "POSIX" locales,
+            //     checks for white-space characters.  In the "C" and "POSIX" locales,
             //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
             //     horizontal tab ('\t'), and vertical tab ('\v').
             const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
@@ -69,12 +69,12 @@ int process(FILE* stream, const char* filename)
                             )
                         );
 
-            uint32_t mask = _mm256_movemask_epi8(isspace);
-            words += ISWORD(mask, 0) && ISSPACE(prev, stride-1) ? 1 : 0;
-            for (int j = 1; j < stride; ++j) {
-                words += ISWORD(mask, j) && ISSPACE(mask, j-1) ? 1 : 0;
-            }
-            prev = mask;
+            uint32_t isspacemask     = _mm256_movemask_epi8(isspace);
+            uint32_t isprevspacemask = (isspacemask << 1) | ((prevchkmask & (1u << 31)) >> 31);
+            uint32_t iswordmask      = ~isspacemask & isprevspacemask;
+            prevchkmask = isspacemask;
+
+            words += popcnt(iswordmask);
             lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
     } while (read > 0);
