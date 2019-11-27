@@ -8,18 +8,12 @@
 #define OUT_WORD 1
 
 char buf[4096];
-int run(const char* filename)
+
+int process(FILE* stream, const char* filename)
 {
     size_t read, i;
-    FILE* stream;
     int lines = 0, words = 0, bytes = 0;
     int state = OUT_WORD;
-
-    stream = fopen(filename, "rb");
-    if (!stream) {
-        fprintf(stderr, "error: unable to open input: %s\n", filename);
-        return 1;
-    }
 
     do {
         read = fread(&buf[0], 1, sizeof(buf), stream);
@@ -37,21 +31,38 @@ int run(const char* filename)
 
     if (ferror(stream)) {
         fprintf(stderr, "error: read error while reading input: %s\n", strerror(errno));
-        fclose(stream);
         return 1;
     }
 
     printf(" %d\t%d\t%d\t%s\n", lines, words, bytes, filename);
 
-    fclose(stream);
     return 0;
+}
+
+int run_file(const char* filename)
+{
+    int rc;
+    FILE* stream;
+    stream = fopen(filename, "rb");
+    if (!stream) {
+        fprintf(stderr, "error: unable to open input: %s\n", filename);
+        return 1;
+    }
+    rc = process(stream, filename);
+    fclose(stream);
+    return rc;
 }
 
 int main(int argc, char** argv)
 {
     int i;
-    for (i = 1; i < argc; ++i) {
-        run(argv[i]);
+
+    if (argc == 1) {
+        process(stdin, "");
+    } else {
+        for (i = 1; i < argc; ++i) {
+            run_file(argv[i]);
+        }
     }
     return 0;
 }
