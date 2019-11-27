@@ -18,11 +18,7 @@ char buf[4096];
 
 #define popcnt __builtin_popcount
 
-#ifdef USE_FD
 int process(int fd, const char* filename)
-#else
-int process(FILE* stream, const char* filename)
-#endif
 {
     const size_t stride = 32;
     size_t len, extra;
@@ -36,11 +32,7 @@ int process(FILE* stream, const char* filename)
     const __m256i horztab  = _mm256_set1_epi8('\t');
     const __m256i verttab  = _mm256_set1_epi8('\v');
 
-#ifdef USE_FD
     while ((len = read(fd, &buf[0], sizeof(buf))) > 0) {
-#else
-    while ((len = fread(&buf[0], 1, sizeof(buf), stream)) > 0) {
-#endif
         bytes += len;
 
         extra = stride - (bytes % stride);
@@ -80,12 +72,10 @@ int process(FILE* stream, const char* filename)
         }
     }
 
-#ifndef USE_FD
-    if (ferror(stream)) {
+    if (len < 0) {
         fprintf(stderr, "error: read error while reading input: %s\n", strerror(errno));
         return 1;
     }
-#endif
 
 	printf(" %7d %7d %7d %s\n", lines, words, bytes, filename);
 
@@ -95,24 +85,14 @@ int process(FILE* stream, const char* filename)
 int run_file(const char* filename)
 {
     int rc;
-#ifdef USE_FD
-    int stream = open(filename, O_RDONLY);
-    if (stream < 0) {
+    int fd = open(filename, O_RDONLY);
+    if (fd < 0) {
         fprintf(stderr, "error: unable to open input: %s\n", filename);
         return 1;
     }
-	posix_fadvise(stream, 0, 0, POSIX_FADV_SEQUENTIAL);
-#else
-    FILE* stream = fopen(filename, "rb");
-    if (!stream) {
-        fprintf(stderr, "error: unable to open input: %s\n", filename);
-        return 1;
-    }
-#endif
-    rc = process(stream, filename);
-#ifndef USE_FD
-    fclose(stream);
-#endif
+	posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+    rc = process(fd, filename);
+    close(fd);
     return rc;
 }
 
@@ -120,11 +100,7 @@ int main(int argc, char** argv)
 {
 
     if (argc == 1) {
-#ifdef USE_FD
         process(STDIN_FILENO, "");
-#else
-        process(stdin, "");
-#endif
     } else {
         for (int i = 1; i < argc; ++i) {
             run_file(argv[i]);
