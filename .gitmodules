@@ -1,3 +1,6 @@
 [submodule "third_party/Catch2"]
 	path = third_party/Catch2
 	url = git@github.com:catchorg/Catch2.git
+[submodule "third_party/cgreen"]
+	path = third_party/cgreen
+	url = git@github.com:cgreen-devs/cgreen.git
