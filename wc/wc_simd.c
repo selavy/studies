@@ -12,13 +12,11 @@
 #include <emmintrin.h>
 #include <stdint.h>
 
-// #define USE_FD
-
-char buf[4096];
-
+#define BUFSIZE 4096
+__m256i buf[BUFSIZE];
 #define popcnt __builtin_popcount
 
-#if 1
+#if 0
 
 // using pshufb
 static uint32_t simd_isspace(__m256i d)
@@ -61,26 +59,19 @@ static uint32_t simd_isspace(__m256i d)
 
 #endif
 
+#define ROUNDUP_N(a, n) (((a) + ((n)-1)) & ~((n)-1))
+
 int process(int fd, const char* filename)
 {
-    const size_t stride = 32;
     size_t len, extra;
     int lines = 0, words = 0, bytes = 0;
     uint32_t prevchk = 0xFFFFFFFFu;
-
-    while ((len = read(fd, &buf[0], sizeof(buf))) > 0) {
+    while ((len = read(fd, &buf[0], BUFSIZE*sizeof(buf[0]))) > 0) {
         bytes += len;
-
-        extra = stride - (bytes % stride);
-        memset(&buf[len], 0, extra);
-        assert((bytes + extra) % stride == 0);
-
-        for (int i = 0; i < len; i += stride) {
-            // isspace()
-            //     checks for white-space characters.  In the "C" and "POSIX" locales,
-            //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
-            //     horizontal tab ('\t'), and vertical tab ('\v').
-            const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
+        extra = ROUNDUP_N(len, 32) - len;
+        memset(&buf[len], 0, extra / sizeof(buf[0]));
+        for (int i = 0; i < len / sizeof(buf[0]); ++i) {
+            const __m256i data = _mm256_loadu_si256(&buf[i]);
             const __m256i isnewline  = _mm256_cmpeq_epi8(data, _mm256_set1_epi8('\n'));
             const uint32_t isspace = simd_isspace(data);
             const uint32_t previsspace = (isspace << 1) | ((prevchk & (1u << 31)) >> 31);
@@ -90,14 +81,11 @@ int process(int fd, const char* filename)
             lines += popcnt(_mm256_movemask_epi8(isnewline));
         }
     }
-
     if (len < 0) {
         fprintf(stderr, "error: read error while reading input: %s\n", strerror(errno));
         return 1;
     }
-
 	printf(" %7d %7d %7d %s\n", lines, words, bytes, filename);
-
     return 0;
 }
 

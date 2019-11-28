@@ -10,5 +10,5 @@ add_subdirectory(third_party)
 
 # Studies:
 add_subdirectory(alu)
-add_subdirectory(cgreen-test)
+# add_subdirectory(cgreen-test)
 add_subdirectory(wc)
