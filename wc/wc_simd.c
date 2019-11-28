@@ -18,6 +18,49 @@ char buf[4096];
 
 #define popcnt __builtin_popcount
 
+#if 1
+
+// using pshufb
+uint32_t my_isspace(__m256i d)
+{
+    const __m256i shuffle = _mm256_set_epi64x(
+            0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
+            0x20,           // = ' '
+            0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
+            0x20            // = ' '
+            );
+    const __m256i isnewline  = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\n'));
+    const __m256i a = _mm256_shuffle_epi8(shuffle, d);
+    const __m256i b = _mm256_cmpeq_epi8(a, d);
+    return _mm256_movemask_epi8(b);
+}
+
+#else
+
+uint32_t my_isspace(__m256i d)
+{
+	const __m256i isnewline  = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\n'));
+	const __m256i ishspace   = _mm256_cmpeq_epi8(d, _mm256_set1_epi8( ' '));
+	const __m256i isformfeed = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\f'));
+	const __m256i iscarriage = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\r'));
+	const __m256i ishorztab  = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\t'));
+	const __m256i isverttab  = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\v'));
+	const __m256i mask =
+		_mm256_or_si256(isnewline,
+				_mm256_or_si256(ishspace,
+					_mm256_or_si256(isformfeed,
+						_mm256_or_si256(iscarriage,
+							_mm256_or_si256(ishorztab, isverttab)
+							)
+						)
+					)
+				);
+
+	return _mm256_movemask_epi8(mask);
+}
+
+#endif
+
 int process(int fd, const char* filename)
 {
     const size_t stride = 32;
@@ -38,16 +81,8 @@ int process(int fd, const char* filename)
             //     these are: space, form-feed ('\f'), newline ('\n'), carriage return ('\r'),
             //     horizontal tab ('\t'), and vertical tab ('\v').
             const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
-            const __m256i shuffle = _mm256_set_epi64x(
-                        0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
-                        0x20,           // = ' '
-                        0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
-                        0x20            // = ' '
-                    );
             const __m256i isnewline  = _mm256_cmpeq_epi8(data, _mm256_set1_epi8('\n'));
-            const __m256i a = _mm256_shuffle_epi8(shuffle, data);
-            const __m256i b = _mm256_cmpeq_epi8(a, data);
-            const uint32_t isspace = _mm256_movemask_epi8(b);
+            const uint32_t isspace = my_isspace(data);
             const uint32_t previsspace = (isspace << 1) | ((prevchk & (1u << 31)) >> 31);
             const uint32_t isword  = ~isspace & previsspace;
             prevchk = isspace;
