@@ -21,7 +21,7 @@ char buf[4096];
 #if 1
 
 // using pshufb
-uint32_t my_isspace(__m256i d)
+static uint32_t simd_isspace(__m256i d)
 {
     const __m256i shuffle = _mm256_set_epi64x(
             0x0d0c0b0a0900, // = '\r' '\f' '\v' '\n' '\t' '\0'
@@ -37,7 +37,7 @@ uint32_t my_isspace(__m256i d)
 
 #else
 
-uint32_t my_isspace(__m256i d)
+static uint32_t simd_isspace(__m256i d)
 {
 	const __m256i isnewline  = _mm256_cmpeq_epi8(d, _mm256_set1_epi8('\n'));
 	const __m256i ishspace   = _mm256_cmpeq_epi8(d, _mm256_set1_epi8( ' '));
@@ -82,7 +82,7 @@ int process(int fd, const char* filename)
             //     horizontal tab ('\t'), and vertical tab ('\v').
             const __m256i data = _mm256_loadu_si256((const __m256i*)&buf[i]);
             const __m256i isnewline  = _mm256_cmpeq_epi8(data, _mm256_set1_epi8('\n'));
-            const uint32_t isspace = my_isspace(data);
+            const uint32_t isspace = simd_isspace(data);
             const uint32_t previsspace = (isspace << 1) | ((prevchk & (1u << 31)) >> 31);
             const uint32_t isword  = ~isspace & previsspace;
             prevchk = isspace;
