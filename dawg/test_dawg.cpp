@@ -28,7 +28,6 @@ struct Trie
 {
     struct Node {
         int  value;
-        int  nodenum;
         int  links[26];
         bool term;
     };
@@ -44,7 +43,6 @@ void trie_init(Trie* t)
     memset(&t->symcnts[0], 0, sizeof(t->symcnts));
     t->nodes.emplace_back();
     auto* node = &t->nodes.back();
-    node->nodenum = 0;
     node->value   = 0;
     node->term    = false;
     std::fill(std::begin(node->links), std::end(node->links), 0);
@@ -64,7 +62,6 @@ void trie_insert(Trie* t, const char* const word)
             int next = static_cast<int>(nodes.size());
             nodes.emplace_back();
             auto* new_node = &nodes.back();
-            new_node->nodenum = 0; // TODO: can I set this now?
             new_node->value   = c;
             new_node->term    = false;
             std::fill(std::begin(new_node->links), std::end(new_node->links), 0);
@@ -207,28 +204,19 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
         assert(0 && "unable to find location for next entries");
     }
 
-    assert(0 <= node->nodenum && node->nodenum < base.size());
-    setbase3(t3, node->nodenum, next_base_idx, node->term);
+    const int s = n;
+    assert(0 <= s && s < base.size());
+    setbase3(t3, s, next_base_idx, node->term);
     for (int i = 0; i < n_cs; ++i) {
         const int c = cs[i];
         const int t = next_base_idx + c;
+        const int link = node->links[c-1];
         assert(0 <= t && t < next.size());
         assert(0 <= t && t < chck.size());
         assert(next[t] == -1);
         assert(chck[t] == -1);
-        next[t] = nodes[node->links[c-1]].nodenum;
-        chck[t] = node->nodenum;
-    }
-}
-
-void _numbernodes(Trie* trie, int n, int& nodenum)
-{
-    trie->nodes[n].nodenum = nodenum++;
-    auto* links = &trie->nodes[n].links[0];
-    for (int i = 0; i < 26; ++i) {
-        if (links[i] != 0) {
-            _numbernodes(trie, links[i], nodenum);
-        }
+        next[t] = link;
+        chck[t] = s;
     }
 }
 
@@ -246,13 +234,11 @@ void _build3(Datrie3* t3, const Trie* trie, int n)
     }
 }
 
-void build3(Datrie3* t3, Trie* trie, int n_symbols, int n_states)
+void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
 {
     t3->base = Datrie3::Array(n_states            , -1);
     t3->next = Datrie3::Array(n_symbols * n_states, -1);
     t3->chck = Datrie3::Array(n_symbols * n_states, -1);
-    int nn = 0;
-    _numbernodes(trie, 0, nn);
     _build3(t3, trie, 0);
 }
 
