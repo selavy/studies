@@ -151,7 +151,6 @@ void setbase2(Datrie2* t, int s, int base, bool term)
 
 bool walk2(const Datrie2* trie, const char* const word)
 {
-    printf("walk2: %s\n", word);
     auto& base = trie->base;
     auto& chck = trie->chck;
     int s = 0;
@@ -160,7 +159,6 @@ bool walk2(const Datrie2* trie, const char* const word)
         assert(1 <= c && c < 27);
         const int t   = getbase2(trie, s) + c;
         const int chk = getchck2(trie, t);
-        printf("\t'%c' s=%d base[s]=%d c=%d t=%d chck[t]=%d\n", *ch, s, getbase2(trie, s), c, t, getchck2(trie, t));
         // if (getchck2(trie, t) != s) {
         if (chk != s) {
             return false;
@@ -321,15 +319,6 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     _build3(t3, trie, 0);
 }
 
-void printcs(const int* cs, const int* cs_end)
-{
-    printf("[ ");
-    for (; cs != cs_end; ++cs) {
-        printf("%c ", (char)(*cs - 1 + 'A'));
-    }
-    printf("]");
-}
-
 void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
 {
     auto& base = t2->base;
@@ -368,10 +357,6 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
     assert(0 <= s && s < base.size());
     setbase2(t2, s, next_base_idx, node->term);
     node->base = next_base_idx;
-    printf("assign2: c=%c parent=%c my_c=%d s=%d next_base=%d children=",
-            node->value, nodes[node->parent].value, my_c, s, next_base_idx);
-    printcs(&cs[0], &cs[n_cs]);
-    printf("\n");
     for (int i = 0; i < n_cs; ++i) {
         const int c = cs[i];
         const int t = next_base_idx + c;
