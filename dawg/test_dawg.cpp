@@ -60,7 +60,7 @@ void trie_init(Trie* t)
     auto* node = &t->nodes.back();
     node->value   = ' ';
     node->term    = false;
-    node->parent  = 0;
+    node->parent  = -1;
     node->base    = 0;
     std::fill(std::begin(node->links), std::end(node->links), 0);
 }
@@ -158,7 +158,6 @@ bool walk2(const Datrie2* trie, const char* const word)
         if (getchck2(trie, t) != s) {
             return false;
         }
-        assert(0 <= t && t < next.size());
         s = t;
     }
     return getterm2(trie, s);
@@ -343,12 +342,17 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
     }
     assert(next_base_idx != -1);
     for (int i = 0; i < n_cs; ++i) {
-        assert(base[next_base_idx + cs[i]] == -1);
+        assert(getbase2(t2, next_base_idx + cs[i]) == Datrie2::UnsetBase);
     }
 
-    const int my_c = iconv(node->value) + 1;
-    assert(nodes[node->parent].base >= 0);
-    const int s = nodes[node->parent].base + my_c;
+    int s;
+    if (node->parent >= 0) {
+        assert(nodes[node->parent].base >= 0);
+        const int my_c = iconv(node->value) + 1;
+        s = nodes[node->parent].base + my_c;
+    } else {
+        s = 0;
+    }
     assert(0 <= s && s < base.size());
     setbase2(t2, s, next_base_idx, node->term);
     node->base = next_base_idx;
@@ -390,10 +394,10 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
         }
     }
     std::size_t i = t2->base.size();
-    while (t2->base[i] == Datrie2::UnsetBase) {
+    while (getbase2(t2, i) == Datrie2::UnsetBase) {
         --i;
     }
-    assert(t2->base[i]] != Datrie2::UnsetBase);
+    assert(getbase2(t2, i) != Datrie2::UnsetBase);
     printf("Initialize size: %zu\n", t2->base.size());
     printf("New        size: %zu\n", i);
     printf("Full       size: %zu\n", full);
