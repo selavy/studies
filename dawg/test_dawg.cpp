@@ -119,14 +119,12 @@ struct Datrie2
     using Array = std::vector<int>;
     Array base;
     Array chck;
-    Array term;              // TEMP
 };
 
 int getbase2(const Datrie2* t, int s)
 {
     assert(s >= 0);
-    // return s < t->base.size() ? t->base[s] & ~(1u << 31) : 0;
-    return s < t->base.size() ? t->base[s] : INT_MIN;
+    return s < t->base.size() ? t->base[s] & ~(1u << 31) : 0;
 }
 
 int getchck2(const Datrie2* t, int s)
@@ -138,16 +136,13 @@ int getchck2(const Datrie2* t, int s)
 bool getterm2(const Datrie2* t, int s)
 {
     assert(s >= 0);
-    // return s < t->base.size() ? (t->base[s] >> 31) != 0 : false;
-    return s < t->term.size() ? t->term[s] : false;
+    return s < t->base.size() ? (t->base[s] >> 31) != 0 : false;
 }
 
 void setbase2(Datrie2* t, int s, int base, bool term)
 {
     assert(0 <= s && s < t->base.size());
-    // t->base[s] = base | ((term ? 1 : 0) << 31);
-    t->base[s] = base;
-    t->term[s] = term;
+    t->base[s] = base | ((term ? 1 : 0) << 31);
 }
 
 bool walk2(const Datrie2* trie, const char* const word)
@@ -384,7 +379,6 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
 {
     t2->base = Datrie3::Array(n_symbols * n_states, Datrie2::UnsetBase);
     t2->chck = Datrie3::Array(n_symbols * n_states, -1);
-    t2->term = Datrie3::Array(n_symbols * n_states, 0);  // TEMP TEMP
     t2->base[0] = 0;
     _build2(t2, trie, 0);
 
