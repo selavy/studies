@@ -106,22 +106,53 @@ TEST_CASE("Verify word lists")
 
 TEST_CASE("Datrie2")
 {
-    Datrie2 t;
+    Datrie2 dt;
 
     {
-        bool ok = init2(&t);
+        bool ok = init2(&dt);
         REQUIRE(ok == true);
     }
 
+    {
+        const auto& word = DICT[0];
+        INFO("Inserting word: " << word);
+
+        bool ok = insert2(&dt, word.c_str());
+        REQUIRE(ok == true);
+
+        bool found = isword2(&dt, word.c_str());
+        CHECK(found == true);
+    }
+
+    {
+        const auto& word = DICT[1];
+        INFO("Inserting word: " << word);
+
+        bool ok = insert2(&dt, word.c_str());
+        REQUIRE(ok == true);
+
+        bool found = isword2(&dt, word.c_str());
+        CHECK(found == true);
+    }
+
+    {
+        const auto& word = MISSING[1];
+        INFO("Looking for missing word: " << word);
+
+        bool found = isword2(&dt, word.c_str());
+        CHECK(found == false);
+    }
+
+#if 0
     for (const auto& word : DICT) {
         bool ok = insert2(&t, word.c_str());
         REQUIRE(ok == true);
     }
-
     for (const auto& word : DICT) {
         CHECK(isword2(&t, word.c_str()) == true);
     }
     for (const auto& word : MISSING) {
         CHECK(isword2(&t, word.c_str()) == false);
     }
+#endif
 }

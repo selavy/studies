@@ -85,49 +85,62 @@ bool init2([[maybe_unused]] Datrie2* t)
     return true;
 }
 
+int findbase(const int* const first, const int* const last, int c, int value)
+{
+    for (const int* p = first; p != last; ++p) {
+        if (p[c] == value) {
+            return static_cast<int>(p - first);
+        }
+    }
+    return -1;
+}
+
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
 {
-    // auto& base = dt->base;
-    // auto& chck = dt->chck;
+#if 0
+                     dt->chck[0] = 0;
+    dt->base[0] = 0; dt->chck[1] = 0;
+    dt->base[1] = 1; dt->chck[2] = 1;
+    dt->base[2] = 2;
+    dt->term[2] = true;
+#endif
 
-    // int s = 0;
-    // for (const char* p = word; *p != '\0'; ++p) {
-    //     const char ch  = *p;
-    //     const int  c   = iconv(ch) + 1;
-    //     const int  t   = getbase2(dt, s) + c;
-    //     const int  chk = getchck2(dt, t);
-    //     if (chk != s) {
-    //         assert(AsIdx(t) < chk.size()); // TODO: handle resizing
 
-    //         int installed[26];
-    //         int n_installed = 0;
-    //         for (int c2 = 1; c2 <= 27; ++c2) {
-    //             if (getchck2(dt, getbase2(dt, s) + c2) == s) {
-    //                 installed[n_installed++] = c2;
-    //             }
-    //         }
+    auto& chck = dt->chck;
+    int s = 0;
+    for (const char* p = word; *p != '\0'; ++p) {
+        const char ch  = *p;
+        const int  c   = iconv(ch) + 1;
+        const int  t   = getbase2(dt, s) + c;
+        const int  chk = getchck2(dt, t);
 
-    //         if (n_installed > 0) {
-    //             assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
-    //             setchck2(dt, t, s);
-    //             s = t;
-    //         } else {
-    //             int new_base = -1;
-    //             for (std::size_t i = 0; i < (chck.size() - c); ++i) {
-    //                 if (chck[i+c] == UNSET_CHCK) {
-    //                     new_base = i;
-    //                     break;
-    //                 }
-    //             }
-    //             assert(new_base != -1); // TODO: implement resizing
-    //             setbase2(dt, s, new_base, false);
-    //             setchck2(dt, new_base + c, s);
-    //             s = new_base + c;
-    //         }
-    //     } else {
-    //         s = t;
-    //     }
-    // }
+        if (chk != s) {
+            assert(AsIdx(t) < chck.size()); // TODO: handle resizing
+
+            [[maybe_unused]] int installed[26];
+            int n_installed = 0;
+            for (int c2 = 1; c2 <= 27; ++c2) {
+                if (getchck2(dt, getbase2(dt, s) + c2) == s) {
+                    installed[n_installed++] = c2;
+                }
+            }
+
+            if (n_installed > 0) {
+                assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
+                setchck2(dt, t, s);
+                s = t;
+            } else {
+                const std::size_t chck_end = chck.size() - AsIdx(c);
+                const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
+                assert(new_base != -1); // TODO: implement resizing
+                setbase2(dt, s, new_base, false);
+                setchck2(dt, new_base + c, s);
+                s = new_base + c;
+            }
+        } else {
+            s = t;
+        }
+    }
     return true;
 }
 
