@@ -11,6 +11,16 @@
 // #include <map>
 #include <fstream>
 
+#if 0
+#define Datrie Datrie3
+#define build  build3
+#define walk   walk3
+#else
+#define Datrie Datrie2
+#define build  build2
+#define walk   walk2
+#endif
+
 
 // TODO: make table based
 int iconv(char c) {
@@ -32,7 +42,7 @@ struct Trie
     struct Node {
         int  parent = 0;
         int  base = 0;
-        int  value;
+        char  value;
         int  links[26];
         bool term;
     };
@@ -48,7 +58,7 @@ void trie_init(Trie* t)
     memset(&t->symcnts[0], 0, sizeof(t->symcnts));
     t->nodes.emplace_back();
     auto* node = &t->nodes.back();
-    node->value   = 0;
+    node->value   = ' ';
     node->term    = false;
     node->parent  = 0;
     node->base    = 0;
@@ -70,7 +80,7 @@ void trie_insert(Trie* t, const char* const word)
             nodes.emplace_back();
             auto* new_node = &nodes.back();
             new_node->base    = -1; // sentinel
-            new_node->value   = c;
+            new_node->value   = *ch;
             new_node->term    = false;
             new_node->parent  = i;
             std::fill(std::begin(new_node->links), std::end(new_node->links), 0);
@@ -108,8 +118,8 @@ struct Datrie2
     using Array = std::vector<int>;
     Array base;
     Array chck;
-    // TEMP
-    Array term;
+    Array term;              // TEMP
+    std::vector<char> vals;  // TEMP
 };
 
 int getbase2(const Datrie2* t, int s)
@@ -312,6 +322,15 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     _build3(t3, trie, 0);
 }
 
+void printcs(const int* cs, const int* cs_end)
+{
+    printf("[ ");
+    for (; cs != cs_end; ++cs) {
+        printf("%c ", (char)(*cs - 1 + 'A'));
+    }
+    printf("]");
+}
+
 void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
 {
     auto& base = t2->base;
@@ -346,7 +365,12 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
     const int s = nodes[node->parent].base + my_c;
     assert(0 <= s && s < base.size());
     setbase2(t2, s, next_base_idx, node->term);
+    t2->vals[s] = node->value;
     node->base = next_base_idx;
+    printf("assign2: c=%c parent=%c my_c=%d s=%d next_base=%d children=",
+            node->value, nodes[node->parent].value, my_c, s, next_base_idx);
+    printcs(&cs[0], &cs[n_cs]);
+    printf("\n");
     for (int i = 0; i < n_cs; ++i) {
         const int c = cs[i];
         const int t = next_base_idx + c;
@@ -374,8 +398,9 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
 {
     t2->base = Datrie3::Array(n_symbols * n_states, -1);
     t2->chck = Datrie3::Array(n_symbols * n_states, -1);
-    // TEMP TEMP
-    t2->term = Datrie3::Array(n_symbols * n_states, -1);
+    t2->term = Datrie3::Array(n_symbols * n_states, -1);  // TEMP TEMP
+    t2->vals = std::vector<char>(n_symbols * n_states, ' '); // TEMP TEMP
+    t2->base[0] = 0;
     _build2(t2, trie, 0);
 }
 
@@ -418,16 +443,6 @@ std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
     }
     return trie;
 }
-
-#if 1
-#define Datrie Datrie3
-#define build  build3
-#define walk   walk3
-#else
-#define Datrie Datrie2
-#define build  build2
-#define walk   walk2
-#endif
 
 void test_dict(const char* const path)
 {
@@ -514,18 +529,25 @@ int main(int argc, char** argv)
         "HEAT",
         "HEAL",
         "HEAP",
-        "HEM",
-        "HA",
-        "HAT",
-        "HATE",
-        "HAPPY",
-        "HI",
-        "HIM",
-        "HIP",
-        "HIPPY",
-        "HIT",
+        // "HEM",
+        // "HA",
+        // "HAT",
+        // "HATE",
+        // "HAPPY",
+        // "HI",
+        // "HIM",
+        // "HIP",
+        // "HIPPY",
+        // "HIT",
+        // "APPLE",
     };
     // clang-format on
+
+    printf("--- WORDS ---\n");
+    for (const auto& word : words) {
+        printf("\t%s\n", word.c_str());
+    }
+    printf("--- END WORDS ---\n\n");
 
     Trie t;
     trie_init(&t);
@@ -549,6 +571,8 @@ int main(int argc, char** argv)
 
     // clang-format off
     const std::vector<std::string> missing = {
+        "AH",
+        "AAH",
         "HELLO",
         "HEE",
         "HITE",
@@ -559,7 +583,7 @@ int main(int argc, char** argv)
     };
     // clang-format on
 
-#if 1
+#if 0
     { // Trie verification
         printf("trie verfication starting...\n");
 
@@ -588,24 +612,27 @@ int main(int argc, char** argv)
     { // Datrie3 verification
         printf("datrie3 verfication starting...\n");
 
-        int failures = 0;
+        int tests = 0;
+        int fails = 0;
         for (const auto& word : words) {
+            tests++;
             if (!walk(&dt, word.c_str())) {
-                failures++;
+                fails++;
                 printf("Failure: failed to find '%s'\n", word.c_str());
             }
         }
         for (const auto& word : missing) {
+            tests++;
             if (walk(&dt, word.c_str())) {
-                failures++;
+                fails++;
                 printf("Failure: incorrectly found '%s'\n", word.c_str());
             }
         }
 
-        if (failures == 0) {
-            printf("trie verfication: passed.\n");
+        if (fails == 0) {
+            printf("trie verfication: passed %d tests.\n", tests);
         } else {
-            printf("trie verfication: failed. %d failures\n", failures);
+            printf("trie verfication: failed. %d fails out of %d tests\n", fails, tests);
         }
     }
 #endif
