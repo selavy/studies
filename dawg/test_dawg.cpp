@@ -115,6 +115,7 @@ bool trie_isword(const Trie* t, const std::string& word) { return trie_isword(t,
 
 struct Datrie2
 {
+    constexpr static int UnsetBase = 1 << 30;
     using Array = std::vector<int>;
     Array base;
     Array chck;
@@ -239,10 +240,10 @@ int mksymcodes(const int freqs[26], int out[26])
     return n_symbols;
 }
 
-bool all_entries_fit(const int* first, const int* last, const int* vs)
+bool all_entries_fit(const int* first, const int* last, const int* vs, int val)
 {
     for (auto* c = first; c != last; ++c) {
-        if (vs[*c] != -1) {
+        if (vs[*c] != val) {
             return false;
         }
     }
@@ -272,7 +273,7 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
     int next_base_idx = -1;
     int maxc = cs[n_cs - 1];
     for (int i = 0, N = next.size() - maxc; i < N; ++i) {
-        if (all_entries_fit(&cs[0], &cs[n_cs], &next[i])) {
+        if (all_entries_fit(&cs[0], &cs[n_cs], &next[i], -1)) {
             next_base_idx = i;
             break;
         }
@@ -339,7 +340,7 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
     int next_base_idx = -1;
     int maxc = cs[n_cs - 1];
     for (int i = 0, N = base.size() - maxc; i < N; ++i) {
-        if (all_entries_fit(&cs[0], &cs[n_cs], &base[i])) {
+        if (all_entries_fit(&cs[0], &cs[n_cs], &base[i], Datrie2::UnsetBase)) {
             next_base_idx = i;
             break;
         }
@@ -361,7 +362,7 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
         assert(0 <= t && t < chck.size());
         assert(chck[t] == -1);
         chck[t] = s;
-        base[t] = 0; // assign to something so all_entris_fit works
+        setbase2(t2, t, t, true);
     }
 }
 
@@ -381,9 +382,9 @@ void _build2(Datrie2* t2, Trie* trie, int n)
 
 void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
 {
-    t2->base = Datrie3::Array(n_symbols * n_states, -1);
+    t2->base = Datrie3::Array(n_symbols * n_states, Datrie2::UnsetBase);
     t2->chck = Datrie3::Array(n_symbols * n_states, -1);
-    t2->term = Datrie3::Array(n_symbols * n_states, -1);  // TEMP TEMP
+    t2->term = Datrie3::Array(n_symbols * n_states, 0);  // TEMP TEMP
     t2->base[0] = 0;
     _build2(t2, trie, 0);
 
@@ -445,7 +446,7 @@ std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
 
 void test_dict(const char* const path)
 {
-    auto maybe_trie = load_dictionary(path, 1000);
+    auto maybe_trie = load_dictionary(path, 100000);
     if (!maybe_trie) {
         fprintf(stderr, "unable to load dictionary from %s\n", path);
         return;
