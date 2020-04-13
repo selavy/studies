@@ -11,6 +11,7 @@ struct Datrie2
 {
     std::vector<int> base;
     std::vector<int> chck;
+    std::vector<int> term; // TEMP TEMP
 };
 
 bool init2(Datrie2* t);
