@@ -233,6 +233,10 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
         cs[n_cs++] = i + 1;
     }
 
+    if (n_cs == 0) {
+        return;
+    }
+
     auto all_next_entries_fit = [](const int* first, const int* last, const int* next)
     {
         for (auto* c = first; c != last; ++c) {
@@ -244,15 +248,13 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
     };
 
     int next_base_idx = -1;
-    for (int i = 0; i < next.size(); ++i) {
+    for (int i = 0, N = next.size() - cs[n_cs-1]; i < N; ++i) {
         if (all_next_entries_fit(&cs[0], &cs[n_cs], &next[i])) {
             next_base_idx = i;
             break;
         }
     }
-    if (next_base_idx == -1) {
-        assert(0 && "unable to find location for next entries");
-    }
+    assert(next_base_idx != -1);
 
     const int s = n;
     assert(0 <= s && s < base.size());
@@ -335,9 +337,19 @@ void test_dict(const char* const path)
         fprintf(stderr, "unable to load dictionary from %s\n", path);
         return;
     }
-    printf("Loading dictionary\n");
     auto& trie = *maybe_trie;
-    printf("# states = %zu\n", trie.nodes.size());
+    printf("Loading dictionary\n");
+
+    int codes[26];
+    const int n_symbols = mksymcodes(trie.symcnts, codes);
+    const int n_states  = static_cast<int>(trie.nodes.size());
+    printf("# symbols = %d\n", n_symbols);
+    printf("# states  = %d\n", n_states);
+
+    printf("Building Tripple array...\n");
+    Datrie3 t3;
+    build3(&t3, &trie, n_symbols, n_states);
+    printf("Finished!\n");
 }
 
 int main(int argc, char** argv)
