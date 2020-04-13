@@ -218,6 +218,16 @@ int mksymcodes(const int freqs[26], int out[26])
     return n_symbols;
 }
 
+bool all_entries_fit(const int* first, const int* last, const int* vs)
+{
+    for (auto* c = first; c != last; ++c) {
+        if (vs[*c] != -1) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
 {
     auto& base = t3->base;
@@ -238,19 +248,10 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
         return;
     }
 
-    auto all_next_entries_fit = [](const int* first, const int* last, const int* next)
-    {
-        for (auto* c = first; c != last; ++c) {
-            if (next[*c] != -1) {
-                return false;
-            }
-        }
-        return true;
-    };
-
     int next_base_idx = -1;
-    for (int i = 0, N = next.size() - cs[n_cs-1]; i < N; ++i) {
-        if (all_next_entries_fit(&cs[0], &cs[n_cs], &next[i])) {
+    int maxc = cs[n_cs - 1];
+    for (int i = 0, N = next.size() - maxc; i < N; ++i) {
+        if (all_entries_fit(&cs[0], &cs[n_cs], &next[i])) {
             next_base_idx = i;
             break;
         }
@@ -293,6 +294,69 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     t3->next = Datrie3::Array(n_symbols * n_states, -1);
     t3->chck = Datrie3::Array(n_symbols * n_states, -1);
     _build3(t3, trie, 0);
+}
+
+void _assign2(Datrie2* t2, int n, const Trie::Node* nodes)
+{
+    auto& base = t2->base;
+    auto& chck = t2->chck;
+    auto* node = &nodes[n];
+
+    int cs[26];
+    int n_cs = 0;
+    for (int i = 0; i < 26; ++i) {
+        if (node->links[i] == 0) {
+            continue;
+        }
+        cs[n_cs++] = i + 1;
+    }
+
+    if (n_cs == 0) {
+        return;
+    }
+
+    int next_base_idx = -1;
+    int maxc = cs[n_cs - 1];
+    for (int i = 0, N = base.size() - maxc; i < N; ++i) {
+        if (all_entries_fit(&cs[0], &cs[n_cs], &base[i])) {
+            next_base_idx = i;
+            break;
+        }
+    }
+    assert(next_base_idx != -1);
+
+    const int s = n;
+    assert(0 <= s && s < base.size());
+    setbase2(t2, s, next_base_idx, node->term);
+    for (int i = 0; i < n_cs; ++i) {
+        const int c = cs[i];
+        const int t = next_base_idx + c;
+        const int link = node->links[c-1];
+        assert(0 <= t && t < chck.size());
+        assert(chck[t] == -1);
+        chck[t] = s;
+    }
+}
+
+void _build2(Datrie2* t2, const Trie* trie, int n)
+{
+    auto* nodes = &trie->nodes[0];
+    auto* node  = &nodes[n];
+    auto* links = &node->links[0];
+    _assign2(t2, n, nodes);
+    for (int i = 0; i < 26; ++i) {
+        if (links[i] == 0) {
+            continue;
+        }
+        _build2(t2, trie, links[i]);
+    }
+}
+
+void build2(Datrie2* t2, const Trie* trie, int n_symbols, int n_states)
+{
+    t2->base = Datrie3::Array(n_symbols * n_states, -1);
+    t2->chck = Datrie3::Array(n_symbols * n_states, -1);
+    _build2(t2, trie, 0);
 }
 
 std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
@@ -352,8 +416,15 @@ void test_dict(const char* const path)
     printf("# states  = %d\n", n_states);
 
     printf("Building Tripple array...\n");
+
+#define USE_3 0
+#if USE_3
     Datrie3 t3;
     build3(&t3, &trie, n_symbols, n_states);
+#else
+    Datrie2 t2;
+    build2(&t2, &trie, n_symbols, n_states);
+#endif
     printf("Finished!\n");
 
     // clang-format off
@@ -371,9 +442,16 @@ void test_dict(const char* const path)
 
     int fails = 0;
     for (const auto& word : words) {
-        if (!walk3(&t3, word)) {
+#if USE_3
+        bool found = walk3(&t3, word);
+#else
+        bool found = walk2(&t2, word);
+#endif
+        if (!found) {
             ++fails;
             printf("Failed to find: '%s'\n", word.c_str());
+        } else {
+            printf("Success! found %s\n", word.c_str());
         }
     }
 
@@ -388,7 +466,12 @@ void test_dict(const char* const path)
     // clang-format on
 
     for (const auto& word : missing) {
-        if (walk3(&t3, word)) {
+#if USE_3
+        bool found = walk3(&t3, word);
+#else
+        bool found = walk2(&t2, word);
+#endif
+        if (found) {
             ++fails;
             printf("Failed to NOT find: '%s'\n", word.c_str());
         }
