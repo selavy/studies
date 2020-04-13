@@ -117,6 +117,7 @@ struct Datrie2
 {
     constexpr static int UnsetBase = 1 << 30;
     using Array = std::vector<int>;
+
     Array base;
     Array chck;
 };
@@ -389,10 +390,10 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
         }
     }
     std::size_t i = t2->base.size();
-    while (t2->base[i] == -1) {
+    while (t2->base[i] == Datrie2::UnsetBase) {
         --i;
     }
-    assert(t2->base[i]] != -1);
+    assert(t2->base[i]] != Datrie2::UnsetBase);
     printf("Initialize size: %zu\n", t2->base.size());
     printf("New        size: %zu\n", i);
     printf("Full       size: %zu\n", full);
@@ -440,7 +441,7 @@ std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
 
 void test_dict(const char* const path)
 {
-    auto maybe_trie = load_dictionary(path, 100000);
+    auto maybe_trie = load_dictionary(path, 10000);
     if (!maybe_trie) {
         fprintf(stderr, "unable to load dictionary from %s\n", path);
         return;
