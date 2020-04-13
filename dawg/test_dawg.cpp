@@ -156,11 +156,9 @@ bool walk2(const Datrie2* trie, const char* const word)
     int s = 0;
     for (const char* ch = word; *ch != '\0'; ++ch) {
         const int c = iconv(*ch) + 1;
+        const int t = getbase2(trie, s) + c;
         assert(1 <= c && c < 27);
-        const int t   = getbase2(trie, s) + c;
-        const int chk = getchck2(trie, t);
-        // if (getchck2(trie, t) != s) {
-        if (chk != s) {
+        if (getchck2(trie, t) != s) {
             return false;
         }
         assert(0 <= t && t < next.size());
@@ -388,6 +386,21 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
     t2->term = Datrie3::Array(n_symbols * n_states, -1);  // TEMP TEMP
     t2->base[0] = 0;
     _build2(t2, trie, 0);
+
+    std::size_t full = 0;
+    for (std::size_t i = 0; i < t2->base.size(); ++i) {
+        if (t2->base[i] != -1) {
+            ++full;
+        }
+    }
+    std::size_t i = t2->base.size();
+    while (t2->base[i] == -1) {
+        --i;
+    }
+    assert(t2->base[i]] != -1);
+    printf("Initialize size: %zu\n", t2->base.size());
+    printf("New        size: %zu\n", i);
+    printf("Full       size: %zu\n", full);
 }
 
 std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
