@@ -6,7 +6,9 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <optional>
 // #include <map>
+#include <fstream>
 
 
 // TODO: make table based
@@ -94,6 +96,57 @@ bool trie_isword(const Trie* t, const char* const word)
 
 bool trie_isword(const Trie* t, const std::string& word) { return trie_isword(t, word.c_str()); }
 
+struct Datrie2
+{
+    using Array = std::vector<int>;
+    Array base;
+    Array chck;
+};
+
+int getbase2(const Datrie2* t, int s)
+{
+    assert(s >= 0);
+    return s < t->base.size() ? t->base[s] & ~(1u << 31) : 0;
+}
+
+int getchck2(const Datrie2* t, int s)
+{
+    assert(s >= 0);
+    return s < t->chck.size() ? t->chck[s] : 0;
+}
+
+bool getterm2(const Datrie2* t, int s)
+{
+    assert(s >= 0);
+    return s < t->base.size() ? (t->base[s] >> 31) != 0 : false;
+}
+
+void setbase2(Datrie2* t, int s, int base, bool term)
+{
+    assert(0 <= s && s < t->base.size());
+    t->base[s] = base | ((term ? 1 : 0) << 31);
+}
+
+bool walk2(const Datrie2* trie, const char* const word)
+{
+    auto& base = trie->base;
+    auto& chck = trie->chck;
+    int s = 0;
+    for (const char* ch = word; *ch != '\0'; ++ch) {
+        const int c = iconv(*ch) + 1;
+        assert(1 <= c && c < 27);
+        int t = getbase2(trie, s) + c;
+        if (getchck2(trie, t) != s) {
+            return false;
+        }
+        assert(0 <= t && t < next.size());
+        s = t;
+    }
+    return getterm2(trie, s);
+}
+
+bool walk2(const Datrie2* t, const std::string& word) { return walk2(t, word.c_str()); }
+
 struct Datrie3
 {
     using Array = std::vector<int>;
@@ -180,13 +233,10 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
         cs[n_cs++] = i + 1;
     }
 
-    auto all_next_entries_fit = [](int index, const int* first, const int* last, const int* next, int next_size)
+    auto all_next_entries_fit = [](const int* first, const int* last, const int* next)
     {
         for (auto* c = first; c != last; ++c) {
-            if (index + *c >= next_size) {
-                return false;
-            }
-            if (next[index + *c] != -1) {
+            if (next[*c] != -1) {
                 return false;
             }
         }
@@ -195,7 +245,7 @@ void _assign3(Datrie3* t3, int n, const Trie::Node* nodes)
 
     int next_base_idx = -1;
     for (int i = 0; i < next.size(); ++i) {
-        if (all_next_entries_fit(i, &cs[0], &cs[n_cs], &next[0], next.size())) {
+        if (all_next_entries_fit(&cs[0], &cs[n_cs], &next[i])) {
             next_base_idx = i;
             break;
         }
@@ -242,8 +292,61 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     _build3(t3, trie, 0);
 }
 
+std::optional<Trie> load_dictionary(std::string path) {
+    Trie trie;
+    trie_init(&trie);
+    std::string word;
+    std::ifstream ifs{path};
+    if (!ifs) {
+        std::cerr << "error: unable to open input file\n";
+        return std::nullopt;
+    }
+    while (ifs >> word) {
+        if (word.empty()) {
+            continue;
+        }
+        if (word.size() < 2 || word.size() > 15) {
+            std::cerr << "warning: skipping invalid word: \"" << word << "\"\n";
+        }
+        bool valid_word = true;
+        for (std::size_t i = 0; i < word.size(); ++i) {
+            char c = word[i];
+            if ('a' <= c && c <= 'z') {
+                word[i] = (c - 'a') + 'A';
+            } else if ('A' <= c && c <= 'Z') {
+                word[i] = c;
+            } else {
+                std::cerr << "warning: invalid character '" << c << "' in word \"" << word << "\"\n";
+                valid_word = false;
+                break;
+            }
+        }
+        if (valid_word) {
+            trie_insert(&trie, word);
+        }
+    }
+    return trie;
+}
+
+void test_dict(const char* const path)
+{
+    auto maybe_trie = load_dictionary(path);
+    if (!maybe_trie) {
+        fprintf(stderr, "unable to load dictionary from %s\n", path);
+        return;
+    }
+    printf("Loading dictionary\n");
+    auto& trie = *maybe_trie;
+    printf("# states = %zu\n", trie.nodes.size());
+}
+
 int main(int argc, char** argv)
 {
+    if (argc > 1) {
+        test_dict(argv[1]);
+        return 0;
+    }
+
     // clang-format off
     const std::vector<std::string> words = {
         "HE",
