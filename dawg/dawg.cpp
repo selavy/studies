@@ -103,6 +103,27 @@ int findbase(const int* const first, const int* const last, int c, int value)
     return -1;
 }
 
+int baseworks(const int* const base, const int* const cs, const int* const csend, int value)
+{
+    for (const int* c = cs; cs != csend; ++c) {
+        if (base[*c] != value) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// TODO: replace with free list
+int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend, int value)
+{
+    for (const int* chck = first; chck != last; ++chck) {
+        if (baseworks(chck, cs, csend, value)) {
+            return static_cast<int>(chck - first);
+        }
+    }
+    return -1;
+}
+
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
 {
 #if 0
@@ -114,6 +135,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 #endif
 
 
+    [[maybe_unused]] int childs[26];
     auto& chck = dt->chck;
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -124,17 +146,26 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
         if (chk != s) {
             assert(AsIdx(t) < chck.size()); // TODO: handle resizing
-            [[maybe_unused]] int installed[26];
-            int n_installed = 0;
+            // TODO: Can I mark the current branch as a child? Not sure if the logic will work
+            //       trying to move an uninstall node.
+            int n_childs = 0;
             for (int c2 = 1; c2 <= 27; ++c2) {
                 if (getchck2(dt, getbase2(dt, s) + c2) == s) {
-                    installed[n_installed++] = c2;
+                    childs[n_childs++] = c2;
                 }
             }
-            if (n_installed > 0) {
-                assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
-                setchck2(dt, t, s);
-                s = t;
+            if (n_childs > 0) {
+                if (getchck2(dt, t) == UNSET_CHCK) { // slot is available
+                    setchck2(dt, t, s);
+                    s = t;
+                } else {
+                    assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
+                    // assert(getchck2(dt, t) != UNSET_CHCK);
+                    // const std::size_t maxc = AsIdx(childs[n_childs - 1]);
+                    // const std::size_t last = chkc.size() - maxc;
+                    // int new_base = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], CHCK_UNSET);
+                    // assert(new_base >= 0);
+                }
             } else {
                 const std::size_t chck_end = chck.size() - AsIdx(c);
                 const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
