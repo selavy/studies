@@ -116,7 +116,6 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
         if (chk != s) {
             assert(AsIdx(t) < chck.size()); // TODO: handle resizing
-
             [[maybe_unused]] int installed[26];
             int n_installed = 0;
             for (int c2 = 1; c2 <= 27; ++c2) {
@@ -124,7 +123,6 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     installed[n_installed++] = c2;
                 }
             }
-
             if (n_installed > 0) {
                 assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
                 setchck2(dt, t, s);

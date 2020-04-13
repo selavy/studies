@@ -119,7 +119,6 @@ TEST_CASE("Datrie2")
 
         bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
-
         bool found = isword2(&dt, word.c_str());
         CHECK(found == true);
     }
@@ -130,7 +129,16 @@ TEST_CASE("Datrie2")
 
         bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
+        bool found = isword2(&dt, word.c_str());
+        CHECK(found == true);
+    }
 
+    {
+        const auto& word = DICT[1];
+        INFO("Inserting word: " << word);
+
+        bool ok = insert2(&dt, word.c_str());
+        REQUIRE(ok == true);
         bool found = isword2(&dt, word.c_str());
         CHECK(found == true);
     }
