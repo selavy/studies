@@ -30,6 +30,8 @@ int iconv(char c) {
 struct Trie
 {
     struct Node {
+        int  parent = 0;
+        int  base = 0;
         int  value;
         int  links[26];
         bool term;
@@ -48,6 +50,8 @@ void trie_init(Trie* t)
     auto* node = &t->nodes.back();
     node->value   = 0;
     node->term    = false;
+    node->parent  = 0;
+    node->base    = 0;
     std::fill(std::begin(node->links), std::end(node->links), 0);
 }
 
@@ -65,8 +69,10 @@ void trie_insert(Trie* t, const char* const word)
             int next = static_cast<int>(nodes.size());
             nodes.emplace_back();
             auto* new_node = &nodes.back();
+            new_node->base    = -1; // sentinel
             new_node->value   = c;
             new_node->term    = false;
+            new_node->parent  = i;
             std::fill(std::begin(new_node->links), std::end(new_node->links), 0);
             node = &nodes[i]; // emplace could move the node
             node->links[c]  = next;
@@ -102,42 +108,52 @@ struct Datrie2
     using Array = std::vector<int>;
     Array base;
     Array chck;
+    // TEMP
+    Array term;
 };
 
 int getbase2(const Datrie2* t, int s)
 {
     assert(s >= 0);
-    return s < t->base.size() ? t->base[s] & ~(1u << 31) : 0;
+    // return s < t->base.size() ? t->base[s] & ~(1u << 31) : 0;
+    return s < t->base.size() ? t->base[s] : INT_MIN;
 }
 
 int getchck2(const Datrie2* t, int s)
 {
     assert(s >= 0);
-    return s < t->chck.size() ? t->chck[s] : 0;
+    return s < t->chck.size() ? t->chck[s] : INT_MIN;
 }
 
 bool getterm2(const Datrie2* t, int s)
 {
     assert(s >= 0);
-    return s < t->base.size() ? (t->base[s] >> 31) != 0 : false;
+    // return s < t->base.size() ? (t->base[s] >> 31) != 0 : false;
+    return s < t->term.size() ? t->term[s] : false;
 }
 
 void setbase2(Datrie2* t, int s, int base, bool term)
 {
     assert(0 <= s && s < t->base.size());
-    t->base[s] = base | ((term ? 1 : 0) << 31);
+    // t->base[s] = base | ((term ? 1 : 0) << 31);
+    t->base[s] = base;
+    t->term[s] = term;
 }
 
 bool walk2(const Datrie2* trie, const char* const word)
 {
+    printf("walk2: %s\n", word);
     auto& base = trie->base;
     auto& chck = trie->chck;
     int s = 0;
     for (const char* ch = word; *ch != '\0'; ++ch) {
         const int c = iconv(*ch) + 1;
         assert(1 <= c && c < 27);
-        int t = getbase2(trie, s) + c;
-        if (getchck2(trie, t) != s) {
+        const int t   = getbase2(trie, s) + c;
+        const int chk = getchck2(trie, t);
+        printf("\t'%c' s=%d base[s]=%d c=%d t=%d chck[t]=%d\n", *ch, s, getbase2(trie, s), c, t, getchck2(trie, t));
+        // if (getchck2(trie, t) != s) {
+        if (chk != s) {
             return false;
         }
         assert(0 <= t && t < next.size());
@@ -296,21 +312,21 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     _build3(t3, trie, 0);
 }
 
-void _assign2(Datrie2* t2, int n, const Trie::Node* nodes)
+void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
 {
     auto& base = t2->base;
     auto& chck = t2->chck;
     auto* node = &nodes[n];
+    auto* links = &node->links[0];
 
     int cs[26];
     int n_cs = 0;
     for (int i = 0; i < 26; ++i) {
-        if (node->links[i] == 0) {
+        if (links[i] == 0) {
             continue;
         }
         cs[n_cs++] = i + 1;
     }
-
     if (n_cs == 0) {
         return;
     }
@@ -325,20 +341,22 @@ void _assign2(Datrie2* t2, int n, const Trie::Node* nodes)
     }
     assert(next_base_idx != -1);
 
-    const int s = n;
+    const int my_c = iconv(node->value) + 1;
+    assert(nodes[node->parent].base >= 0);
+    const int s = nodes[node->parent].base + my_c;
     assert(0 <= s && s < base.size());
     setbase2(t2, s, next_base_idx, node->term);
+    node->base = next_base_idx;
     for (int i = 0; i < n_cs; ++i) {
         const int c = cs[i];
         const int t = next_base_idx + c;
-        const int link = node->links[c-1];
         assert(0 <= t && t < chck.size());
         assert(chck[t] == -1);
         chck[t] = s;
     }
 }
 
-void _build2(Datrie2* t2, const Trie* trie, int n)
+void _build2(Datrie2* t2, Trie* trie, int n)
 {
     auto* nodes = &trie->nodes[0];
     auto* node  = &nodes[n];
@@ -352,10 +370,12 @@ void _build2(Datrie2* t2, const Trie* trie, int n)
     }
 }
 
-void build2(Datrie2* t2, const Trie* trie, int n_symbols, int n_states)
+void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
 {
     t2->base = Datrie3::Array(n_symbols * n_states, -1);
     t2->chck = Datrie3::Array(n_symbols * n_states, -1);
+    // TEMP TEMP
+    t2->term = Datrie3::Array(n_symbols * n_states, -1);
     _build2(t2, trie, 0);
 }
 
@@ -399,6 +419,16 @@ std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
     return trie;
 }
 
+#if 1
+#define Datrie Datrie3
+#define build  build3
+#define walk   walk3
+#else
+#define Datrie Datrie2
+#define build  build2
+#define walk   walk2
+#endif
+
 void test_dict(const char* const path)
 {
     auto maybe_trie = load_dictionary(path, 1000);
@@ -417,14 +447,8 @@ void test_dict(const char* const path)
 
     printf("Building Tripple array...\n");
 
-#define USE_3 0
-#if USE_3
-    Datrie3 t3;
-    build3(&t3, &trie, n_symbols, n_states);
-#else
-    Datrie2 t2;
-    build2(&t2, &trie, n_symbols, n_states);
-#endif
+    Datrie dt;
+    build(&dt, &trie, n_symbols, n_states);
     printf("Finished!\n");
 
     // clang-format off
@@ -442,11 +466,7 @@ void test_dict(const char* const path)
 
     int fails = 0;
     for (const auto& word : words) {
-#if USE_3
-        bool found = walk3(&t3, word);
-#else
-        bool found = walk2(&t2, word);
-#endif
+        bool found = walk(&dt, word);
         if (!found) {
             ++fails;
             printf("Failed to find: '%s'\n", word.c_str());
@@ -466,11 +486,7 @@ void test_dict(const char* const path)
     // clang-format on
 
     for (const auto& word : missing) {
-#if USE_3
-        bool found = walk3(&t3, word);
-#else
-        bool found = walk2(&t2, word);
-#endif
+        bool found = walk(&dt, word);
         if (found) {
             ++fails;
             printf("Failed to NOT find: '%s'\n", word.c_str());
@@ -523,8 +539,9 @@ int main(int argc, char** argv)
     printf("# symbols = %d\n", n_symbols);
     printf("# states  = %d\n", n_states);
 
-    Datrie3 t3;
-    build3(&t3, &t, n_symbols, n_states);
+
+    Datrie dt;
+    build(&dt, &t, n_symbols, n_states);
 
     // ------------------------------------------------------------------------
     // verification
@@ -573,13 +590,13 @@ int main(int argc, char** argv)
 
         int failures = 0;
         for (const auto& word : words) {
-            if (!walk3(&t3, word.c_str())) {
+            if (!walk(&dt, word.c_str())) {
                 failures++;
                 printf("Failure: failed to find '%s'\n", word.c_str());
             }
         }
         for (const auto& word : missing) {
-            if (walk3(&t3, word.c_str())) {
+            if (walk(&dt, word.c_str())) {
                 failures++;
                 printf("Failure: incorrectly found '%s'\n", word.c_str());
             }
