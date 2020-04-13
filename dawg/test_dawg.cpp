@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cassert>
 #include <cstdint>
+#include <climits>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -294,11 +295,12 @@ void build3(Datrie3* t3, const Trie* trie, int n_symbols, int n_states)
     _build3(t3, trie, 0);
 }
 
-std::optional<Trie> load_dictionary(std::string path) {
+std::optional<Trie> load_dictionary(std::string path, int max_entries=INT_MAX) {
     Trie trie;
     trie_init(&trie);
     std::string word;
     std::ifstream ifs{path};
+    int nwords = 0;
     if (!ifs) {
         std::cerr << "error: unable to open input file\n";
         return std::nullopt;
@@ -325,6 +327,9 @@ std::optional<Trie> load_dictionary(std::string path) {
         }
         if (valid_word) {
             trie_insert(&trie, word);
+            if (++nwords == max_entries) {
+                break;
+            }
         }
     }
     return trie;
@@ -332,7 +337,7 @@ std::optional<Trie> load_dictionary(std::string path) {
 
 void test_dict(const char* const path)
 {
-    auto maybe_trie = load_dictionary(path);
+    auto maybe_trie = load_dictionary(path, 1000);
     if (!maybe_trie) {
         fprintf(stderr, "unable to load dictionary from %s\n", path);
         return;
@@ -350,6 +355,51 @@ void test_dict(const char* const path)
     Datrie3 t3;
     build3(&t3, &trie, n_symbols, n_states);
     printf("Finished!\n");
+
+    // clang-format off
+    std::vector<std::string> words = {
+        "AA",
+        "AAHS",
+        "AAL",
+        "AALII",
+        "AALIIS",
+        "AALS",
+        "AARDVARK",
+        "ABASIA",
+    };
+    // clang-format on
+
+    int fails = 0;
+    for (const auto& word : words) {
+        if (!walk3(&t3, word)) {
+            ++fails;
+            printf("Failed to find: '%s'\n", word.c_str());
+        }
+    }
+
+    // clang-format off
+    std::vector<std::string> missing = {
+        "MISSINX",
+        "AAX",
+        "ABAA",
+        "ZZZZZZ",
+        "ZAZA",
+    };
+    // clang-format on
+
+    for (const auto& word : missing) {
+        if (walk3(&t3, word)) {
+            ++fails;
+            printf("Failed to NOT find: '%s'\n", word.c_str());
+        }
+    }
+
+    if (fails == 0) {
+        printf("Passed.\n");
+    } else{
+        printf("Failed: %d\n", fails);
+    }
+
 }
 
 int main(int argc, char** argv)
