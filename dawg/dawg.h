@@ -4,7 +4,8 @@
 
 struct Letters
 {
-    bool ischild[26];
+    int children[26];
+    int n_children;
 };
 
 struct Datrie2

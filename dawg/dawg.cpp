@@ -149,7 +149,7 @@ bool isword2(Datrie2* dt, const char* const word)
 Letters childs2(Datrie2* dt, const char* const prefix)
 {
     Letters result;
-    std::fill(std::begin(result.ischild), std::end(result.ischild), false);
+    result.n_children = 0;
     int s = 0;
     for (const char* p = prefix; *p != '\0'; ++p) {
         const char ch = *p;
@@ -164,7 +164,7 @@ Letters childs2(Datrie2* dt, const char* const prefix)
         const int c = ch + 1;
         const int t = getbase2(dt, s) + c;
         if (getchck2(dt, t) == s) {
-            result.ischild[ch] = true;
+            result.children[result.n_children++] = ch;
         }
     }
     return result;
