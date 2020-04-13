@@ -65,6 +65,14 @@ int iconv(char c) {
     t->chck[s] = base;
 }
 
+[[maybe_unused]] static void setterm2(Datrie2* t, int index, bool term)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->chck.size());
+    t->term[s] = term;
+}
+
 bool init2([[maybe_unused]] Datrie2* t)
 {
     const std::size_t N = 10000; // TODO: fix me
@@ -131,6 +139,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 const std::size_t chck_end = chck.size() - AsIdx(c);
                 const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
                 assert(new_base != -1); // TODO: implement resizing
+                // assert(getterm2(dt, s) == false);
                 setbase2(dt, s, new_base, false);
                 setchck2(dt, new_base + c, s);
                 s = new_base + c;
@@ -139,6 +148,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
             s = t;
         }
     }
+    setterm2(dt, s, true);
     return true;
 }
 
