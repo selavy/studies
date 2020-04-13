@@ -119,7 +119,6 @@ struct Datrie2
     Array base;
     Array chck;
     Array term;              // TEMP
-    std::vector<char> vals;  // TEMP
 };
 
 int getbase2(const Datrie2* t, int s)
@@ -359,13 +358,15 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
         }
     }
     assert(next_base_idx != -1);
+    for (int i = 0; i < n_cs; ++i) {
+        assert(base[next_base_idx + cs[i]] == -1);
+    }
 
     const int my_c = iconv(node->value) + 1;
     assert(nodes[node->parent].base >= 0);
     const int s = nodes[node->parent].base + my_c;
     assert(0 <= s && s < base.size());
     setbase2(t2, s, next_base_idx, node->term);
-    t2->vals[s] = node->value;
     node->base = next_base_idx;
     printf("assign2: c=%c parent=%c my_c=%d s=%d next_base=%d children=",
             node->value, nodes[node->parent].value, my_c, s, next_base_idx);
@@ -377,6 +378,7 @@ void _assign2(Datrie2* t2, int n, Trie::Node* nodes)
         assert(0 <= t && t < chck.size());
         assert(chck[t] == -1);
         chck[t] = s;
+        base[t] = 0; // assign to something so all_entris_fit works
     }
 }
 
@@ -399,7 +401,6 @@ void build2(Datrie2* t2, Trie* trie, int n_symbols, int n_states)
     t2->base = Datrie3::Array(n_symbols * n_states, -1);
     t2->chck = Datrie3::Array(n_symbols * n_states, -1);
     t2->term = Datrie3::Array(n_symbols * n_states, -1);  // TEMP TEMP
-    t2->vals = std::vector<char>(n_symbols * n_states, ' '); // TEMP TEMP
     t2->base[0] = 0;
     _build2(t2, trie, 0);
 }
@@ -529,17 +530,21 @@ int main(int argc, char** argv)
         "HEAT",
         "HEAL",
         "HEAP",
-        // "HEM",
-        // "HA",
-        // "HAT",
-        // "HATE",
-        // "HAPPY",
-        // "HI",
-        // "HIM",
-        // "HIP",
-        // "HIPPY",
-        // "HIT",
-        // "APPLE",
+        "HEM",
+        "HA",
+        "HAT",
+        "HATE",
+        "HAPPY",
+        "HI",
+        "HIM",
+        "HIP",
+        "HIPPY",
+        "HIT",
+        "APP",
+        "APPLE",
+        "APPLES",
+        "GEORGE",
+        "PAGES",
     };
     // clang-format on
 
