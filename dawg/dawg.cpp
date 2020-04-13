@@ -131,7 +131,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
     return true;
 }
 
-bool isword2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
+bool isword2(Datrie2* dt, const char* const word)
 {
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -146,8 +146,26 @@ bool isword2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
     return getterm2(dt, s);
 }
 
-Letters childs2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const prefix)
+Letters childs2(Datrie2* dt, const char* const prefix)
 {
-    // TODO(peter): implement
-    return {};
+    Letters result;
+    std::fill(std::begin(result.ischild), std::end(result.ischild), false);
+    int s = 0;
+    for (const char* p = prefix; *p != '\0'; ++p) {
+        const char ch = *p;
+        const int  c  = iconv(ch) + 1;
+        const int  t  = getbase2(dt, s) + c;
+        if (getchck2(dt, t) != s) {
+            return result;
+        }
+        s = t;
+    }
+    for (int ch = 0; ch < 26; ++ch) {
+        const int c = ch + 1;
+        const int t = getbase2(dt, s) + c;
+        if (getchck2(dt, t) == s) {
+            result.ischild[ch] = true;
+        }
+    }
+    return result;
 }
