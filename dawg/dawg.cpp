@@ -146,12 +146,15 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
         if (chk != s) {
             assert(AsIdx(t) < chck.size()); // TODO: handle resizing
+
             // TODO: Can I mark the current branch as a child? Not sure if the logic will work
             //       trying to move an uninstall node.
             int n_childs = 0;
-            for (int c2 = 1; c2 <= 27; ++c2) {
-                if (getchck2(dt, getbase2(dt, s) + c2) == s) {
-                    childs[n_childs++] = c2;
+            if (getbase2(dt, s) != UNSET_BASE) {
+                for (int c2 = 1; c2 <= 27; ++c2) {
+                    if (getchck2(dt, getbase2(dt, s) + c2) == s) {
+                        childs[n_childs++] = c2;
+                    }
                 }
             }
             if (n_childs > 0) {
