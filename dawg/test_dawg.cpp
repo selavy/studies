@@ -123,8 +123,9 @@ TEST_CASE("Datrie2")
         CHECK(found == true);
     }
 
+    for (std::size_t i = 1; i < 5; ++i)
     {
-        const auto& word = DICT[1];
+        const auto& word = DICT[i];
         INFO("Inserting word: " << word);
 
         bool ok = insert2(&dt, word.c_str());
@@ -133,20 +134,19 @@ TEST_CASE("Datrie2")
         CHECK(found == true);
     }
 
-    {
-        const auto& word = DICT[1];
-        INFO("Inserting word: " << word);
+    // {
+    //     const auto& word = DICT[1];
+    //     INFO("Inserting word: " << word);
+    //     bool ok = insert2(&dt, word.c_str());
+    //     REQUIRE(ok == true);
+    //     bool found = isword2(&dt, word.c_str());
+    //     CHECK(found == true);
+    // }
 
-        bool ok = insert2(&dt, word.c_str());
-        REQUIRE(ok == true);
-        bool found = isword2(&dt, word.c_str());
-        CHECK(found == true);
-    }
-
+    for (std::size_t i = 0; i < 5; ++i)
     {
-        const auto& word = MISSING[1];
+        const auto& word = MISSING[i];
         INFO("Looking for missing word: " << word);
-
         bool found = isword2(&dt, word.c_str());
         CHECK(found == false);
     }
