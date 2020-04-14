@@ -175,7 +175,7 @@ TEST_CASE("Datrie2")
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
 
-        print_state(&dt);
+        // print_state(&dt);
 
 #if 1
         const auto found = isword2(&dt, word.c_str());
@@ -193,7 +193,7 @@ TEST_CASE("Datrie2")
 #endif
     }
 
-#if 0
+#if 1
     for (std::size_t i = 0; i < MISSING.size(); ++i)
     {
         const auto& word = MISSING[i];
