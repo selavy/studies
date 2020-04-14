@@ -11,3 +11,13 @@ target_link_libraries(test_dawg
         Catch
         # project_warnings
 )
+
+add_executable(makedawg
+    makedawg.cpp
+    )
+target_link_libraries(makedawg
+    PUBLIC
+        cxx_project_options
+        Dawg
+        project_warnings
+)

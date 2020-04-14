@@ -108,10 +108,10 @@ int iconv(char c) {
     t->term[s] = false;
 }
 
-bool init2([[maybe_unused]] Datrie2* t)
+bool init2(Datrie2* t)
 {
-    const std::size_t N = 1; // TODO: fix me
-    // const std::size_t N = 1000; // TODO: fix me
+    // const std::size_t N = 1; // TODO: fix me
+    const std::size_t N = 1000; // TODO: fix me
 
     t->base = std::vector<int>(N, 0);
     t->chck = std::vector<int>(N, 0);
@@ -187,7 +187,6 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
     auto check = [dt](int x) { return getchck2(dt, x); };
     for (int i = 0; i < n_childs; ++i) {
         assert(1 <= childs[i] && childs[i] <= 27);
-        [[maybe_unused]] const char ch = static_cast<char>((childs[i] - 1) + 'A'); // TEMP TEMP
         const int c = childs[i];
         const int t_old = base(s) + c;
         const int t_new = b + c;
@@ -202,20 +201,21 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
             }
         }
         clrchck2(dt, t_old);
-        clrbase2(dt, t_old); // TEMP TEMP: for debugging
-        clrterm2(dt, t_old); // TEMP TEMP: for debugging
+        clrbase2(dt, t_old);  // TODO(peter): remove -- just for debugging
+        clrterm2(dt, t_old);  // TODO(peter): remove -- just for debugging
     }
     setbase2(dt, s, b);
-    // clrterm2(dt, s); // TODO: needed?
 
     // DEBUG("Finished relocate state %d to base=%d", s, b);
 }
 
-bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
+// TODO(peter): revisit: could have insert2 return false (or switch to error code) if it
+//              is unable to locate a base and the end user has to do the resize, then
+//              add a "insertex2" that will do the resizing and re-call insert2 if needed.
+bool insert2(Datrie2* dt, const char* const word)
 {
     // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
-    [[maybe_unused]] auto base  = [dt](int x) { return getbase2(dt, x); };
-    [[maybe_unused]] auto check = [dt](int x) { return getchck2(dt, x); };
+    auto check = [dt](int x) { return getchck2(dt, x); };
 
     int childs[26];
     auto& chck = dt->chck;
@@ -247,7 +247,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
             dt->base.insert(dt->base.end(), need, UNSET_BASE);
             dt->term.insert(dt->term.end(), need, UNSET_TERM);
         }
-        assert(AsIdx(t) < chck.size()); // TODO: handle resizing
+        assert(0 <= t && AsIdx(t) < chck.size());
 
         // TODO: Can I mark the current branch as a child? Not sure if the logic will work
         //       trying to move an uninstall node.
@@ -275,7 +275,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     dt->base.insert(dt->base.end(), need, UNSET_BASE);
                     dt->term.insert(dt->term.end(), need, UNSET_TERM);
                 }
-                assert(0 <= b_new && AsIdx(b_new) < dt->chck.size()); // TODO: implement resizing
+                assert(0 <= b_new && AsIdx(b_new) < dt->chck.size());
 
                 --n_childs;
                 relocate2(dt, s, b_new, &childs[0], n_childs);
@@ -312,22 +312,16 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
 Tristate isword2(Datrie2* dt, const char* const word)
 {
-    // DEBUG("ENTER isword2: %s", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = getbase2(dt, s) + c;
-        // DEBUG("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=check[%d]=%d =?= %d", ch, c, s,
-        //         getbase2(dt, s), t, t, getchck2(dt, t), s);
         if (getchck2(dt, t) != s) {
-            // return false;
             return Tristate::eNoLink;
         }
         s = t;
     }
-    // DEBUG("\tgetterm2(dt, %d) = %d", s, getterm2(dt, s));
-    // DEBUG("EXIT  isword2: %s", word);
     return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 
