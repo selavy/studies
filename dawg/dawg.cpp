@@ -181,6 +181,7 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
     // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
     auto base  = [dt](int x) { return getbase2(dt, x); };
     auto check = [dt](int x) { return getchck2(dt, x); };
+    // int grandchilds[26];
     for (int i = 0; i < n_childs; ++i) {
         assert(1 <= childs[i] && childs[i] <= 27);
         [[maybe_unused]] const char ch = static_cast<char>((childs[i] - 1) + 'A'); // TEMP TEMP
@@ -190,6 +191,14 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
         assert(check(t_old) == s);
         setchck2(dt, t_new, s);
         setbase2(dt, t_new, base(t_old));
+        // // for simplicity using cntchilds
+        // const int n_grandchilds = cntchilds(dt, t_old, &grandchilds[0]);
+        // for (int j = 0; j < n_grandchilds; ++j) {
+        //     const int d = grandchilds[j];
+        //     setchck2(dt, base(t_old) + d, t_new);
+        // }
+
+        // update grand children
         for (int d = 1; d <= 27; ++d) {
             if (check(base(t_old) + d) == t_old) {
                 setchck2(dt, base(t_old) + d, t_new);
