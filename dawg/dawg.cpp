@@ -110,7 +110,8 @@ int iconv(char c) {
 
 bool init2([[maybe_unused]] Datrie2* t)
 {
-    const std::size_t N = 1000; // TODO: fix me
+    const std::size_t N = 1; // TODO: fix me
+    // const std::size_t N = 1000; // TODO: fix me
 
     t->base = std::vector<int>(N, 0);
     t->chck = std::vector<int>(N, 0);
@@ -228,6 +229,24 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
             continue;
         }
 
+        if (AsIdx(t) >= chck.size()) {
+            // TODO(peter): vector internally will be doubleing in size so here going to
+            //              just request what I actually need. when I remove the vector
+            //              usage, will likely want to do something like:
+            //
+            //     ```
+            //      while (AsIdx(t) < check_size) {
+            //          check = realloc(check, ((check_size * 1.5) + 1) * sizeof(check[0]));
+            //          // same for base
+            //      }
+            //      ```
+
+            assert(dt->chck.size() == dt->base.size());
+            const std::size_t need = AsIdx(t) - dt->chck.size() + 1;
+            dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
+            dt->base.insert(dt->base.end(), need, UNSET_BASE);
+            dt->term.insert(dt->term.end(), need, UNSET_TERM);
+        }
         assert(AsIdx(t) < chck.size()); // TODO: handle resizing
 
         // TODO: Can I mark the current branch as a child? Not sure if the logic will work
@@ -239,20 +258,47 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 s = t;
             } else {
                 childs[n_childs++] = c;
-                const std::size_t maxc = AsIdx(childs[n_childs - 1]);
-                const std::size_t last = chck.size() - maxc;
-                assert(chck.size() > maxc);
-                int b_new = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
-                assert(b_new >= 0);
+                std::size_t start = 0;
+                int b_new;
+                for (;;) {
+                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
+                    const std::size_t last = chck.size() - maxc;
+                    assert(chck.size() > maxc);
+                    b_new = findbaserange(&chck[start], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
+                    if (b_new >= 0) {
+                        b_new = b_new + static_cast<int>(start);
+                        break;
+                    }
+                    const std::size_t need = 50;
+                    start = dt->chck.size();
+                    dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
+                    dt->base.insert(dt->base.end(), need, UNSET_BASE);
+                    dt->term.insert(dt->term.end(), need, UNSET_TERM);
+                }
+                assert(0 <= b_new && AsIdx(b_new) < dt->chck.size()); // TODO: implement resizing
+
                 --n_childs;
                 relocate2(dt, s, b_new, &childs[0], n_childs);
                 setchck2(dt, b_new + c, s);
                 s = b_new + c;
             }
         } else {
-            const std::size_t chck_end = chck.size() - AsIdx(c);
-            const int b_new = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
-            assert(b_new != -1); // TODO: implement resizing
+            std::size_t start = 0;
+            int b_new;
+            for (;;) {
+                const std::size_t chck_end = chck.size() - AsIdx(c);
+                b_new = findbase(&chck[start], &chck[chck_end], c, UNSET_CHCK);
+                if (b_new >= 0) {
+                    b_new = b_new + static_cast<int>(start);
+                    break;
+                }
+                const std::size_t need = 50;
+                start = dt->chck.size();
+                dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
+                dt->base.insert(dt->base.end(), need, UNSET_BASE);
+                dt->term.insert(dt->term.end(), need, UNSET_TERM);
+            }
+            assert(0 <= b_new && AsIdx(b_new) < dt->chck.size()); // TODO: implement resizing
             // DEBUG("\tSET ch=%c s=%d b_new=%d c=%d check[%d]=%d", ch, s, b_new, c, b_new + c, s);
             setbase2(dt, s, b_new);
             setchck2(dt, b_new + c, s);
