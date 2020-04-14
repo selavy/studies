@@ -110,7 +110,7 @@ int iconv(char c) {
 
 bool init2([[maybe_unused]] Datrie2* t)
 {
-    const std::size_t N = 10000; // TODO: fix me
+    const std::size_t N = 1000; // TODO: fix me
 
     t->base = std::vector<int>(N, 0);
     t->chck = std::vector<int>(N, 0);
@@ -178,10 +178,12 @@ int cntchilds(Datrie2* dt, int s, int* childs)
 
 void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
 {
+    DEBUG("!!! relocating the base for state s=%d => base[s] from %d -> %d !!!", s, getbase2(dt, s), b);
+
     // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
     auto base  = [dt](int x) { return getbase2(dt, x); };
+    auto term  = [dt](int x) { return getterm2(dt, x); };
     auto check = [dt](int x) { return getchck2(dt, x); };
-    // int grandchilds[26];
     for (int i = 0; i < n_childs; ++i) {
         assert(1 <= childs[i] && childs[i] <= 27);
         [[maybe_unused]] const char ch = static_cast<char>((childs[i] - 1) + 'A'); // TEMP TEMP
@@ -191,13 +193,7 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
         assert(check(t_old) == s);
         setchck2(dt, t_new, s);
         setbase2(dt, t_new, base(t_old));
-        // // for simplicity using cntchilds
-        // const int n_grandchilds = cntchilds(dt, t_old, &grandchilds[0]);
-        // for (int j = 0; j < n_grandchilds; ++j) {
-        //     const int d = grandchilds[j];
-        //     setchck2(dt, base(t_old) + d, t_new);
-        // }
-
+        setterm2(dt, t_new, term(t_old));
         // update grand children
         for (int d = 1; d <= 27; ++d) {
             if (check(base(t_old) + d) == t_old) {
@@ -210,6 +206,8 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
     }
     setbase2(dt, s, b);
     // clrterm2(dt, s); // TODO: needed?
+
+    DEBUG("Finished relocate state %d to base=%d", s, b);
 }
 
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
@@ -246,7 +244,6 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 assert(chck.size() > maxc);
                 int b_new = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
                 assert(b_new >= 0);
-                DEBUG("!!! relocating s=%d base[s]=%d -> %d !!!", s, base(s), b_new);
                 --n_childs;
                 relocate2(dt, s, b_new, &childs[0], n_childs);
                 setchck2(dt, b_new + c, s);

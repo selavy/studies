@@ -24,19 +24,19 @@ const std::vector<std::string> DICT = {
 #if 1
 // clang-format off
 const std::vector<std::string> DICT = {
-    "AA",
+    // "AA",
     "AAH",
-    "AAHED",
-    "AAHING",
-    "AAHS",
+    // "AAHED",
+    // "AAHING",
+    "AARDWOLVES",
+    // "AAHS",
     "AAL",
-    "AALII",
-    "AALIIS",
-    "AALS",
-    "AARDVARK",
-    "AARDVARKS",
-    "AARDWOLF",
-    // "AARDWOLVES",
+    // "AALII",
+    // "AALIIS",
+    // "AALS",
+    // "AARDVARK",
+    // "AARDVARKS",
+    // "AARDWOLF",
     // "CEANOTHUS",
     // "CEANOTHUSES",
     // "CEAS",
@@ -124,7 +124,7 @@ TEST_CASE("Verify word lists")
 
 void print_state(const Datrie2* dt)
 {
-    const std::size_t N = 7;
+    const std::size_t N = 11;
     printf("-----------------------------------------\n");
     printf("INDX :");
     for (std::size_t i = 0; i < N; ++i) {
