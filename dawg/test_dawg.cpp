@@ -12,6 +12,14 @@ std::ostream& operator<<(std::ostream& os, Tristate t)
     return os;
 }
 
+const std::vector<std::string> DICT = {
+    "AB",
+    "ABBB",
+    // "AABBBC",
+    "ABA",
+};
+
+#if 0
 // clang-format off
 const std::vector<std::string> DICT = {
     "AA",
@@ -75,6 +83,7 @@ const std::vector<std::string> DICT = {
     "ZYMOSIS",
 };
 // clang-format on
+#endif
 
 // clang-format off
 const std::vector<std::string> MISSING = {
@@ -120,11 +129,11 @@ TEST_CASE("Datrie2")
         REQUIRE(ok == true);
     }
 
-    for (std::size_t i = 0; i < 10; ++i)
+    for (std::size_t i = 0; i < DICT.size(); ++i)
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
-        // printf("insert2: %s\n", word.c_str());
+        printf("insert2: %s\n", word.c_str());
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
         const auto found = isword2(&dt, word.c_str());
@@ -138,7 +147,7 @@ TEST_CASE("Datrie2")
             const auto  found2 = isword2(&dt, word2.c_str());
             CHECK(found2 == Tristate::eWord);
         }
-        // printf("\n\n");
+        printf("\n\n");
     }
 
 #if 0

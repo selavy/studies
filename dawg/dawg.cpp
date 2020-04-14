@@ -6,10 +6,13 @@
 
 #define AsIdx(x) static_cast<std::size_t>(x)
 
-constexpr int MISSING_BASE = 0;
-constexpr int UNSET_BASE = -1;
-constexpr int UNSET_CHCK = -1;
-constexpr int UNSET_TERM = -1;
+constexpr int MISSING_BASE = -42;
+constexpr int UNSET_BASE   = -42;
+constexpr int UNSET_CHCK   = -42;
+constexpr int UNSET_TERM   =  0;
+
+
+#define DEBUG(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__);
 
 
 // TODO: make table based
@@ -48,14 +51,14 @@ int iconv(char c) {
     return s < t->term.size() ? t->term[s] != 0 : false;
 }
 
-[[maybe_unused]] static void setbase2(Datrie2* t, int index, int base, bool term)
+[[maybe_unused]] static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
     t->base[s] = base;
-    t->term[s] = term;
+    // t->term[s] = term;
 }
 
 [[maybe_unused]] static void clrbase2(Datrie2* t, int index)
@@ -162,6 +165,31 @@ int cntchilds(Datrie2* dt, int s, int* childs)
     return n_childs;
 }
 
+void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
+{
+    // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
+    auto base  = [dt](int x) { return getbase2(dt, x); };
+    auto check = [dt](int x) { return getchck2(dt, x); };
+    for (int i = 0; i < n_childs; ++i) {
+        assert(1 <= childs[i] && childs[i] <= 27);
+        [[maybe_unused]] const char ch = static_cast<char>((childs[i] - 1) + 'A'); // TEMP TEMP
+        const int c = childs[i];
+        const int t_old = base(s) + c;
+        const int t_new = b + c;
+        assert(check(t_old) == s);
+        setchck2(dt, t_new, s);
+        setbase2(dt, t_new, base(t_old));
+        for (int d = 1; d <= 27; ++d) {
+            if (check(base(t_old) + d) == t_old) {
+                setchck2(dt, base(t_old) + d, t_new);
+            }
+        }
+        clrchck2(dt, t_old);
+    }
+    setbase2(dt, s, b);
+    setterm2(dt, s, false); // TODO: needed?
+}
+
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
 {
     int childs[26];
@@ -183,38 +211,58 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     setchck2(dt, t, s);
                     s = t;
                 } else {
-                    // printf("Inserting new link for '%s' on character %c (%zu) move %d children: ", word, ch, p - word, n_childs);
-                    // printf("[ ");
-                    // for (int i = 0; i < n_childs; ++i) {
-                    //     printf("%c ", static_cast<char>(childs[i] - 1 + 'A'));
-                    // }
-                    // printf("]\n");
-
                     const std::size_t maxc = AsIdx(childs[n_childs - 1]);
                     assert(chck.size() > maxc);
                     const std::size_t last = chck.size() - maxc;
                     int new_base = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
                     assert(new_base >= 0);
-                    for (int i = 0; i < n_childs; ++i) {
-                        const int c2 = childs[i];
-                        const int old_t = getbase2(dt, s) + c2;
-                        const int new_t = new_base + c2;
-                        setbase2(dt, new_t, getbase2(dt, old_t), getterm2(dt, old_t));
-                        setchck2(dt, new_t, s);
-                        clrbase2(dt, old_t);
-                        clrchck2(dt, old_t);
-                    }
-                    setbase2(dt, s, new_base, getterm2(dt, s));
-                    setchck2(dt, new_base + c, s);
+
+                    if (0) { // TEMP TEMP
+                        DEBUG("\tInserting new link for '%s' on character %c (%zu) new_base=%d; move %d children: ",
+                                word, ch, p - word, new_base, n_childs);
+                        for (int i = 0; i < n_childs; ++i) {
+                            DEBUG("\t\t%c ", static_cast<char>(childs[i] - 1 + 'A'));
+                        }
+                    } // TEMP TEMP
+
+                    relocate2(dt, s, new_base, &childs[0], n_childs);
                     s = new_base + c;
+
+                    // for (int i = 0; i < n_childs; ++i) {
+                    //     const int c2 = childs[i];
+                    //     const int old_t = getbase2(dt, s) + c2;
+                    //     const int new_t = new_base + c2;
+                    //     assert(getchck2(dt, old_t) == s);
+                    //     assert(getchck2(dt, new_t) == UNSET_CHCK);
+                    //     printf("\tMoving %c old_t=%d new_t=%d\n", static_cast<char>(c2 - 1 + 'A'), old_t, new_t);
+                    //     printf("\tsettings check[%d]=%d\n", new_t, s);
+                    //     setchck2(dt, new_t, s);
+                    //     setbase2(dt, new_t, getbase2(dt, old_t), getterm2(dt, old_t));
+                    //     for (int c3 = 1; c3 <= 27; ++c3) {
+                    //         const int new_new_t = getbase2(dt, new_t) + c3;
+                    //         if (getchck2(dt, new_new_t) == getbase2(dt, old_t)) {
+                    //             setchck2(dt, new_new_t, new_t);
+                    //             printf("\t\tsetting3 base[%d] = %d check[%d] = %d\n", new_t, getbase2(dt, new_t), new_new_t, new_t);
+                    //         }
+                    //     }
+                    //     clrbase2(dt, old_t); // TODO: not required?
+                    //     clrchck2(dt, old_t);
+                    // }
+
+                    // setbase2(dt, s, new_base, getterm2(dt, s));
+                    // setchck2(dt, new_base + c, s);
+                    // printf("\tSetting new branch base[s]=base[%d]=%d check[base[%d]+%d]=check[%d]=%d for '%c'\n",
+                    //         s, new_base, s, c, new_base+c, getchck2(dt, new_base+c), ch);
+                    // s = new_base + c;
                 }
             } else {
                 const std::size_t chck_end = chck.size() - AsIdx(c);
                 const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
                 assert(new_base != -1); // TODO: implement resizing
                 // assert(getterm2(dt, s) == false);
-                setbase2(dt, s, new_base, getterm2(dt, s));
+                setbase2(dt, s, new_base);
                 setchck2(dt, new_base + c, s);
+                DEBUG("\tSet2 check[%d]=%d", new_base + c, s);
                 s = new_base + c;
             }
         } else {
@@ -227,21 +275,22 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
 Tristate isword2(Datrie2* dt, const char* const word)
 {
-    // printf("ENTER isword2: %s\n", word);
+    DEBUG("ENTER isword2: %s", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = getbase2(dt, s) + c;
-        // printf("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=%d\n", ch, c, s, getbase2(dt, s), t, getchck2(dt, t));
+        DEBUG("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=check[%d]=%d =?= %d", ch, c, s,
+                getbase2(dt, s), t, t, getchck2(dt, t), s);
         if (getchck2(dt, t) != s) {
             // return false;
             return Tristate::eNoLink;
         }
         s = t;
     }
-    // printf("\tgetterm2(dt, %d) = %d\n", s, getterm2(dt, s));
-    // printf("EXIT  isword2: %s\n", word);
+    DEBUG("\tgetterm2(dt, %d) = %d", s, getterm2(dt, s));
+    DEBUG("EXIT  isword2: %s", word);
     return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 
