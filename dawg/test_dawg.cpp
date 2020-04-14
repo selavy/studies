@@ -120,6 +120,42 @@ TEST_CASE("Verify word lists")
     }
 }
 
+void print_state(const Datrie2* dt)
+{
+    const std::size_t N = 7;
+    printf("-----------------------------------------\n");
+    printf("INDX :");
+    for (std::size_t i = 0; i < N; ++i) {
+        printf(" %2zu |", i);
+    }
+    printf("\n");
+    printf("-----------------------------------------\n");
+
+    printf("BASE :");
+    for (std::size_t i = 0; i < N; ++i) {
+        printf(" %2d |", dt->base[i]);
+    }
+    printf("\n");
+
+    printf("CHCK :");
+    for (std::size_t i = 0; i < N; ++i) {
+        if (dt->chck[i] == -1) {
+            printf("    |");
+        } else {
+            printf(" %2d |", dt->chck[i]);
+        }
+    }
+    printf("\n");
+
+    printf("TERM :");
+    for (std::size_t i = 0; i < N; ++i) {
+        printf(" %2d |", dt->term[i]);
+    }
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+}
+
 TEST_CASE("Datrie2")
 {
     Datrie2 dt;
@@ -136,6 +172,10 @@ TEST_CASE("Datrie2")
         printf("insert2: %s\n", word.c_str());
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
+
+        print_state(&dt);
+
+#if 1
         const auto found = isword2(&dt, word.c_str());
         CHECK(found == Tristate::eWord);
 
@@ -148,6 +188,7 @@ TEST_CASE("Datrie2")
             CHECK(found2 == Tristate::eWord);
         }
         printf("\n\n");
+#endif
     }
 
 #if 0

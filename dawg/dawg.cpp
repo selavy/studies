@@ -57,6 +57,7 @@ int iconv(char c) {
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
+    DEBUG("SETBASE[%d] = %d", index, base);
     t->base[s] = base;
     // t->term[s] = term;
 }
@@ -67,8 +68,8 @@ int iconv(char c) {
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
+    DEBUG("CLRBASE[%d]", index);
     t->base[s] = UNSET_BASE;
-    t->term[s] = UNSET_TERM;
 }
 
 [[maybe_unused]] static void setchck2(Datrie2* t, int index, int base)
@@ -76,6 +77,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
+    DEBUG("SETCHECK[%d] = %d", index, base);
     t->chck[s] = base;
 }
 
@@ -84,6 +86,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
+    DEBUG("CLRCHECK[%d]", index);
     t->chck[s] = UNSET_CHCK;
 }
 
@@ -92,6 +95,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
+    DEBUG("SETTERM[%d] = %s", index, term?"T":"F");
     t->term[s] = term;
 }
 
@@ -100,6 +104,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
+    DEBUG("CLRTERM[%d]", index);
     t->term[s] = false;
 }
 
@@ -197,7 +202,7 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
         clrterm2(dt, t_old); // TEMP TEMP: for debugging
     }
     setbase2(dt, s, b);
-    clrterm2(dt, s); // TODO: needed?
+    // clrterm2(dt, s); // TODO: needed?
 }
 
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
@@ -237,6 +242,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 DEBUG("relocating s=%d base[s]=%d -> %d", s, base(s), b_new);
                 --n_childs;
                 relocate2(dt, s, b_new, &childs[0], n_childs);
+                setchck2(dt, b_new + c, s);
                 s = b_new + c;
             }
         } else {
