@@ -123,7 +123,7 @@ TEST_CASE("Datrie2")
         CHECK(found == true);
     }
 
-    for (std::size_t i = 1; i < 8; ++i)
+    for (std::size_t i = 1; i < 9; ++i)
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);

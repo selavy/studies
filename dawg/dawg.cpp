@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstddef>
 #include <climits>
+#include <cstdio> // TEMP
 
 #define AsIdx(x) static_cast<std::size_t>(x)
 
@@ -57,12 +58,30 @@ int iconv(char c) {
     t->term[s] = term;
 }
 
+[[maybe_unused]] static void clrbase2(Datrie2* t, int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->base.size());
+    assert(s < t->term.size());
+    t->base[s] = UNSET_BASE;
+    t->term[s] = UNSET_TERM;
+}
+
 [[maybe_unused]] static void setchck2(Datrie2* t, int index, int base)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
     t->chck[s] = base;
+}
+
+[[maybe_unused]] static void clrchck2(Datrie2* t, int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->chck.size());
+    t->chck[s] = UNSET_CHCK;
 }
 
 [[maybe_unused]] static void setterm2(Datrie2* t, int index, bool term)
@@ -105,7 +124,8 @@ int findbase(const int* const first, const int* const last, int c, int value)
 
 int baseworks(const int* const base, const int* const cs, const int* const csend, int value)
 {
-    for (const int* c = cs; cs != csend; ++c) {
+    for (const int* c = cs; c != csend; ++c) {
+        assert(1 <= *c && *c <= 27);
         if (base[*c] != value) {
             return false;
         }
@@ -114,7 +134,12 @@ int baseworks(const int* const base, const int* const cs, const int* const csend
 }
 
 // TODO: replace with free list
-int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend, int value)
+int findbaserange(
+        const int* const first,
+        const int* const last,
+        const int* const cs,
+        const int* const csend,
+        int value)
 {
     for (const int* chck = first; chck != last; ++chck) {
         if (baseworks(chck, cs, csend, value)) {
@@ -142,9 +167,8 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
         const char ch  = *p;
         const int  c   = iconv(ch) + 1;
         const int  t   = getbase2(dt, s) + c;
-        const int  chk = getchck2(dt, t);
 
-        if (chk != s) {
+        if (getchck2(dt, t) != s) {
             assert(AsIdx(t) < chck.size()); // TODO: handle resizing
 
             // TODO: Can I mark the current branch as a child? Not sure if the logic will work
@@ -162,12 +186,23 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     setchck2(dt, t, s);
                     s = t;
                 } else {
-                    assert(getchck2(dt, t) == UNSET_CHCK); // TODO: implement relocate
-                    // assert(getchck2(dt, t) != UNSET_CHCK);
-                    // const std::size_t maxc = AsIdx(childs[n_childs - 1]);
-                    // const std::size_t last = chkc.size() - maxc;
-                    // int new_base = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], CHCK_UNSET);
-                    // assert(new_base >= 0);
+                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
+                    assert(chck.size() > maxc);
+                    const std::size_t last = chck.size() - maxc;
+                    int new_base = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
+                    assert(new_base >= 0);
+                    for (int i = 0; i < n_childs; ++i) {
+                        const int c2 = childs[i];
+                        const int old_t = getbase2(dt, s) + c2;
+                        const int new_t = new_base + c2;
+                        setbase2(dt, new_t, getbase2(dt, old_t), getterm2(dt, old_t));
+                        setchck2(dt, new_t, s);
+                        clrbase2(dt, old_t);
+                        clrchck2(dt, old_t);
+                    }
+                    setbase2(dt, s, new_base, false);
+                    setchck2(dt, new_base + c, s);
+                    s = new_base + c;
                 }
             } else {
                 const std::size_t chck_end = chck.size() - AsIdx(c);
