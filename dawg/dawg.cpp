@@ -57,7 +57,7 @@ int iconv(char c) {
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
-    DEBUG("SETBASE[%d] = %d", index, base);
+    // DEBUG("SETBASE[%d] = %d", index, base);
     t->base[s] = base;
     // t->term[s] = term;
 }
@@ -68,7 +68,7 @@ int iconv(char c) {
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
-    DEBUG("CLRBASE[%d]", index);
+    // DEBUG("CLRBASE[%d]", index);
     t->base[s] = UNSET_BASE;
 }
 
@@ -77,7 +77,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
-    DEBUG("SETCHECK[%d] = %d", index, base);
+    // DEBUG("SETCHECK[%d] = %d", index, base);
     t->chck[s] = base;
 }
 
@@ -86,7 +86,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
-    DEBUG("CLRCHECK[%d]", index);
+    // DEBUG("CLRCHECK[%d]", index);
     t->chck[s] = UNSET_CHCK;
 }
 
@@ -95,7 +95,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
-    DEBUG("SETTERM[%d] = %s", index, term?"T":"F");
+    // DEBUG("SETTERM[%d] = %s", index, term?"T":"F");
     t->term[s] = term;
 }
 
@@ -104,7 +104,7 @@ int iconv(char c) {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
-    DEBUG("CLRTERM[%d]", index);
+    // DEBUG("CLRTERM[%d]", index);
     t->term[s] = false;
 }
 
@@ -178,7 +178,7 @@ int cntchilds(Datrie2* dt, int s, int* childs)
 
 void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
 {
-    DEBUG("!!! relocating the base for state s=%d => base[s] from %d -> %d !!!", s, getbase2(dt, s), b);
+    // DEBUG("!!! relocating the base for state s=%d => base[s] from %d -> %d !!!", s, getbase2(dt, s), b);
 
     // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
     auto base  = [dt](int x) { return getbase2(dt, x); };
@@ -207,7 +207,7 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
     setbase2(dt, s, b);
     // clrterm2(dt, s); // TODO: needed?
 
-    DEBUG("Finished relocate state %d to base=%d", s, b);
+    // DEBUG("Finished relocate state %d to base=%d", s, b);
 }
 
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
@@ -253,7 +253,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
             const std::size_t chck_end = chck.size() - AsIdx(c);
             const int b_new = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
             assert(b_new != -1); // TODO: implement resizing
-            DEBUG("\tSET2 ch=%c s=%d b_new=%d c=%d check[%d]=%d", ch, s, b_new, c, b_new + c, s);
+            // DEBUG("\tSET ch=%c s=%d b_new=%d c=%d check[%d]=%d", ch, s, b_new, c, b_new + c, s);
             setbase2(dt, s, b_new);
             setchck2(dt, b_new + c, s);
             s = b_new + c;

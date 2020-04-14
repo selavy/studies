@@ -171,7 +171,6 @@ TEST_CASE("Datrie2")
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
-        printf("insert2: %s\n", word.c_str());
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
 
@@ -183,13 +182,14 @@ TEST_CASE("Datrie2")
 
         // verify potential movement of entries didn't cause us to not
         // find words already inserted
-        for (std::size_t j = 0; j < i; ++j) {
+        for (std::size_t j = 0; j <= i; ++j) {
             const auto& word2  = DICT[j];
             INFO("After inserting " << word << ", checking " << word2);
             const auto  found2 = isword2(&dt, word2.c_str());
             CHECK(found2 == Tristate::eWord);
+            const auto  ok2 = insert2(&dt, word2.c_str());
+            REQUIRE(ok2 == true);
         }
-        printf("\n\n");
 #endif
     }
 
