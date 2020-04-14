@@ -6,9 +6,9 @@
 
 #define AsIdx(x) static_cast<std::size_t>(x)
 
-constexpr int MISSING_BASE = -42;
-constexpr int UNSET_BASE   = -42;
-constexpr int UNSET_CHCK   = -42;
+constexpr int MISSING_BASE = -1;
+constexpr int UNSET_BASE   =  0;
+constexpr int UNSET_CHCK   = -1;
 constexpr int UNSET_TERM   =  0;
 
 
@@ -93,6 +93,14 @@ int iconv(char c) {
     auto s = static_cast<std::size_t>(index);
     assert(s < t->chck.size());
     t->term[s] = term;
+}
+
+[[maybe_unused]] static void clrterm2(Datrie2* t, int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->chck.size());
+    t->term[s] = false;
 }
 
 bool init2([[maybe_unused]] Datrie2* t)
@@ -185,13 +193,19 @@ void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
             }
         }
         clrchck2(dt, t_old);
+        clrbase2(dt, t_old); // TEMP TEMP: for debugging
+        clrterm2(dt, t_old); // TEMP TEMP: for debugging
     }
     setbase2(dt, s, b);
-    setterm2(dt, s, false); // TODO: needed?
+    clrterm2(dt, s); // TODO: needed?
 }
 
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
 {
+    // TODO(peter): revisit -- warnings don't like parameter being named `s` saying it shadows...
+    [[maybe_unused]] auto base  = [dt](int x) { return getbase2(dt, x); };
+    [[maybe_unused]] auto check = [dt](int x) { return getchck2(dt, x); };
+
     int childs[26];
     auto& chck = dt->chck;
     int s = 0;
@@ -199,76 +213,43 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
         const char ch  = *p;
         const int  c   = iconv(ch) + 1;
         const int  t   = getbase2(dt, s) + c;
+        if (check(t) == s) {
+            s = t;
+            continue;
+        }
 
-        if (getchck2(dt, t) != s) {
-            assert(AsIdx(t) < chck.size()); // TODO: handle resizing
+        assert(AsIdx(t) < chck.size()); // TODO: handle resizing
 
-            // TODO: Can I mark the current branch as a child? Not sure if the logic will work
-            //       trying to move an uninstall node.
-            const int n_childs = cntchilds(dt, s, &childs[0]);
-            if (n_childs > 0) {
-                if (getchck2(dt, t) == UNSET_CHCK) { // slot is available
-                    setchck2(dt, t, s);
-                    s = t;
-                } else {
-                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
-                    assert(chck.size() > maxc);
-                    const std::size_t last = chck.size() - maxc;
-                    int new_base = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
-                    assert(new_base >= 0);
-
-                    if (0) { // TEMP TEMP
-                        DEBUG("\tInserting new link for '%s' on character %c (%zu) new_base=%d; move %d children: ",
-                                word, ch, p - word, new_base, n_childs);
-                        for (int i = 0; i < n_childs; ++i) {
-                            DEBUG("\t\t%c ", static_cast<char>(childs[i] - 1 + 'A'));
-                        }
-                    } // TEMP TEMP
-
-                    relocate2(dt, s, new_base, &childs[0], n_childs);
-                    s = new_base + c;
-
-                    // for (int i = 0; i < n_childs; ++i) {
-                    //     const int c2 = childs[i];
-                    //     const int old_t = getbase2(dt, s) + c2;
-                    //     const int new_t = new_base + c2;
-                    //     assert(getchck2(dt, old_t) == s);
-                    //     assert(getchck2(dt, new_t) == UNSET_CHCK);
-                    //     printf("\tMoving %c old_t=%d new_t=%d\n", static_cast<char>(c2 - 1 + 'A'), old_t, new_t);
-                    //     printf("\tsettings check[%d]=%d\n", new_t, s);
-                    //     setchck2(dt, new_t, s);
-                    //     setbase2(dt, new_t, getbase2(dt, old_t), getterm2(dt, old_t));
-                    //     for (int c3 = 1; c3 <= 27; ++c3) {
-                    //         const int new_new_t = getbase2(dt, new_t) + c3;
-                    //         if (getchck2(dt, new_new_t) == getbase2(dt, old_t)) {
-                    //             setchck2(dt, new_new_t, new_t);
-                    //             printf("\t\tsetting3 base[%d] = %d check[%d] = %d\n", new_t, getbase2(dt, new_t), new_new_t, new_t);
-                    //         }
-                    //     }
-                    //     clrbase2(dt, old_t); // TODO: not required?
-                    //     clrchck2(dt, old_t);
-                    // }
-
-                    // setbase2(dt, s, new_base, getterm2(dt, s));
-                    // setchck2(dt, new_base + c, s);
-                    // printf("\tSetting new branch base[s]=base[%d]=%d check[base[%d]+%d]=check[%d]=%d for '%c'\n",
-                    //         s, new_base, s, c, new_base+c, getchck2(dt, new_base+c), ch);
-                    // s = new_base + c;
-                }
+        // TODO: Can I mark the current branch as a child? Not sure if the logic will work
+        //       trying to move an uninstall node.
+        int n_childs = cntchilds(dt, s, &childs[0]);
+        if (n_childs > 0) {
+            if (check(t) == UNSET_CHCK) { // slot is available
+                setchck2(dt, t, s);
+                s = t;
             } else {
-                const std::size_t chck_end = chck.size() - AsIdx(c);
-                const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
-                assert(new_base != -1); // TODO: implement resizing
-                // assert(getterm2(dt, s) == false);
-                setbase2(dt, s, new_base);
-                setchck2(dt, new_base + c, s);
-                DEBUG("\tSet2 check[%d]=%d", new_base + c, s);
-                s = new_base + c;
+                childs[n_childs++] = c;
+                const std::size_t maxc = AsIdx(childs[n_childs - 1]);
+                const std::size_t last = chck.size() - maxc;
+                assert(chck.size() > maxc);
+                int b_new = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
+                assert(b_new >= 0);
+                DEBUG("relocating s=%d base[s]=%d -> %d", s, base(s), b_new);
+                --n_childs;
+                relocate2(dt, s, b_new, &childs[0], n_childs);
+                s = b_new + c;
             }
         } else {
-            s = t;
+            const std::size_t chck_end = chck.size() - AsIdx(c);
+            const int b_new = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
+            assert(b_new != -1); // TODO: implement resizing
+            setbase2(dt, s, b_new);
+            setchck2(dt, b_new + c, s);
+            DEBUG("\tSet2 check[%d]=%d", b_new + c, s);
+            s = b_new + c;
         }
     }
+
     setterm2(dt, s, true);
     return true;
 }

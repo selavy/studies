@@ -1,0 +1,44 @@
+# VERSION 0 --------------------------------------------------
+
+def dumpl
+    print s
+    print ch
+    print c
+    print getbase2(dt, s)
+    print getchck2(dt, t)
+end
+
+def base
+    call getbase2(dt, $arg0)
+end
+
+def chck
+    call getchck2(dt, $arg0)
+end
+
+def term
+    call getterm2(dt, $arg0)
+end
+
+# VERSION 1 --------------------------------------------------
+
+def dumpl
+    printf "s        = %d\n", s
+    printf "ch       = '%c'\n", ch
+    printf "c        = %d\n", c
+    printf "base[%d]  = %d\n", s, getbase2(dt, s)
+    printf "t        = %d\n", t
+    printf "check[%d] = %d\n", t, getchck2(dt, t)
+end
+
+def base
+    printf "base[%d] = %d\n", $arg0, getbase2(dt, $arg0)
+end
+
+def chck
+    printf "check[%d] = %d\n", $arg0, getchck2(dt, $arg0)
+end
+
+def term
+    printf "term[%d] = %d\n", $arg0, getterm2(dt, $arg0)
+end
