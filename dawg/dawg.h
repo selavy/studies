@@ -27,7 +27,7 @@ inline const char* tristate_to_str(Tristate t)
     switch (t) {
         case Tristate::eWord:    return "Word";
         case Tristate::eNoLink:  return "NoLink";
-        case Tristate::eNotTerm: return "NoTerminal";
+        case Tristate::eNotTerm: return "NotTerminal";
     }
     return "Unknown";
 }

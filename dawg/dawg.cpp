@@ -183,6 +183,13 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     setchck2(dt, t, s);
                     s = t;
                 } else {
+                    printf("Inserting new link for '%s' on character %c (%zu) move %d children: ", word, ch, p - word, n_childs);
+                    printf("[ ");
+                    for (int i = 0; i < n_childs; ++i) {
+                        printf("%c ", static_cast<char>(childs[i] - 1 + 'A'));
+                    }
+                    printf("]\n");
+
                     const std::size_t maxc = AsIdx(childs[n_childs - 1]);
                     assert(chck.size() > maxc);
                     const std::size_t last = chck.size() - maxc;

@@ -120,14 +120,23 @@ TEST_CASE("Datrie2")
         REQUIRE(ok == true);
     }
 
-    for (std::size_t i = 0; i < 50; ++i)
+    for (std::size_t i = 0; i < 5/*27*/; ++i)
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
-        bool ok = insert2(&dt, word.c_str());
+        const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
-        auto found = isword2(&dt, word.c_str());
+        const auto found = isword2(&dt, word.c_str());
         CHECK(found == Tristate::eWord);
+
+        // verify potential movement of entries didn't cause us to not
+        // find words already inserted
+        for (std::size_t j = 0; j <= i; ++j) {
+            const auto& word2  = DICT[j];
+            INFO("After inserting " << word << ", checking " << word2);
+            const auto  found2 = isword2(&dt, word2.c_str());
+            CHECK(found2 == Tristate::eWord);
+        }
     }
 
 #if 0
