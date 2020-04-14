@@ -3,7 +3,14 @@
 #include <string>
 #include <unordered_map>
 #include <set>
+#include <iostream>
 #include "dawg.h"
+
+std::ostream& operator<<(std::ostream& os, Tristate t)
+{
+    os << tristate_to_str(t);
+    return os;
+}
 
 // clang-format off
 const std::vector<std::string> DICT = {
@@ -113,27 +120,17 @@ TEST_CASE("Datrie2")
         REQUIRE(ok == true);
     }
 
-    {
-        const auto& word = DICT[0];
-        INFO("Inserting word: " << word);
-
-        bool ok = insert2(&dt, word.c_str());
-        REQUIRE(ok == true);
-        bool found = isword2(&dt, word.c_str());
-        CHECK(found == true);
-    }
-
-    for (std::size_t i = 1; i < 9; ++i)
+    for (std::size_t i = 0; i < 50; ++i)
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
-
         bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
-        bool found = isword2(&dt, word.c_str());
-        CHECK(found == true);
+        auto found = isword2(&dt, word.c_str());
+        CHECK(found == Tristate::eWord);
     }
 
+#if 0
     if (1)
     {
         const auto& word = DICT[1];
@@ -143,13 +140,14 @@ TEST_CASE("Datrie2")
         bool found = isword2(&dt, word.c_str());
         CHECK(found == true);
     }
+#endif
 
     for (std::size_t i = 0; i < MISSING.size(); ++i)
     {
         const auto& word = MISSING[i];
         INFO("Looking for missing word: " << word);
-        bool found = isword2(&dt, word.c_str());
-        CHECK(found == false);
+        auto found = isword2(&dt, word.c_str());
+        CHECK(found != Tristate::eWord);
     }
 
 #if 0

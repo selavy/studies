@@ -149,18 +149,22 @@ int findbaserange(
     return -1;
 }
 
+int cntchilds(Datrie2* dt, int s, int* childs)
+{
+    int n_childs = 0;
+    if (getbase2(dt, s) != UNSET_BASE) {
+        for (int c = 1; c <= 27; ++c) {
+            if (getchck2(dt, getbase2(dt, s) + c) == s) {
+                childs[n_childs++] = c;
+            }
+        }
+    }
+    return n_childs;
+}
+
 bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const word)
 {
-#if 0
-                     dt->chck[0] = 0;
-    dt->base[0] = 0; dt->chck[1] = 0;
-    dt->base[1] = 1; dt->chck[2] = 1;
-    dt->base[2] = 2;
-    dt->term[2] = true;
-#endif
-
-
-    [[maybe_unused]] int childs[26];
+    int childs[26];
     auto& chck = dt->chck;
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -173,14 +177,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
             // TODO: Can I mark the current branch as a child? Not sure if the logic will work
             //       trying to move an uninstall node.
-            int n_childs = 0;
-            if (getbase2(dt, s) != UNSET_BASE) {
-                for (int c2 = 1; c2 <= 27; ++c2) {
-                    if (getchck2(dt, getbase2(dt, s) + c2) == s) {
-                        childs[n_childs++] = c2;
-                    }
-                }
-            }
+            const int n_childs = cntchilds(dt, s, &childs[0]);
             if (n_childs > 0) {
                 if (getchck2(dt, t) == UNSET_CHCK) { // slot is available
                     setchck2(dt, t, s);
@@ -221,7 +218,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
     return true;
 }
 
-bool isword2(Datrie2* dt, const char* const word)
+Tristate isword2(Datrie2* dt, const char* const word)
 {
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -229,11 +226,12 @@ bool isword2(Datrie2* dt, const char* const word)
         const int  c  = iconv(ch) + 1;
         const int  t  = getbase2(dt, s) + c;
         if (getchck2(dt, t) != s) {
-            return false;
+            // return false;
+            return Tristate::eNoLink;
         }
         s = t;
     }
-    return getterm2(dt, s);
+    return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 
 Letters childs2(Datrie2* dt, const char* const prefix)
