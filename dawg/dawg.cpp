@@ -239,7 +239,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 assert(chck.size() > maxc);
                 int b_new = findbaserange(&chck[0], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
                 assert(b_new >= 0);
-                DEBUG("relocating s=%d base[s]=%d -> %d", s, base(s), b_new);
+                DEBUG("!!! relocating s=%d base[s]=%d -> %d !!!", s, base(s), b_new);
                 --n_childs;
                 relocate2(dt, s, b_new, &childs[0], n_childs);
                 setchck2(dt, b_new + c, s);
@@ -262,22 +262,22 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
 Tristate isword2(Datrie2* dt, const char* const word)
 {
-    DEBUG("ENTER isword2: %s", word);
+    // DEBUG("ENTER isword2: %s", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = getbase2(dt, s) + c;
-        DEBUG("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=check[%d]=%d =?= %d", ch, c, s,
-                getbase2(dt, s), t, t, getchck2(dt, t), s);
+        // DEBUG("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=check[%d]=%d =?= %d", ch, c, s,
+        //         getbase2(dt, s), t, t, getchck2(dt, t), s);
         if (getchck2(dt, t) != s) {
             // return false;
             return Tristate::eNoLink;
         }
         s = t;
     }
-    DEBUG("\tgetterm2(dt, %d) = %d", s, getterm2(dt, s));
-    DEBUG("EXIT  isword2: %s", word);
+    // DEBUG("\tgetterm2(dt, %d) = %d", s, getterm2(dt, s));
+    // DEBUG("EXIT  isword2: %s", word);
     return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 
