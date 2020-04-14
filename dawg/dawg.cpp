@@ -168,11 +168,9 @@ int findbaserange(
 int cntchilds(Datrie2* dt, int s, int* childs)
 {
     int n_childs = 0;
-    if (getbase2(dt, s) != UNSET_BASE) {
-        for (int c = 1; c <= 27; ++c) {
-            if (getchck2(dt, getbase2(dt, s) + c) == s) {
-                childs[n_childs++] = c;
-            }
+    for (int c = 1; c <= 27; ++c) {
+        if (getchck2(dt, getbase2(dt, s) + c) == s) {
+            childs[n_childs++] = c;
         }
     }
     return n_childs;
@@ -249,9 +247,9 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
             const std::size_t chck_end = chck.size() - AsIdx(c);
             const int b_new = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
             assert(b_new != -1); // TODO: implement resizing
+            DEBUG("\tSET2 ch=%c s=%d b_new=%d c=%d check[%d]=%d", ch, s, b_new, c, b_new + c, s);
             setbase2(dt, s, b_new);
             setchck2(dt, b_new + c, s);
-            DEBUG("\tSet2 check[%d]=%d", b_new + c, s);
             s = b_new + c;
         }
     }
