@@ -183,12 +183,12 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                     setchck2(dt, t, s);
                     s = t;
                 } else {
-                    printf("Inserting new link for '%s' on character %c (%zu) move %d children: ", word, ch, p - word, n_childs);
-                    printf("[ ");
-                    for (int i = 0; i < n_childs; ++i) {
-                        printf("%c ", static_cast<char>(childs[i] - 1 + 'A'));
-                    }
-                    printf("]\n");
+                    // printf("Inserting new link for '%s' on character %c (%zu) move %d children: ", word, ch, p - word, n_childs);
+                    // printf("[ ");
+                    // for (int i = 0; i < n_childs; ++i) {
+                    //     printf("%c ", static_cast<char>(childs[i] - 1 + 'A'));
+                    // }
+                    // printf("]\n");
 
                     const std::size_t maxc = AsIdx(childs[n_childs - 1]);
                     assert(chck.size() > maxc);
@@ -204,7 +204,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                         clrbase2(dt, old_t);
                         clrchck2(dt, old_t);
                     }
-                    setbase2(dt, s, new_base, false);
+                    setbase2(dt, s, new_base, getterm2(dt, s));
                     setchck2(dt, new_base + c, s);
                     s = new_base + c;
                 }
@@ -213,7 +213,7 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
                 const int new_base = findbase(&chck[0], &chck[chck_end], c, UNSET_CHCK);
                 assert(new_base != -1); // TODO: implement resizing
                 // assert(getterm2(dt, s) == false);
-                setbase2(dt, s, new_base, false);
+                setbase2(dt, s, new_base, getterm2(dt, s));
                 setchck2(dt, new_base + c, s);
                 s = new_base + c;
             }
@@ -227,17 +227,21 @@ bool insert2([[maybe_unused]] Datrie2* dt, [[maybe_unused]] const char* const wo
 
 Tristate isword2(Datrie2* dt, const char* const word)
 {
+    // printf("ENTER isword2: %s\n", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = getbase2(dt, s) + c;
+        // printf("\tch=%c c=%d s=%d base[s]=%d t=%d check[t]=%d\n", ch, c, s, getbase2(dt, s), t, getchck2(dt, t));
         if (getchck2(dt, t) != s) {
             // return false;
             return Tristate::eNoLink;
         }
         s = t;
     }
+    // printf("\tgetterm2(dt, %d) = %d\n", s, getterm2(dt, s));
+    // printf("EXIT  isword2: %s\n", word);
     return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 

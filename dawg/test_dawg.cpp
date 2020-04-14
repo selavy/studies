@@ -120,10 +120,11 @@ TEST_CASE("Datrie2")
         REQUIRE(ok == true);
     }
 
-    for (std::size_t i = 0; i < 5/*27*/; ++i)
+    for (std::size_t i = 0; i < 10; ++i)
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
+        // printf("insert2: %s\n", word.c_str());
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
         const auto found = isword2(&dt, word.c_str());
@@ -131,26 +132,16 @@ TEST_CASE("Datrie2")
 
         // verify potential movement of entries didn't cause us to not
         // find words already inserted
-        for (std::size_t j = 0; j <= i; ++j) {
+        for (std::size_t j = 0; j < i; ++j) {
             const auto& word2  = DICT[j];
             INFO("After inserting " << word << ", checking " << word2);
             const auto  found2 = isword2(&dt, word2.c_str());
             CHECK(found2 == Tristate::eWord);
         }
+        // printf("\n\n");
     }
 
 #if 0
-    if (1)
-    {
-        const auto& word = DICT[1];
-        INFO("Inserting word: " << word);
-        bool ok = insert2(&dt, word.c_str());
-        REQUIRE(ok == true);
-        bool found = isword2(&dt, word.c_str());
-        CHECK(found == true);
-    }
-#endif
-
     for (std::size_t i = 0; i < MISSING.size(); ++i)
     {
         const auto& word = MISSING[i];
@@ -158,6 +149,7 @@ TEST_CASE("Datrie2")
         auto found = isword2(&dt, word.c_str());
         CHECK(found != Tristate::eWord);
     }
+#endif
 
 #if 0
     for (const auto& word : DICT) {
