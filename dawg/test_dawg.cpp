@@ -7,6 +7,8 @@
 #include <iostream>
 #include "dawg.h"
 
+#include "mafsa.h"
+
 std::ostream& operator<<(std::ostream& os, Tristate t)
 {
     os << tristate_to_str(t);
