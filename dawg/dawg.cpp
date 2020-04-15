@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <climits>
 #include <cstdio> // TEMP
+#include "iconv.h"
 
 #define AsIdx(x) static_cast<std::size_t>(x)
 
@@ -31,19 +32,19 @@ static_assert((UNSET_BASE + static_cast<u32>(MAX_CHILD_OFFSET)) < static_cast<u3
 
 
 // TODO: make table based
-int iconv(char c) {
-    int result;
-    if ('a' <= c && c <= 'z') {
-        result = c - 'a';
-    } else if ('A' <= c && c <= 'Z') {
-        result = c - 'A';
-    } else {
-        assert(0 && "invalid character");
-        result = -1; // should cause an error
-    }
-    assert(0 <= result && result < 26);
-    return result;
-}
+// int iconv(char c) {
+//     int result;
+//     if ('a' <= c && c <= 'z') {
+//         result = c - 'a';
+//     } else if ('A' <= c && c <= 'Z') {
+//         result = c - 'A';
+//     } else {
+//         assert(0 && "invalid character");
+//         result = -1; // should cause an error
+//     }
+//     assert(0 <= result && result < 26);
+//     return result;
+// }
 
 static int getbase2(const Datrie2* t, int index)
 {
