@@ -269,11 +269,12 @@ bool insert2(Datrie2* dt, const char* const word)
                         b_new = b_new + static_cast<int>(start);
                         break;
                     }
-                    const std::size_t need = 50;
-                    start = dt->chck.size();
+                    // const std::size_t need = 50;
+                    const std::size_t need = 1;
                     dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
                     dt->base.insert(dt->base.end(), need, UNSET_BASE);
                     dt->term.insert(dt->term.end(), need, UNSET_TERM);
+                    start = dt->chck.size() > 30 ? dt->chck.size() - 26 : 0;
                 }
                 assert(0 <= b_new && AsIdx(b_new) < dt->chck.size());
 
@@ -347,4 +348,27 @@ Letters childs2(Datrie2* dt, const char* const prefix)
         }
     }
     return result;
+}
+
+void trim2([[maybe_unused]] Datrie2* dt)
+{
+    assert(dt->chck.size() == dt->base.size());
+#if 1
+    // std::size_t n = dt->chck.size();
+    // std::size_t i = n;
+    int i = static_cast<int>(dt->chck.size());
+    while (i-- > 10) {
+        std::size_t ii = AsIdx(i);
+        if (dt->chck[ii] != UNSET_CHCK) {
+            break;
+        }
+        // if (dt->term[ii]) {
+        //     break;
+        // }
+    }
+    ++i;
+    dt->chck.erase(dt->chck.cbegin() + i, dt->chck.cend());
+    dt->base.erase(dt->base.cbegin() + i, dt->base.cend());
+    dt->term.erase(dt->term.cbegin() + i, dt->term.cend());
+#endif
 }

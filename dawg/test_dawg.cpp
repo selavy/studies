@@ -203,16 +203,24 @@ TEST_CASE("Datrie2")
     }
 #endif
 
+    std::cout << "SIZE BEFORE: " << dt.chck.size() << "\n";
+    trim2(&dt);
+    std::cout << "SIZE AFTER : " << dt.chck.size() << "\n";
+
+
 #if 0
     for (const auto& word : DICT) {
         bool ok = insert2(&t, word.c_str());
         REQUIRE(ok == true);
     }
+#endif
+
+#if 1
     for (const auto& word : DICT) {
-        CHECK(isword2(&t, word.c_str()) == true);
+        CHECK(isword2(&dt, word.c_str()) == Tristate::eWord);
     }
     for (const auto& word : MISSING) {
-        CHECK(isword2(&t, word.c_str()) == false);
+        CHECK(isword2(&dt, word.c_str()) != Tristate::eWord);
     }
 #endif
 }

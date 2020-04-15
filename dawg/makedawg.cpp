@@ -5,8 +5,9 @@
 #include <memory>
 #include "dawg.h"
 
-
-bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX) {
+template <class F>
+bool foreach_in_dictionary(std::string path, int max_words, F&& f)
+{
     int n_words = 0;
     std::string word;
     std::ifstream ifs{path};
@@ -35,7 +36,8 @@ bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX) {
             }
         }
         if (valid_word) {
-            const bool ok = insert2(trie, word.c_str());
+            const bool ok = f(word);
+            // const bool ok = insert2(trie, word.c_str());
             if (!ok) {
                 std::cerr << "Failed to insert the word \"" << word << "\"" << std::endl;
                 return false;
@@ -48,11 +50,34 @@ bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX) {
     return true;
 }
 
+
+bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX)
+{
+    return foreach_in_dictionary(path, max_words,
+        [trie](const std::string& word)
+        {
+            return insert2(trie, word.c_str());
+        });
+}
+
+bool test_trie(Datrie2* trie, std::string path, int max_words=INT_MAX) {
+    return foreach_in_dictionary(path, max_words,
+        [trie](const std::string& word)
+        {
+            return isword2(trie, word.c_str()) == Tristate::eWord;
+        });
+}
+
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
         std::cerr << "Usage: [" << argv[0] << "] [DICT]" << std::endl;
         return 1;
+    }
+    const std::string filename = argv[1];
+    int max_words = 1000;
+    if (argc >= 3) {
+        max_words = std::max(atoi(argv[2]), 10);
     }
 
     Datrie2 trie;
@@ -61,9 +86,18 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (!load_dictionary(&trie, argv[1])) {
+    if (!load_dictionary(&trie, filename)) {
         std::cerr << "error: failed to load dictionary" << std::endl;
         return 1;
+    }
+
+    if (argc > 2) {
+        printf("Checking %d words\n", max_words);
+        if (test_trie(&trie, filename, max_words)) {
+            printf("Passed!\n");
+        } else {
+            printf("Failed!\n");
+        }
     }
 
     return 0;
