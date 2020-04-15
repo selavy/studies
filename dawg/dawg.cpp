@@ -146,7 +146,7 @@ bool init2(Datrie2* t)
     return true;
 }
 
-int findbase(const int* const first, const int* const last, int c)
+static int findbase(const int* const first, const int* const last, int c)
 {
     for (const int* p = first; p != last; ++p) {
         if (p[c] == UNSET_CHCK) {
@@ -156,11 +156,11 @@ int findbase(const int* const first, const int* const last, int c)
     return -1;
 }
 
-int baseworks(const int* const base, const int* const cs, const int* const csend)
+static int baseworks(const int* const chck, const int* const cs, const int* const csend)
 {
     for (const int* c = cs; c != csend; ++c) {
         assert(1 <= *c && *c <= 27);
-        if (base[*c] != UNSET_CHCK) {
+        if (chck[*c] != UNSET_CHCK) {
             return false;
         }
     }
@@ -168,7 +168,7 @@ int baseworks(const int* const base, const int* const cs, const int* const csend
 }
 
 // TODO: replace with free list
-int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
+static int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
 {
     for (const int* chck = first; chck != last; ++chck) {
         if (baseworks(chck, cs, csend)) {
@@ -178,7 +178,7 @@ int findbaserange(const int* const first, const int* const last, const int* cons
     return -1;
 }
 
-int cntchilds(Datrie2* dt, int s, int* childs)
+static int cntchilds(Datrie2* dt, int s, int* childs)
 {
     int n_childs = 0;
     for (int c = 1; c <= 27; ++c) {

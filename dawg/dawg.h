@@ -12,7 +12,7 @@ struct Letters
 struct Datrie2
 {
     std::vector<uint32_t> base;
-    std::vector<int> chck;
+    std::vector<int>      chck;
 };
 
 enum class Tristate
