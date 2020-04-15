@@ -5,8 +5,8 @@
 
 struct Letters
 {
-    int children[26];
-    int n_children;
+    char kids[26];
+    int  n_kids;
 };
 
 struct Datrie2
@@ -35,6 +35,6 @@ inline const char* tristate_to_str(Tristate t)
 bool     init2(Datrie2* t);
 bool     insert2(Datrie2* t, const char* const word);
 Tristate isword2(Datrie2* t, const char* const word);
-Letters  childs2(Datrie2* t, const char* const prefix);
+Letters  kids2(Datrie2* t, const char* const prefix);
 void     trim2(Datrie2* t);
 // void     destroy2(Datrie2* t);

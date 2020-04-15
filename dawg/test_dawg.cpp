@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <set>
+#include <map>
 #include <iostream>
 #include "dawg.h"
 
@@ -122,6 +123,7 @@ TEST_CASE("Verify word lists")
     }
 }
 
+#if 0
 void print_state(const Datrie2* dt)
 {
     const std::size_t N = std::min<std::size_t>(11, dt->chck.size());
@@ -149,14 +151,10 @@ void print_state(const Datrie2* dt)
     }
     printf("\n");
 
-    printf("TERM :");
-    for (std::size_t i = 0; i < N; ++i) {
-        printf(" %2d |", dt->term[i]);
-    }
-    printf("\n");
     printf("-----------------------------------------\n");
     printf("\n");
 }
+#endif
 
 TEST_CASE("Datrie2")
 {
@@ -171,29 +169,27 @@ TEST_CASE("Datrie2")
     {
         const auto& word = DICT[i];
         INFO("Inserting word: " << word);
+
         const bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
 
-        // print_state(&dt);
-
-#if 1
         const auto found = isword2(&dt, word.c_str());
         CHECK(found == Tristate::eWord);
 
-        // // verify potential movement of entries didn't cause us to not
-        // // find words already inserted
-        // for (std::size_t j = 0; j <= i; ++j) {
-        //     const auto& word2  = DICT[j];
-        //     INFO("After inserting " << word << ", checking " << word2);
-        //     const auto  found2 = isword2(&dt, word2.c_str());
-        //     CHECK(found2 == Tristate::eWord);
-        //     const auto  ok2 = insert2(&dt, word2.c_str());
-        //     REQUIRE(ok2 == true);
-        // }
-#endif
+        // verify potential movement of entries didn't cause us to not
+        // find words already inserted
+        for (std::size_t j = 0; j <= i; ++j) {
+            const auto& word2  = DICT[j];
+            INFO("After inserting " << word << ", checking " << word2);
+
+            const auto  found2 = isword2(&dt, word2.c_str());
+            CHECK(found2 == Tristate::eWord);
+
+            const auto  ok2    = insert2(&dt, word2.c_str());
+            REQUIRE(ok2 == true);
+        }
     }
 
-#if 1
     for (std::size_t i = 0; i < MISSING.size(); ++i)
     {
         const auto& word = MISSING[i];
@@ -201,26 +197,67 @@ TEST_CASE("Datrie2")
         auto found = isword2(&dt, word.c_str());
         CHECK(found != Tristate::eWord);
     }
-#endif
-
-    std::cout << "SIZE BEFORE: " << dt.chck.size() << "\n";
-    trim2(&dt);
-    std::cout << "SIZE AFTER : " << dt.chck.size() << "\n";
 
 
-#if 0
     for (const auto& word : DICT) {
-        bool ok = insert2(&t, word.c_str());
+        bool ok = insert2(&dt, word.c_str());
         REQUIRE(ok == true);
     }
-#endif
-
-#if 1
     for (const auto& word : DICT) {
         CHECK(isword2(&dt, word.c_str()) == Tristate::eWord);
     }
     for (const auto& word : MISSING) {
         CHECK(isword2(&dt, word.c_str()) != Tristate::eWord);
     }
-#endif
+}
+
+TEST_CASE("Datrie2 get children")
+{
+    std::vector<std::string> dict = {
+        "AA",
+        "AAH",
+        "AAHS",
+        "AAB",
+        "BAT",
+        "BATS",
+        "CRAB",
+        "AAT",
+    };
+
+    Datrie2 dt;
+    REQUIRE(init2(&dt) == true);
+
+    for (const auto& word : dict) {
+        REQUIRE(insert2(&dt, word.c_str()) == true);
+    }
+
+    SECTION("AA children")
+    {
+        Letters result = kids2(&dt, "AA");
+        std::map<char, int> cnts;
+        for (int i = 0; i < result.n_kids; ++i) {
+            cnts[result.kids[i]]++;
+        }
+        CHECK(result.n_kids == 3);
+        CHECK(cnts['B'] == 1);
+        CHECK(cnts['H'] == 1);
+        CHECK(cnts['T'] == 1);
+    }
+
+    SECTION("AAH children")
+    {
+        Letters result = kids2(&dt, "AAH");
+        std::map<char, int> cnts;
+        for (int i = 0; i < result.n_kids; ++i) {
+            cnts[result.kids[i]]++;
+        }
+        CHECK(result.n_kids == 1);
+        CHECK(cnts['S'] == 1);
+    }
+
+    SECTION("MISSING children")
+    {
+        Letters result = kids2(&dt, "MISSING");
+        CHECK(result.n_kids == 0);
+    }
 }

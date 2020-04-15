@@ -318,10 +318,10 @@ Tristate isword2(Datrie2* dt, const char* const word)
     return getterm2(dt, s) ? Tristate::eWord : Tristate::eNotTerm;
 }
 
-Letters childs2(Datrie2* dt, const char* const prefix)
+Letters kids2(Datrie2* dt, const char* const prefix)
 {
     Letters result;
-    result.n_children = 0;
+    result.n_kids = 0;
     int s = 0;
     for (const char* p = prefix; *p != '\0'; ++p) {
         const char ch = *p;
@@ -332,17 +332,16 @@ Letters childs2(Datrie2* dt, const char* const prefix)
         }
         s = t;
     }
-    for (int ch = 0; ch < 26; ++ch) {
-        const int c = ch + 1;
+    for (int c = 1; c <= 27; ++c) {
         const int t = getbase2(dt, s) + c;
         if (getchck2(dt, t) == s) {
-            result.children[result.n_children++] = ch;
+            result.kids[result.n_kids++] = static_cast<char>((c - 1) + 'A');
         }
     }
     return result;
 }
 
-void trim2( Datrie2* dt)
+void trim2(Datrie2* dt)
 {
     assert(dt->chck.size() == dt->base.size());
     int i = static_cast<int>(dt->chck.size());
