@@ -6,7 +6,7 @@
 #include "dawg.h"
 
 template <class F>
-bool foreach_in_dictionary(std::string path, int max_words, F&& f)
+bool foreach_in_dictionary(std::string path, int max_words, std::string action, F&& f)
 {
     int n_words = 0;
     std::string word;
@@ -39,7 +39,7 @@ bool foreach_in_dictionary(std::string path, int max_words, F&& f)
             const bool ok = f(word);
             // const bool ok = insert2(trie, word.c_str());
             if (!ok) {
-                std::cerr << "Failed to insert the word \"" << word << "\"" << std::endl;
+                std::cerr << "Failed to " << action << " the word \"" << word << "\"" << std::endl;
                 return false;
             }
             if (++n_words >= max_words) {
@@ -53,7 +53,7 @@ bool foreach_in_dictionary(std::string path, int max_words, F&& f)
 
 bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX)
 {
-    return foreach_in_dictionary(path, max_words,
+    return foreach_in_dictionary(path, max_words, /*action*/"insert",
         [trie](const std::string& word)
         {
             return insert2(trie, word.c_str());
@@ -61,10 +61,14 @@ bool load_dictionary(Datrie2* trie, std::string path, int max_words=INT_MAX)
 }
 
 bool test_trie(Datrie2* trie, std::string path, int max_words=INT_MAX) {
-    return foreach_in_dictionary(path, max_words,
+    return foreach_in_dictionary(path, max_words, /*action*/"find",
         [trie](const std::string& word)
         {
-            return isword2(trie, word.c_str()) == Tristate::eWord;
+            auto res = isword2(trie, word.c_str());
+            if (res != Tristate::eWord) {
+                std::cerr << "Word: \"" << word << "\": " << tristate_to_str(res) << "\n";
+            }
+            return res == Tristate::eWord;
         });
 }
 
