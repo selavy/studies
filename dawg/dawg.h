@@ -10,7 +10,7 @@ struct Letters
 
 struct Datrie2
 {
-    std::vector<int> base;
+    std::vector<unsigned int> base;
     std::vector<int> chck;
     std::vector<int> term; // TEMP TEMP
 };
@@ -32,8 +32,9 @@ inline const char* tristate_to_str(Tristate t)
     return "Unknown";
 }
 
-bool init2(Datrie2* t);
-bool insert2(Datrie2* t, const char* const word);
+bool     init2(Datrie2* t);
+bool     insert2(Datrie2* t, const char* const word);
 Tristate isword2(Datrie2* t, const char* const word);
-Letters childs2(Datrie2* t, const char* const prefix);
-void trim2(Datrie2* t);
+Letters  childs2(Datrie2* t, const char* const prefix);
+void     trim2(Datrie2* t);
+// void     destroy2(Datrie2* t);

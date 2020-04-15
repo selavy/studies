@@ -10,6 +10,8 @@ constexpr int MISSING_BASE = -1;
 constexpr int UNSET_BASE   =  0;
 constexpr int UNSET_CHCK   = -1;
 constexpr int UNSET_TERM   =  0;
+constexpr int TERM_BIT  = 32;
+constexpr int BASE_MASK = ~(1u << (TERM_BIT - 1));
 
 
 #define DEBUG(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__);
@@ -34,7 +36,7 @@ static int getbase2(const Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < t->base.size() ? t->base[s] : MISSING_BASE;
+    return s < t->base.size() ? static_cast<int>(t->base[s]) : MISSING_BASE;
 }
 
 static int getchck2(const Datrie2* t, int index)
@@ -54,11 +56,12 @@ static bool getterm2(const Datrie2* t, int index)
 static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
 {
     assert(index >= 0);
+    assert(base  >= 0);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
     // DEBUG("SETBASE[%d] = %d", index, base);
-    t->base[s] = base;
+    t->base[s] = static_cast<unsigned int>(base);
     // t->term[s] = term;
 }
 
@@ -113,7 +116,7 @@ bool init2(Datrie2* t)
     // const std::size_t N = 1; // TODO: fix me
     const std::size_t N = 1000; // TODO: fix me
 
-    t->base = std::vector<int>(N, 0);
+    t->base = std::vector<unsigned int>(N, 0u);
     t->chck = std::vector<int>(N, 0);
     t->term = std::vector<int>(N, 0);
     assert(t->base.size() == N);
