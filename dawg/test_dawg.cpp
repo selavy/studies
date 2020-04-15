@@ -281,3 +281,60 @@ TEST_CASE("MAFSA Insert")
         CHECK(!m.isword(word));
     }
 }
+
+TEST_CASE("MAFSA reduce simple word list")
+{
+    const std::vector<std::string> words = {
+        "BLIP",
+        "CAT",
+        "CATNIP",
+    };
+    REQUIRE(std::is_sorted(words.begin(), words.end()));
+
+    const std::vector<std::string> missing = {
+        "CATS",
+        "CATNIPS",
+        "BL",
+        "BLIPS",
+        "CATNI",
+        "CA",
+        "CATN",
+        "CANIP",
+        "CATNIPP",
+    };
+
+    Mafsa m;
+    for (const auto& word : words) {
+        m.insert(word);
+    }
+
+    SECTION("Verify find word correct after insertion")
+    {
+        for (const auto& word : words) {
+            CHECK(m.isword(word));
+        }
+        for (const auto& word : MISSING) {
+            CHECK(!m.isword(word));
+        }
+        for (const auto& word : missing) {
+            CHECK(!m.isword(word));
+        }
+    }
+
+    m.reduce();
+
+#if 1
+    SECTION("Verify find word still correct after reduce")
+    {
+        for (const auto& word : words) {
+            CHECK(m.isword(word));
+        }
+        for (const auto& word : MISSING) {
+            CHECK(!m.isword(word));
+        }
+        for (const auto& word : missing) {
+            CHECK(!m.isword(word));
+        }
+    }
+#endif
+}
