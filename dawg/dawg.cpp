@@ -269,12 +269,13 @@ bool insert2(Datrie2* dt, const char* const word)
                         b_new = b_new + static_cast<int>(start);
                         break;
                     }
-                    // const std::size_t need = 50;
-                    const std::size_t need = 1;
+                    const std::size_t need = 50;
+                    // const std::size_t need = 1;
+                    const std::size_t lookback = 26;
+                    start = dt->chck.size() > lookback ? dt->chck.size() - lookback : 0;
                     dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
                     dt->base.insert(dt->base.end(), need, UNSET_BASE);
                     dt->term.insert(dt->term.end(), need, UNSET_TERM);
-                    start = dt->chck.size() > 30 ? dt->chck.size() - 26 : 0;
                 }
                 assert(0 <= b_new && AsIdx(b_new) < dt->chck.size());
 

@@ -91,6 +91,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "SIZE BEFORE: " << trie.chck.size() << "\n";
+    trim2(&trie);
+    std::cout << "SIZE AFTER : " << trie.chck.size() << "\n";
+
     if (argc > 2) {
         printf("Checking %d words\n", max_words);
         if (test_trie(&trie, filename, max_words)) {
