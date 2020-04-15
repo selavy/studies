@@ -71,16 +71,6 @@ static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
     // t->term[s] = term;
 }
 
-static void clrbase2(Datrie2* t, int index)
-{
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < t->base.size());
-    assert(s < t->term.size());
-    // DEBUG("CLRBASE[%d]", index);
-    t->base[s] = UNSET_BASE;
-}
-
 static void setchck2(Datrie2* t, int index, int base)
 {
     assert(index >= 0);
@@ -88,15 +78,6 @@ static void setchck2(Datrie2* t, int index, int base)
     assert(s < t->chck.size());
     // DEBUG("SETCHECK[%d] = %d", index, base);
     t->chck[s] = base;
-}
-
-static void clrchck2(Datrie2* t, int index)
-{
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < t->chck.size());
-    // DEBUG("CLRCHECK[%d]", index);
-    t->chck[s] = UNSET_CHCK;
 }
 
 static void setterm2(Datrie2* t, int index, bool term)
@@ -108,6 +89,25 @@ static void setterm2(Datrie2* t, int index, bool term)
     t->term[s] = term;
 }
 
+static void clrbase2(Datrie2* t, int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->base.size());
+    assert(s < t->term.size());
+    // DEBUG("CLRBASE[%d]", index);
+    t->base[s] = UNSET_BASE;
+}
+
+static void clrchck2(Datrie2* t, int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < t->chck.size());
+    // DEBUG("CLRCHECK[%d]", index);
+    t->chck[s] = UNSET_CHCK;
+}
+
 static void clrterm2(Datrie2* t, int index)
 {
     assert(index >= 0);
@@ -116,6 +116,11 @@ static void clrterm2(Datrie2* t, int index)
     // DEBUG("CLRTERM[%d]", index);
     t->term[s] = false;
 }
+
+// static bool validbase2(int base)
+// {
+//     return 0 <= base && base < INT_MAX; // MAX_BASE;
+// }
 
 bool init2(Datrie2* t)
 {
@@ -138,21 +143,21 @@ bool init2(Datrie2* t)
     return true;
 }
 
-int findbase(const int* const first, const int* const last, int c, int value)
+int findbase(const int* const first, const int* const last, int c)
 {
     for (const int* p = first; p != last; ++p) {
-        if (p[c] == value) {
+        if (p[c] == UNSET_CHCK) {
             return static_cast<int>(p - first);
         }
     }
     return -1;
 }
 
-int baseworks(const int* const base, const int* const cs, const int* const csend, int value)
+int baseworks(const int* const base, const int* const cs, const int* const csend)
 {
     for (const int* c = cs; c != csend; ++c) {
         assert(1 <= *c && *c <= 27);
-        if (base[*c] != value) {
+        if (base[*c] != UNSET_CHCK) {
             return false;
         }
     }
@@ -160,15 +165,10 @@ int baseworks(const int* const base, const int* const cs, const int* const csend
 }
 
 // TODO: replace with free list
-int findbaserange(
-        const int* const first,
-        const int* const last,
-        const int* const cs,
-        const int* const csend,
-        int value)
+int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
 {
     for (const int* chck = first; chck != last; ++chck) {
-        if (baseworks(chck, cs, csend, value)) {
+        if (baseworks(chck, cs, csend)) {
             return static_cast<int>(chck - first);
         }
     }
@@ -238,31 +238,11 @@ bool insert2(Datrie2* dt, const char* const word)
             continue;
         }
 
-        if (AsIdx(t) >= chck.size()) {
-            // TODO(peter): vector internally will be doubleing in size so here going to
-            //              just request what I actually need. when I remove the vector
-            //              usage, will likely want to do something like:
-            //
-            //     ```
-            //      while (AsIdx(t) < check_size) {
-            //          check = realloc(check, ((check_size * 1.5) + 1) * sizeof(check[0]));
-            //          // same for base
-            //      }
-            //      ```
-
-            assert(dt->chck.size() == dt->base.size());
-            const std::size_t need = AsIdx(t) - dt->chck.size() + 1;
-            dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
-            dt->base.insert(dt->base.end(), need, UNSET_BASE);
-            dt->term.insert(dt->term.end(), need, UNSET_TERM);
-        }
-        assert(0 <= t && AsIdx(t) < chck.size());
-
         // TODO: Can I mark the current branch as a child? Not sure if the logic will work
         //       trying to move an uninstall node.
         int n_childs = cntchilds(dt, s, &childs[0]);
         if (n_childs > 0) {
-            if (check(t) == UNSET_CHCK) { // slot is available
+            if (AsIdx(t) < dt->chck.size() && check(t) == UNSET_CHCK) { // slot is available
                 setchck2(dt, t, s);
                 s = t;
             } else {
@@ -273,13 +253,12 @@ bool insert2(Datrie2* dt, const char* const word)
                     const std::size_t maxc = AsIdx(childs[n_childs - 1]);
                     const std::size_t last = chck.size() - maxc;
                     assert(chck.size() > maxc);
-                    b_new = findbaserange(&chck[start], &chck[last], &childs[0], &childs[n_childs], UNSET_CHCK);
+                    b_new = findbaserange(&chck[start], &chck[last], &childs[0], &childs[n_childs]);
                     if (b_new >= 0) {
                         b_new = b_new + static_cast<int>(start);
                         break;
                     }
                     const std::size_t need = 50;
-                    // const std::size_t need = 1;
                     const std::size_t lookback = 26;
                     start = dt->chck.size() > lookback ? dt->chck.size() - lookback : 0;
                     dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
@@ -298,7 +277,7 @@ bool insert2(Datrie2* dt, const char* const word)
             int b_new;
             for (;;) {
                 const std::size_t chck_end = chck.size() - AsIdx(c);
-                b_new = findbase(&chck[start], &chck[chck_end], c, UNSET_CHCK);
+                b_new = findbase(&chck[start], &chck[chck_end], c);
                 if (b_new >= 0) {
                     b_new = b_new + static_cast<int>(start);
                     break;
