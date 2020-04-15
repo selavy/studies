@@ -6,12 +6,17 @@
 
 #define AsIdx(x) static_cast<std::size_t>(x)
 
+using u32 = uint32_t;
+
 constexpr int MISSING_BASE = -1;
-constexpr int UNSET_BASE   =  0;
-constexpr int UNSET_CHCK   = -1;
-constexpr int UNSET_TERM   =  0;
-constexpr int TERM_BIT  = 32;
-constexpr int BASE_MASK = ~(1u << (TERM_BIT - 1));
+constexpr int MIN_CHILD_OFFSET = 1;
+constexpr int MAX_CHILD_OFFSET = 27;
+constexpr u32 UNSET_BASE =  0;
+constexpr int UNSET_CHCK = INT_MAX - MAX_CHILD_OFFSET;
+constexpr int UNSET_TERM =  0;
+constexpr int TERM_BIT   = 32;
+constexpr int BASE_MASK  = ~(1u << (TERM_BIT - 1));
+constexpr u32 MAX_BASE   =  (1u << (TERM_BIT - 1)) - 1;
 
 
 #define DEBUG(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__);
@@ -57,11 +62,12 @@ static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
 {
     assert(index >= 0);
     assert(base  >= 0);
+    assert(static_cast<u32>(base) < MAX_BASE);
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
     // DEBUG("SETBASE[%d] = %d", index, base);
-    t->base[s] = static_cast<uint32_t>(base);
+    t->base[s] = static_cast<u32>(base);
     // t->term[s] = term;
 }
 
@@ -116,7 +122,7 @@ bool init2(Datrie2* t)
     // const std::size_t N = 1; // TODO: fix me
     const std::size_t N = 1000; // TODO: fix me
 
-    t->base = std::vector<uint32_t>(N, 0u);
+    t->base = std::vector<u32>(N, UNSET_BASE);
     t->chck = std::vector<int>(N, 0);
     t->term = std::vector<int>(N, 0);
     assert(t->base.size() == N);
