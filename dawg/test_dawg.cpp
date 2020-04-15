@@ -266,11 +266,15 @@ TEST_CASE("Datrie2 get children")
 
 TEST_CASE("MAFSA Insert")
 {
+    std::vector<std::string> dict{DICT};
+    std::sort(dict.begin(), dict.end());
+    REQUIRE(std::is_sorted(dict.begin(), dict.end()));
+
     Mafsa m;
-    for (const auto& word : DICT) {
+    for (const auto& word : dict) {
         m.insert(word);
     }
-    for (const auto& word : DICT) {
+    for (const auto& word : dict) {
         CHECK(m.isword(word));
     }
     for (const auto& word : MISSING) {
