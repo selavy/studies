@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 struct Letters
 {
@@ -10,7 +11,7 @@ struct Letters
 
 struct Datrie2
 {
-    std::vector<unsigned int> base;
+    std::vector<uint32_t> base;
     std::vector<int> chck;
     std::vector<int> term; // TEMP TEMP
 };

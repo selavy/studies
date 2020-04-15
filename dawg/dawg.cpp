@@ -61,7 +61,7 @@ static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
     assert(s < t->base.size());
     assert(s < t->term.size());
     // DEBUG("SETBASE[%d] = %d", index, base);
-    t->base[s] = static_cast<unsigned int>(base);
+    t->base[s] = static_cast<uint32_t>(base);
     // t->term[s] = term;
 }
 
@@ -116,7 +116,7 @@ bool init2(Datrie2* t)
     // const std::size_t N = 1; // TODO: fix me
     const std::size_t N = 1000; // TODO: fix me
 
-    t->base = std::vector<unsigned int>(N, 0u);
+    t->base = std::vector<uint32_t>(N, 0u);
     t->chck = std::vector<int>(N, 0);
     t->term = std::vector<int>(N, 0);
     assert(t->base.size() == N);
