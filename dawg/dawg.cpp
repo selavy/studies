@@ -189,6 +189,12 @@ static int cntchilds(Datrie2* dt, int s, int* childs)
     return n_childs;
 }
 
+static void extendarrays(Datrie2* dt, std::size_t need)
+{
+    dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
+    dt->base.insert(dt->base.end(), need, UNSET_CHCK);
+}
+
 void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
 {
     // DEBUG("!!! relocating the base for state s=%d => base[s] from %d -> %d !!!", s, getbase2(dt, s), b);
@@ -261,11 +267,9 @@ bool insert2(Datrie2* dt, const char* const word)
                         b_new = b_new + static_cast<int>(start);
                         break;
                     }
-                    const std::size_t need = 50;
                     const std::size_t lookback = 26;
                     start = dt->chck.size() > lookback ? dt->chck.size() - lookback : 0;
-                    dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
-                    dt->base.insert(dt->base.end(), need, UNSET_BASE);
+                    extendarrays(dt, 50);
                 }
                 assert(0 <= b_new && AsIdx(b_new) < dt->chck.size());
 
@@ -284,10 +288,8 @@ bool insert2(Datrie2* dt, const char* const word)
                     b_new = b_new + static_cast<int>(start);
                     break;
                 }
-                const std::size_t need = 50;
                 start = dt->chck.size();
-                dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
-                dt->base.insert(dt->base.end(), need, UNSET_BASE);
+                extendarrays(dt, 50);
             }
             assert(0 <= b_new && AsIdx(b_new) < dt->chck.size()); // TODO: implement resizing
             // DEBUG("\tSET ch=%c s=%d b_new=%d c=%d check[%d]=%d", ch, s, b_new, c, b_new + c, s);
