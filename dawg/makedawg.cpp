@@ -75,9 +75,16 @@ int main(int argc, char** argv)
         return 1;
     }
     const std::string filename = argv[1];
-    int max_words = 1000;
+    int max_dict_words = INT_MAX;
+    int max_check_words = 1000;
     if (argc >= 3) {
-        max_words = std::max(atoi(argv[2]), 10);
+        max_check_words = std::max(atoi(argv[2]), 10);
+    }
+    if (argc >= 4) {
+        max_dict_words = atoi(argv[3]);
+        if (max_dict_words == 0) {
+            max_dict_words = INT_MAX;
+        }
     }
 
     Datrie2 trie;
@@ -86,7 +93,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (!load_dictionary(&trie, filename)) {
+    if (!load_dictionary(&trie, filename, max_dict_words)) {
         std::cerr << "error: failed to load dictionary" << std::endl;
         return 1;
     }
@@ -96,8 +103,8 @@ int main(int argc, char** argv)
     std::cout << "SIZE AFTER : " << trie.chck.size() << "\n";
 
     if (argc > 2) {
-        printf("Checking %d words\n", max_words);
-        if (test_trie(&trie, filename, max_words)) {
+        printf("Checking %d words\n", max_check_words);
+        if (test_trie(&trie, filename, max_check_words)) {
             printf("Passed!\n");
         } else {
             printf("Failed!\n");

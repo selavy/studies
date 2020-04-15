@@ -8,15 +8,18 @@
 
 using u32 = uint32_t;
 
-constexpr int MISSING_BASE = -1;
+// assumption: (UNSET_BASE   & TERM_MASK) == 0
+// assumption: (MISSING_BASE & TERM_MASK) == 0
+constexpr int TERM_BIT     = 31;
+constexpr u32 TERM_MASK    = 1u << TERM_BIT;
+constexpr u32 BASE_MASK    = ~TERM_MASK;
+constexpr u32 MAX_BASE     = TERM_MASK - 1;
+constexpr int MISSING_BASE = static_cast<int>(MAX_BASE);
 constexpr int MIN_CHILD_OFFSET = 1;
 constexpr int MAX_CHILD_OFFSET = 27;
-constexpr u32 UNSET_BASE =  0;
-constexpr int UNSET_CHCK = INT_MAX - MAX_CHILD_OFFSET;
-constexpr int UNSET_TERM =  0;
-constexpr int TERM_BIT   = 32;
-constexpr int BASE_MASK  = ~(1u << (TERM_BIT - 1));
-constexpr u32 MAX_BASE   =  (1u << (TERM_BIT - 1)) - 1;
+constexpr u32 UNSET_BASE   =  0;
+constexpr int UNSET_CHCK   = INT_MAX - MAX_CHILD_OFFSET;
+constexpr int UNSET_TERM   =  0;
 
 
 #define DEBUG(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__);
@@ -41,7 +44,11 @@ static int getbase2(const Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < t->base.size() ? static_cast<int>(t->base[s]) : MISSING_BASE;
+    if (s < t->base.size()) {
+        return static_cast<int>(t->base[s] & BASE_MASK);
+    } else {
+        return MISSING_BASE;
+    }
 }
 
 static int getchck2(const Datrie2* t, int index)
@@ -58,7 +65,7 @@ static bool getterm2(const Datrie2* t, int index)
     return s < t->term.size() ? t->term[s] != 0 : false;
 }
 
-static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
+static void setbase2(Datrie2* t, int index, int base)
 {
     assert(index >= 0);
     assert(base  >= 0);
@@ -66,9 +73,9 @@ static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
     auto s = static_cast<std::size_t>(index);
     assert(s < t->base.size());
     assert(s < t->term.size());
+    assert((UNSET_BASE & TERM_MASK) == 0);
+    t->base[s] = (t->base[s] & TERM_MASK) | static_cast<u32>(base);
     // DEBUG("SETBASE[%d] = %d", index, base);
-    t->base[s] = static_cast<u32>(base);
-    // t->term[s] = term;
 }
 
 static void setchck2(Datrie2* t, int index, int base)
