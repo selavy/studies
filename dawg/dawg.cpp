@@ -30,28 +30,28 @@ int iconv(char c) {
     return result;
 }
 
-[[maybe_unused]] static int getbase2(const Datrie2* t, int index)
+static int getbase2(const Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < t->base.size() ? t->base[s] : MISSING_BASE;
 }
 
-[[maybe_unused]] static int getchck2(const Datrie2* t, int index)
+static int getchck2(const Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < t->chck.size() ? t->chck[s] : UNSET_CHCK;
 }
 
-[[maybe_unused]] static bool getterm2(const Datrie2* t, int index)
+static bool getterm2(const Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < t->term.size() ? t->term[s] != 0 : false;
 }
 
-[[maybe_unused]] static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
+static void setbase2(Datrie2* t, int index, int base /*, bool term*/)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -62,7 +62,7 @@ int iconv(char c) {
     // t->term[s] = term;
 }
 
-[[maybe_unused]] static void clrbase2(Datrie2* t, int index)
+static void clrbase2(Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -72,7 +72,7 @@ int iconv(char c) {
     t->base[s] = UNSET_BASE;
 }
 
-[[maybe_unused]] static void setchck2(Datrie2* t, int index, int base)
+static void setchck2(Datrie2* t, int index, int base)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -81,7 +81,7 @@ int iconv(char c) {
     t->chck[s] = base;
 }
 
-[[maybe_unused]] static void clrchck2(Datrie2* t, int index)
+static void clrchck2(Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -90,7 +90,7 @@ int iconv(char c) {
     t->chck[s] = UNSET_CHCK;
 }
 
-[[maybe_unused]] static void setterm2(Datrie2* t, int index, bool term)
+static void setterm2(Datrie2* t, int index, bool term)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -99,7 +99,7 @@ int iconv(char c) {
     t->term[s] = term;
 }
 
-[[maybe_unused]] static void clrterm2(Datrie2* t, int index)
+static void clrterm2(Datrie2* t, int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -351,12 +351,9 @@ Letters childs2(Datrie2* dt, const char* const prefix)
     return result;
 }
 
-void trim2([[maybe_unused]] Datrie2* dt)
+void trim2( Datrie2* dt)
 {
     assert(dt->chck.size() == dt->base.size());
-#if 1
-    // std::size_t n = dt->chck.size();
-    // std::size_t i = n;
     int i = static_cast<int>(dt->chck.size());
     while (i-- > 10) {
         std::size_t ii = AsIdx(i);
@@ -371,5 +368,4 @@ void trim2([[maybe_unused]] Datrie2* dt)
     dt->chck.erase(dt->chck.cbegin() + i, dt->chck.cend());
     dt->base.erase(dt->base.cbegin() + i, dt->base.cend());
     dt->term.erase(dt->term.cbegin() + i, dt->term.cend());
-#endif
 }
