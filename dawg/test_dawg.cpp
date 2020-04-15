@@ -288,6 +288,8 @@ TEST_CASE("MAFSA reduce simple word list")
         "BLIP",
         "CAT",
         "CATNIP",
+        "CLIP",
+        "LIP",
     };
     REQUIRE(std::is_sorted(words.begin(), words.end()));
 
@@ -321,7 +323,9 @@ TEST_CASE("MAFSA reduce simple word list")
         }
     }
 
+    std::cout << "# of states before: " << m.numstates() << "\n";
     m.reduce();
+    std::cout << "# of states after : " << m.numstates() << "\n";
 
 #if 1
     SECTION("Verify find word still correct after reduce")

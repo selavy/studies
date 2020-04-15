@@ -52,6 +52,19 @@ bool Mafsa::isword(const char* const word) const
     return ns[static_cast<Node::KidIdx>(s)].term;
 }
 
+int Mafsa::numstates() const
+{
+    int count = 0;
+    for (const auto& n : ns) {
+        if (0 <= n.val && n.val <= 26) {
+            ++count;
+        } else {
+            assert(n.val == -1);
+        }
+    }
+    return count;
+}
+
 bool Mafsa::nodecmp(const Node& a, const Node& b)
 {
     // from https://www.aclweb.org/anthology/J00-1002.pdf pg. 7:
@@ -113,18 +126,18 @@ void Mafsa::reduce()
     std::vector<int>   reg;
     visit_post(0, [&](int ss)
     {
-        if (ss == 0) {
-            return;
-        }
         auto s = static_cast<Node::KidIdx>(ss);
         auto& n = ns[s];
-
         for (auto it = n.kids.begin(); it != n.kids.end(); ++it) {
             auto found = rep.find(it->second);
             if (found != rep.end()) {
                 std::cout << "MODIFING CHILD LINK FOR " << tochar(it->first) << " FROM " << it->second << " TO " << found->second << "\n";
                 it->second = found->second;
             }
+        }
+
+        if (s == 0) {
+            return;
         }
 
         std::cout << "Visiting: " << n << std::endl;

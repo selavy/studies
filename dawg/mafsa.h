@@ -23,6 +23,8 @@ struct Mafsa
     bool isword(const char* const word) const;
     bool isword(const std::string& word) const { return isword(word.c_str()); }
 
+    int numstates() const;
+
     void reduce();
 
     template <class F>
