@@ -11,11 +11,12 @@ struct Mafsa
     {
         using Kids   = std::map<int, int>;
         using KidIdx = typename Kids::size_type;
-        char val;
+        int  val;
         bool term;
         Kids kids;
     };
 
+    Mafsa();
     void insert(const char* const word);
     void insert(const std::string& word) { insert(word.c_str()); }
     bool isword(const char* const word) const;

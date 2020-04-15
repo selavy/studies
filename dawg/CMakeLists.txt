@@ -11,6 +11,7 @@ target_link_libraries(test_dawg
     PUBLIC
         cxx_project_options
         Dawg
+        Mafsa
         Catch
         # project_warnings
 )

@@ -1,9 +1,35 @@
 #include "mafsa.h"
 #include "iconv.h"
 
-void Mafsa::insert([[maybe_unused]] const char* const word)
+Mafsa::Mafsa()
 {
-    // TODO(peter): implement
+    ns.emplace_back();
+    auto& newnode = ns.back();
+    newnode.val  = -1;
+    newnode.term = false;
+}
+
+void Mafsa::insert(const char* const word)
+{
+    int s = 0;
+    for (const char* p = word; *p != '\0'; ++p) {
+        const char ch = *p;
+        const int c = iconv(ch);
+        auto& node = ns[static_cast<Node::KidIdx>(s)];
+        auto it = node.kids.find(c);
+        if (it == node.kids.end()) {
+            const int t = static_cast<int>(ns.size());
+            ns.emplace_back();
+            auto& newnode = ns.back();
+            newnode.val  = c;
+            newnode.term = false;
+            ns[static_cast<Node::KidIdx>(s)].kids[c] = t;
+            s = t;
+        } else {
+            s = it->second;
+        }
+    }
+    ns[static_cast<Node::KidIdx>(s)].term = true;
 }
 
 bool Mafsa::isword(const char* const word) const

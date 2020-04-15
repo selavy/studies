@@ -263,3 +263,17 @@ TEST_CASE("Datrie2 get children")
         CHECK(result.n_kids == 0);
     }
 }
+
+TEST_CASE("MAFSA Insert")
+{
+    Mafsa m;
+    for (const auto& word : DICT) {
+        m.insert(word);
+    }
+    for (const auto& word : DICT) {
+        CHECK(m.isword(word));
+    }
+    for (const auto& word : MISSING) {
+        CHECK(!m.isword(word));
+    }
+}
