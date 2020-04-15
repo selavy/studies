@@ -37,4 +37,4 @@ bool     insert2(Datrie2* t, const char* const word);
 Tristate isword2(Datrie2* t, const char* const word);
 Letters  kids2(Datrie2* t, const char* const prefix);
 void     trim2(Datrie2* t);
-// void     destroy2(Datrie2* t);
+void     destroy2(Datrie2* t);

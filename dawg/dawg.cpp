@@ -191,8 +191,8 @@ static int cntchilds(Datrie2* dt, int s, int* childs)
 
 static void extendarrays(Datrie2* dt, std::size_t need)
 {
-    dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
     dt->base.insert(dt->base.end(), need, UNSET_CHCK);
+    dt->chck.insert(dt->chck.end(), need, UNSET_CHCK);
 }
 
 void relocate2(Datrie2* dt, int s, int b, int* childs, int n_childs)
@@ -352,6 +352,12 @@ void trim2(Datrie2* dt)
         }
     }
     ++i;
-    dt->chck.erase(dt->chck.cbegin() + i, dt->chck.cend());
     dt->base.erase(dt->base.cbegin() + i, dt->base.cend());
+    dt->chck.erase(dt->chck.cbegin() + i, dt->chck.cend());
+}
+
+void destroy2(Datrie2* dt)
+{
+    dt->base.clear();
+    dt->chck.clear();
 }
