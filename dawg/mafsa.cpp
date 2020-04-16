@@ -246,50 +246,27 @@ bool SDFA::isword(const char* const word) const
     result.tt = std::vector<u32>(n_states * NumLetters, NOTRANSITION);
     auto& tt = result.tt;
     assert(tt.size() == (n_states * NumLetters));
-
-    std::map<std::size_t, u32> sconv; // <state number in MA-FSA> -> <state number in TT>
-
-    // number mafsa states
-    u32 sdfa_index = 0;
-    for (std::size_t mafsa_index = 0; mafsa_index < m.ns.size(); ++mafsa_index) {
-        if (!m.validstate(mafsa_index)) {
-            continue;
-        }
-        sconv[mafsa_index] = sdfa_index++;
-    }
-
-    // assign into TT
-    for (std::size_t mafsa_index = 0; mafsa_index < m.ns.size(); ++mafsa_index) {
-        if (!m.validstate(mafsa_index)) {
-            continue;
-        }
-
-        const auto& state = m.ns[mafsa_index];
-        const auto midx = mafsa_index;
-        const auto sidx = sconv[midx];
-        assert(sconv.count(midx));
-        assert(sidx != 0 || midx == 0);
-        const std::size_t base = sidx * NumLetters;
+    for (std::size_t index = 0; index < m.ns.size(); ++index) {
+        assert(m.validstate(index));
+        const auto& state = m.ns[index];
+        const std::size_t base = index * NumLetters;
         assert((base + NumLetters - 1) < tt.size());
-
         for (auto [val, next_state] : state.kids) {
             assert(0 <= val && static_cast<u32>(val) <= NumLetters);
             const auto off = static_cast<std::size_t>(val);
             const auto idx = base + off;
-            const u32  next_base = sconv[static_cast<std::size_t>(next_state)] * NumLetters;
+            const u32  next_base = static_cast<u32>(next_state) * NumLetters;
             assert(next_base != 0);
             assert(idx       < tt.size());
             assert(next_base < tt.size());
             tt[idx] = next_base;
         }
-
         if (state.term) {
             for (u32 i = 0; i < NumLetters; ++i) {
                 tt[base + i] |= TERM_MASK;
             }
         }
     }
-
     return result;
 }
 
