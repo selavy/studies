@@ -289,14 +289,14 @@ int DATrie::base(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < base_.size() ? static_cast<int>(base_[s] & BASE_MASK) : MISSING_BASE;
+    return s < base_.size() ? static_cast<int>(base_[s] >> 1) : NO_BASE;
 }
 
 int DATrie::check(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < check_.size() ? check_[s] : UNSET_CHCK;
+    return s < check_.size() ? check_[s] : UNSET_CHECK;
 }
 
 int DATrie::term(int index) const

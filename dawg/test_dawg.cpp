@@ -5,6 +5,8 @@
 #include <set>
 #include <map>
 #include <iostream>
+#include <random>
+#include <cstdlib>
 #include "dawg.h"
 
 #include "mafsa.h"
@@ -396,6 +398,60 @@ inline std::ostream& operator<<(std::ostream& os, const Mafsa::Node& n)
     return os;
 }
 
+
+using u32 = uint32_t;
+
+struct Base1
+{
+    bool term : 1;
+    int  base : 31;
+};
+static_assert(sizeof(Base1) == 4);
+
+using Base2 = u32;
+
+[[maybe_unused]] constexpr int getbase1(const Base1* bases, std::size_t n) noexcept
+{
+    return bases[n].base;
+}
+
+[[maybe_unused]] constexpr int getbase2(const Base2* bases, std::size_t n) noexcept
+{
+    return static_cast<int>(bases[n]) >> 1;
+}
+
+[[maybe_unused]] constexpr bool getterm1(const Base1* bases, std::size_t n) noexcept
+{
+    return bases[n].term;
+}
+
+[[maybe_unused]] constexpr bool getterm2(const Base2* bases, std::size_t n) noexcept
+{
+    return (bases[n] & 0x1u) != 0;
+}
+
+[[maybe_unused]] constexpr void setbase1(Base1* bases, std::size_t n, int val) noexcept
+{
+    bases[n].base = val;
+}
+
+[[maybe_unused]] constexpr void setterm1(Base1* bases, std::size_t n, bool val) noexcept
+{
+    bases[n].term = val;
+}
+
+[[maybe_unused]] constexpr void setbase2(Base2* bases, std::size_t n, int val) noexcept
+{
+    uint32_t uval = static_cast<uint32_t>(val);
+    bases[n] = (uval << 1) | (bases[n] & 0x1u);
+}
+
+[[maybe_unused]] constexpr void setterm2(Base2* bases, std::size_t n, bool val) noexcept
+{
+    uint32_t uval = val & 0x1u;
+    bases[n] = (bases[n] & ~0x1u) | uval;
+}
+
 TEST_CASE("DATRIE from MA-FSA")
 {
     const std::vector<std::string> words = {
@@ -417,4 +473,42 @@ TEST_CASE("DATRIE from MA-FSA")
     for (std::size_t i = 0; i < m.ns.size(); ++i) {
         std::cout << i << ": " << m.ns[i] << "\n";
     }
+
+    SECTION("Unsigned magic")
+    {
+        constexpr int N = 16;
+        // 32 bit base => 30 bits of magnitude, 1 sign bit, 1 term bit
+        constexpr int MaxValue = 1 << 30;
+        Base1 b1s[N];
+        Base2 b2s[N];
+        std::vector<int>  correct_bases;
+        std::vector<bool> correct_terms;
+
+        srand(42);
+        for (int iter = 0; iter < 100000; ++iter) {
+            correct_bases.clear();
+            correct_terms.clear();
+
+            for (int i = 0; i < N; ++i) {
+                const int sign = rand() % 2 == 0 ? 1 : -1;
+                const int uval = (rand() % MaxValue) * sign;
+                const bool term = rand() % 2 == 0;
+                correct_bases.push_back(uval);
+                correct_terms.push_back(term);
+                setbase1(b1s, i, uval);
+                setbase2(b2s, i, uval);
+                setterm1(b1s, i, term);
+                setterm2(b2s, i, term);
+            }
+
+            for (int i = 0; i < N; ++i) {
+                CHECK(getbase1(b1s, i) == correct_bases[i]);
+                CHECK(getbase2(b2s, i) == correct_bases[i]);
+                CHECK(getterm1(b1s, i) == correct_terms[i]);
+                CHECK(getterm2(b2s, i) == correct_terms[i]);
+            }
+        }
+    }
+
+    printf("Passed!\n");
 }

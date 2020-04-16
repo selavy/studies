@@ -72,16 +72,14 @@ struct DATrie
 {
     using u32 = uint32_t;
 
+    // term state is first bit in base
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
-    static constexpr int TERM_BIT     = 31;
-    static constexpr u32 TERM_MASK    = 1u << TERM_BIT;
-    static constexpr u32 BASE_MASK    = ~TERM_MASK;
-    static constexpr u32 MAX_BASE     = (1u << 30) - MAX_CHILD_OFFSET; // exclusive
-    static constexpr int MISSING_BASE = static_cast<int>(MAX_BASE);
-    static constexpr u32 UNSET_BASE   =  0;
-    static constexpr int UNSET_CHCK   = MAX_BASE;
-    static constexpr int UNSET_TERM   =  0;
+    static constexpr int MAX_BASE    = (1u << 30) - MAX_CHILD_OFFSET; // exclusive
+    static constexpr int NO_BASE     = static_cast<int>(MAX_BASE);
+    static constexpr u32 UNSET_BASE  = 0;
+    static constexpr int UNSET_CHECK = MAX_BASE;
+    static constexpr u32 TERM_MASK   = 0x1u;
 
     std::vector<u32> base_;
     std::vector<int> check_;
