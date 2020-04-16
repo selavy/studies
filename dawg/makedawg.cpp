@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if (0) {
+    if (1) {
         // DATrie
         std::cout << "Using DATrie implementation...\n";
         Datrie2 trie;
@@ -133,6 +133,13 @@ int main(int argc, char** argv)
                 printf("Failed!\n");
             }
         }
+
+        auto& base = trie.base;
+        auto& chck = trie.chck;
+        std::cout << "DATRIE2 memory usage:\n"
+            << "base size = " << base.size() << " x 4 = " << (base.size() * 4) << "\n"
+            << "chck size = " << chck.size() << " x 4 = " << (chck.size() * 4) << "\n"
+            << "total size = " << (base.size() + chck.size()) << " x 4 = " << ((base.size() + chck.size()) * 4) << "\n";
     } else {
         // MAFSA
         std::cout << "Using MAFSA implementation...\n";
@@ -168,6 +175,7 @@ int main(int argc, char** argv)
             std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
             return 1;
         }
+        std::cout << "SDFA memory usage: " << tt.size() << " x 4 = " << (tt.size() * 4) << std::endl;
     }
 
     return 0;
