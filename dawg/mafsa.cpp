@@ -255,3 +255,39 @@ bool SDFA::isword(const char* const word) const
 
     return result;
 }
+
+bool DATrie::isword(const char* const word) const
+{
+    int s = 0;
+    for (const char* p = word; *p != '\0'; ++p) {
+        const char ch = *p;
+        const int  c  = iconv(ch) + 1;
+        const int  t  = base(s) + c;
+        if (check(t) != s) {
+            return false;
+        }
+        s = t;
+    }
+    return term(s);
+}
+
+int DATrie::base(int index) const
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    return s < base_.size() ? static_cast<int>(base_[s] & BASE_MASK) : MISSING_BASE;
+}
+
+int DATrie::check(int index) const
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    return s < check_.size() ? check_[s] : UNSET_CHCK;
+}
+
+int DATrie::term(int index) const
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    return s < base_.size() ? (base_[s] & TERM_MASK) != 0 : false;
+}
