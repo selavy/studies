@@ -4,6 +4,8 @@
 #include <climits>
 #include <memory>
 #include "dawg.h"
+#include "mafsa.h"
+
 
 template <class F>
 bool foreach_in_dictionary(std::string path, int max_words, std::string action, F&& f)
@@ -72,6 +74,23 @@ bool test_trie(Datrie2* trie, std::string path, int max_words=INT_MAX) {
         });
 }
 
+bool load_dict_mafsa(Mafsa& m, std::string path, int max_words=INT_MAX) {
+    return foreach_in_dictionary(path, max_words, /*action*/"insert",
+        [&m](const std::string& word)
+        {
+            m.insert(word);
+            return true;
+        });
+
+}
+
+template <class T>
+bool test_dfa(const T& m, std::string path, int max_words=INT_MAX) {
+    return foreach_in_dictionary(path, max_words, /*action*/"find",
+        [&m](const std::string& word) { return m.isword(word); });
+
+}
+
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
@@ -91,27 +110,63 @@ int main(int argc, char** argv)
         }
     }
 
-    Datrie2 trie;
-    if (!init2(&trie)) {
-        std::cerr << "error: failed to initialize trie" << std::endl;
-        return 1;
-    }
+    if (0) {
+        // DATrie
+        std::cout << "Using DATrie implementation...\n";
+        Datrie2 trie;
+        if (!init2(&trie)) {
+            std::cerr << "error: failed to initialize trie" << std::endl;
+            return 1;
+        }
+        if (!load_dictionary(&trie, filename, max_dict_words)) {
+            std::cerr << "error: failed to load dictionary" << std::endl;
+            return 1;
+        }
+        std::cout << "SIZE BEFORE: " << trie.chck.size() << "\n";
+        trim2(&trie);
+        std::cout << "SIZE AFTER : " << trie.chck.size() << "\n";
+        if (argc > 2) {
+            printf("Checking %d words\n", max_check_words);
+            if (test_trie(&trie, filename, max_check_words)) {
+                printf("Passed!\n");
+            } else {
+                printf("Failed!\n");
+            }
+        }
+    } else {
+        // MAFSA
+        std::cout << "Using MAFSA implementation...\n";
+        Mafsa m;
+        if (!load_dict_mafsa(m, filename, max_dict_words)) {
+            std::cerr << "error: failed to load dictionary" << std::endl;
+            return 1;
+        }
 
-    if (!load_dictionary(&trie, filename, max_dict_words)) {
-        std::cerr << "error: failed to load dictionary" << std::endl;
-        return 1;
-    }
+        std::cout << "Checking words...\n";
+        if (!test_dfa(m, filename, max_check_words)) {
+            std::cerr << "error: failed to find all inserted words" << std::endl;
+            return 1;
+        }
 
-    std::cout << "SIZE BEFORE: " << trie.chck.size() << "\n";
-    trim2(&trie);
-    std::cout << "SIZE AFTER : " << trie.chck.size() << "\n";
+        std::cout << "Reducing MAFSA...\n";
+        std::cout << "# state before = " << m.numstates() << "\n";
+        m.reduce();
+        std::cout << "# state after  = " << m.numstates() << "\n";
 
-    if (argc > 2) {
-        printf("Checking %d words\n", max_check_words);
-        if (test_trie(&trie, filename, max_check_words)) {
-            printf("Passed!\n");
-        } else {
-            printf("Failed!\n");
+        std::cout << "Checking words...\n";
+        if (!test_dfa(m, filename, max_check_words)) {
+            std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
+            return 1;
+        }
+
+        std::cout << "MAFSA Passed!" << std::endl;
+
+
+        SDFA tt = SDFA::make(m);
+        std::cout << "Checking words...\n";
+        if (!test_dfa(m, filename, max_check_words)) {
+            std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
+            return 1;
         }
     }
 

@@ -342,3 +342,44 @@ TEST_CASE("MAFSA reduce simple word list")
     }
 #endif
 }
+
+TEST_CASE("SDFA")
+{
+    const std::vector<std::string> words = {
+        "BLIP",
+        "CAT",
+        "CATNIP",
+        "CLIP",
+        "LIP",
+    };
+    REQUIRE(std::is_sorted(words.begin(), words.end()));
+
+    const std::vector<std::string> missing = {
+        "CATS",
+        "CATNIPS",
+        "BL",
+        "BLIPS",
+        "CATNI",
+        "CA",
+        "CATN",
+        "CANIP",
+        "CATNIPP",
+    };
+
+    Mafsa m;
+    for (const auto& word : words) {
+        m.insert(word);
+    }
+
+    SDFA tt = SDFA::make(m);
+
+    for (const auto& word : words) {
+        CHECK(tt.isword(word));
+    }
+    for (const auto& word : MISSING) {
+        CHECK(!tt.isword(word));
+    }
+    for (const auto& word : missing) {
+        CHECK(!tt.isword(word));
+    }
+}

@@ -23,5 +23,6 @@ target_link_libraries(makedawg
     PUBLIC
         cxx_project_options
         Dawg
+        Mafsa
         project_warnings
 )

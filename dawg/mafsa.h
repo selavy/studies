@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <cstdint>
 
 
 struct Mafsa
@@ -25,6 +26,8 @@ struct Mafsa
 
     int numstates() const;
 
+    bool validstate(std::size_t i) const;
+
     void reduce();
 
     template <class F>
@@ -43,3 +46,24 @@ struct Mafsa
     std::vector<Node> ns;
 };
 
+
+struct SDFA
+{
+    using u32 = uint32_t;
+
+    constexpr static u32 TERM_BIT     = 31;
+    constexpr static u32 TERM_MASK    = 1u << TERM_BIT;
+    constexpr static u32 INDEX_MASK   = ~TERM_MASK;
+    constexpr static u32 NOTRANSITION = 0;
+    constexpr static u32 NumLetters   = 26;
+
+    // after reducing MA-FSA, should be able to have n_states * n_letters in memory
+    // upper bit in t[x] indicates if x is a terminal state
+    std::vector<u32> tt;
+
+    bool isword(const char* const word) const;
+    bool isword(const std::string& word) const { return isword(word.c_str()); }
+    std::size_t size() const { return tt.size(); }
+
+    static SDFA make(const Mafsa& m);
+};
