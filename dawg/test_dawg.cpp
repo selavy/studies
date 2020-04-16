@@ -7,6 +7,7 @@
 #include <iostream>
 #include <random>
 #include <cstdlib>
+#include <cstring>
 #include "dawg.h"
 
 #include "mafsa.h"
@@ -410,46 +411,68 @@ static_assert(sizeof(Base1) == 4);
 
 using Base2 = u32;
 
-[[maybe_unused]] constexpr int getbase1(const Base1* bases, std::size_t n) noexcept
+int getbase1(const Base1* bases, std::size_t n) noexcept
 {
     return bases[n].base;
 }
 
-[[maybe_unused]] constexpr int getbase2(const Base2* bases, std::size_t n) noexcept
+int getbase2(const Base2* bases, std::size_t n) noexcept
 {
     return static_cast<int>(bases[n]) >> 1;
 }
 
-[[maybe_unused]] constexpr bool getterm1(const Base1* bases, std::size_t n) noexcept
+bool getterm1(const Base1* bases, std::size_t n) noexcept
 {
     return bases[n].term;
 }
 
-[[maybe_unused]] constexpr bool getterm2(const Base2* bases, std::size_t n) noexcept
+bool getterm2(const Base2* bases, std::size_t n) noexcept
 {
     return (bases[n] & 0x1u) != 0;
 }
 
-[[maybe_unused]] constexpr void setbase1(Base1* bases, std::size_t n, int val) noexcept
+void setbase1(Base1* bases, std::size_t n, int val) noexcept
 {
     bases[n].base = val;
 }
 
-[[maybe_unused]] constexpr void setterm1(Base1* bases, std::size_t n, bool val) noexcept
+void setterm1(Base1* bases, std::size_t n, bool val) noexcept
 {
     bases[n].term = val;
 }
 
-[[maybe_unused]] constexpr void setbase2(Base2* bases, std::size_t n, int val) noexcept
+void setbase2(Base2* bases, std::size_t n, int val) noexcept
 {
     uint32_t uval = static_cast<uint32_t>(val);
     bases[n] = (uval << 1) | (bases[n] & 0x1u);
 }
 
-[[maybe_unused]] constexpr void setterm2(Base2* bases, std::size_t n, bool val) noexcept
+void setterm2(Base2* bases, std::size_t n, bool val) noexcept
 {
     uint32_t uval = val & 0x1u;
     bases[n] = (bases[n] & ~0x1u) | uval;
+}
+
+void setbase_mimic_clang(Base2* rdi, std::size_t rsi, int edx) noexcept
+{
+    uint64_t rdx;
+    uint32_t eax;
+
+    rdx = static_cast<uint64_t>(edx);
+    eax = rdi[rsi];                           // mov eax, dword ptr [rdi + 4*rsi]
+    eax &= 1;                                 // and eax, 1
+    eax = static_cast<uint64_t>(eax) + 2*rdx; // lea eax, [rax + 2*rdx]
+    rdi[rsi] = eax;                           // move dword ptr [rdi + 4*rsi], eax
+}
+
+void setterm_mimic_clang(Base2* rdi, std::size_t rsi, bool edx) noexcept
+{
+    uint32_t eax;
+
+    eax = rdi[rsi]; // move eax, dword ptr [rdi + 4*rsi]
+    eax &= ~0x1u;   // and eax, -2
+    eax |= edx;     // or eax, edx
+    rdi[rsi] = eax; // move dword ptr [rdi + 4*rsi], eax
 }
 
 TEST_CASE("DATRIE from MA-FSA")
@@ -481,11 +504,15 @@ TEST_CASE("DATRIE from MA-FSA")
         constexpr int MaxValue = 1 << 30;
         Base1 b1s[N];
         Base2 b2s[N];
+        Base2 mimic_clangs[N];
+        memset(b1s, 0, sizeof(b1s));
+        memset(b2s, 0, sizeof(b2s));
+        memset(mimic_clangs, 0, sizeof(mimic_clangs));
         std::vector<int>  correct_bases;
         std::vector<bool> correct_terms;
 
         srand(42);
-        for (int iter = 0; iter < 100000; ++iter) {
+        for (int iter = 0; iter < 10000; ++iter) {
             correct_bases.clear();
             correct_terms.clear();
 
@@ -495,17 +522,24 @@ TEST_CASE("DATRIE from MA-FSA")
                 const bool term = rand() % 2 == 0;
                 correct_bases.push_back(uval);
                 correct_terms.push_back(term);
+
                 setbase1(b1s, i, uval);
                 setbase2(b2s, i, uval);
+                setbase_mimic_clang(mimic_clangs, i, uval);
+
                 setterm1(b1s, i, term);
                 setterm2(b2s, i, term);
+                setterm_mimic_clang(mimic_clangs, i, term);
             }
 
             for (int i = 0; i < N; ++i) {
                 CHECK(getbase1(b1s, i) == correct_bases[i]);
                 CHECK(getbase2(b2s, i) == correct_bases[i]);
+                CHECK(getbase2(mimic_clangs, i) == correct_bases[i]);
+
                 CHECK(getterm1(b1s, i) == correct_terms[i]);
                 CHECK(getterm2(b2s, i) == correct_terms[i]);
+                CHECK(getterm2(mimic_clangs, i) == correct_terms[i]);
             }
         }
     }
