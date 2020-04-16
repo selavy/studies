@@ -383,3 +383,38 @@ TEST_CASE("SDFA")
         CHECK(!tt.isword(word));
     }
 }
+
+inline std::ostream& operator<<(std::ostream& os, const Mafsa::Node& n)
+{
+    [[maybe_unused]] auto tochar  = [](int v)  { return static_cast<char>(v + 'A'); };
+    [[maybe_unused]] auto boolstr = [](bool v) { return v ? "T" : "F"; };
+    os << "Node(" << tochar(n.val) << ", " << boolstr(n.term) << ", [ ";
+    for (auto [val, kid] : n.kids) {
+        os << "(" << tochar(val) << ", " << kid << ") ";
+    }
+    os << "])";
+    return os;
+}
+
+TEST_CASE("DATRIE from MA-FSA")
+{
+    const std::vector<std::string> words = {
+        "BAG",
+        "BAT",
+        "BLIP",
+        "CAT",
+        "CLIP",
+        "LIP",
+    };
+
+    Mafsa m;
+    for (const auto& word : words) {
+        m.insert(word);
+    }
+    m.reduce();
+
+    std::cout << "Nodes:\n";
+    for (std::size_t i = 0; i < m.ns.size(); ++i) {
+        std::cout << i << ": " << m.ns[i] << "\n";
+    }
+}

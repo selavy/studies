@@ -306,6 +306,9 @@ int DATrie::term(int index) const
     return s < base_.size() ? (base_[s] & TERM_MASK) != 0 : false;
 }
 
-// /*static*/ DATrie DATrie::make(const Mafsa& m)
-// {
-// }
+#if 0
+/*static*/ DATrie DATrie::make(const Mafsa& m)
+{
+    std::map<std::size_t, std::size_t> conv; // state # -> base index
+}
+#endif
