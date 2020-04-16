@@ -183,6 +183,43 @@ void Mafsa::reduce()
         ns[t].val = -1;
         ns[t].term = false;
     }
+
+    std::size_t new_size;
+    std::map<std::size_t, std::size_t> conv;  // old -> new
+    std::map<std::size_t, std::size_t> rconv; // new -> old
+    { // re-number states
+        std::size_t next_state = 0;
+        for (std::size_t i = 0; i < ns.size(); ++i) {
+            if (!validstate(i)) {
+                continue;
+            }
+            conv[i]           = next_state;
+            rconv[next_state] = i;
+            ++next_state;
+        }
+        new_size = next_state;
+    }
+
+    std::vector<Node> newnodes(new_size);
+    assert(newnodes.size() == new_size);
+    for (std::size_t i = 0; i < new_size; ++i) {
+        const auto newidx = i;
+        const auto oldidx = rconv[newidx];
+        assert(rconv.count(newidx));
+        assert(conv.count(oldidx));
+        assert(ns[oldidx].val != -1 || oldidx == 0);
+
+        newnodes[newidx].term = ns[oldidx].term;
+        newnodes[newidx].val  = ns[oldidx].val;
+        for (const auto [val, kid] : ns[oldidx].kids) {
+            const auto oldkididx = static_cast<std::size_t>(kid);
+            const auto newkididx = conv[oldkididx];
+            assert(conv.count(oldkididx));
+            newnodes[newidx].kids.emplace(val, newkididx);
+        }
+    }
+
+    ns = std::move(newnodes);
 }
 
 bool SDFA::isword(const char* const word) const
@@ -291,3 +328,7 @@ int DATrie::term(int index) const
     auto s = static_cast<std::size_t>(index);
     return s < base_.size() ? (base_[s] & TERM_MASK) != 0 : false;
 }
+
+// /*static*/ DATrie DATrie::make(const Mafsa& m)
+// {
+// }

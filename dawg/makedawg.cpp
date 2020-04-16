@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if (1) {
+    if (0) {
         // DATrie
         std::cout << "Using DATrie implementation...\n";
         Datrie2 trie;
