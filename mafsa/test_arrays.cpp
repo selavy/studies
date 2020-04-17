@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 #include "darray.h"
+#include "tarraysep.h"
+#include "mafsa.h"
 
 // clang-format off
 const std::vector<std::string> DICT = {
@@ -106,6 +108,52 @@ TEST_CASE("Darray")
     for (const auto& word : DICT) {
         d.insert(word);
     }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+}
+
+TEST_CASE("Mafsa")
+{
+    Mafsa d;
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+}
+
+TEST_CASE("Tarray")
+{
+    Mafsa m;
+    for (const auto& word : DICT) {
+        m.insert(word);
+    }
+
+    const auto d = m.make_tarray();
 
     for (const auto& word : DICT) {
         CHECK(d.isword(word) == true);

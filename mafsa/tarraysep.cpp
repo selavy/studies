@@ -5,6 +5,12 @@
 #include "iconv.h"
 #include "tarray_generated.h"
 
+Tarraysep::Tarraysep(std::size_t n_states)
+    : bases (n_states, UNSET_BASE)
+    , checks(n_states, UNSET_CHECK)
+    , nexts (n_states, UNSET_NEXT)
+{
+}
 
 bool Tarraysep::isword(const char* const word) const
 {
