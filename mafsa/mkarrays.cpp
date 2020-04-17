@@ -3,8 +3,12 @@
 #include <optional>
 #include <string>
 #include <climits>
+#include "mafsa.h"
 #include "darray.h"
 #include "darray_generated.h"
+#include "tarraysep.h"
+#include "tarray_generated.h"
+
 
 template <class T>
 std::optional<T> load_dictionary(std::string path, int max_words)
@@ -89,10 +93,10 @@ bool test_dictionary(const T& dict, std::string path, int max_words)
     return true;
 }
 
-std::string make_out_filename(std::string inname)
+std::string make_out_filename(std::string inname, std::string newext)
 {
     const std::string ext    = ".txt";
-    const std::string newext = ".bin";
+    // const std::string newext = ".bin";
     auto pos = inname.rfind(ext);
     if (pos == std::string::npos) {
         return inname + newext;
@@ -121,6 +125,16 @@ bool write_darray(const Darray& darray, const std::string& filename)
     return write_data(filename, buf, len);
 }
 
+bool write_tarray(const Tarraysep& tarray, const std::string& filename)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    auto serial_tarray = CreateSerialTarrayDirect(builder, &tarray.bases, &tarray.checks, &tarray.nexts);
+    builder.Finish(serial_tarray);
+    auto* buf = builder.GetBufferPointer();
+    auto  len = builder.GetSize();
+    return write_data(filename, buf, len);
+}
+
 int main(int argc, char** argv)
 {
     // TODO: real command line parser
@@ -131,10 +145,12 @@ int main(int argc, char** argv)
 
     const std::string inname    = argc >= 2 ? argv[1]       : "";
     const int         max_words = argc >= 3 ? atoi(argv[2]) : INT_MAX;
-    const std::string outname   = argc >= 4 ? argv[3]       : make_out_filename(inname);
+    const std::string doutname  = argc >= 4 ? argv[3]       : make_out_filename(inname, "ddic");
+    const std::string toutname  = argc >= 5 ? argv[4]       : make_out_filename(inname, "tdic");
 
     std::cout << "INPUT:     " << inname    << "\n"
-              << "OUTPUT   : " << outname   << "\n"
+              << "OUTPUT   : " << doutname  << "\n"
+              << "OUTPUT   : " << toutname  << "\n"
               << "MAX WORDS: " << max_words << "\n"
               ;
 
@@ -144,18 +160,37 @@ int main(int argc, char** argv)
     }
 
 
-    auto maybe_darray = load_dictionary<Darray>(inname, max_words);
-    if (!maybe_darray) {
-        return 1;
-    }
-    const auto& darray = *maybe_darray;
+    if (1) {
+        auto maybe_darray = load_dictionary<Darray>(inname, max_words);
+        if (!maybe_darray) {
+            return 1;
+        }
+        const auto& darray = *maybe_darray;
 
-    if (!test_dictionary<Darray>(darray, inname, max_words)) {
-        std::cerr << "dictionary test failed!" << std::endl;
-        return 1;
+        if (!test_dictionary<Darray>(darray, inname, max_words)) {
+            std::cerr << "dictionary test failed!" << std::endl;
+            return 1;
+        }
+
+        write_darray(darray, doutname);
     }
 
-    write_darray(darray, outname);
+    if (1) {
+        auto maybe_mafsa = load_dictionary<Mafsa>(inname, max_words);
+        if (!maybe_mafsa) {
+            return 1;
+        }
+        const auto& mafsa = *maybe_mafsa;
+
+        if (1) {
+            const auto& tarray = mafsa.make_tarray();
+            if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
+                std::cerr << "dictionary test failed!" << std::endl;
+                return 1;
+            }
+            write_tarray(tarray, toutname);
+        }
+    }
 
     return 0;
 }
