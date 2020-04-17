@@ -110,6 +110,14 @@ static const std::vector<std::string> words = {
     "STEALTHINESSES",
     "BROILS",
     "RAMMISHNESS",
+    "ZYMURGIES",
+    "ZYMURGY",
+    "ZYTHUM",
+    "ZYTHUMS",
+    "ZYZZYVA",
+    "ZYZZYVAS",
+    "ZZZ",
+    "ZZZS",
 };
 // clang-format on
 
