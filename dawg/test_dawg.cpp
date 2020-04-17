@@ -161,6 +161,27 @@ void print_state(const Datrie2* dt)
 }
 #endif
 
+Tatrie make_tatrie(const std::vector<std::string>& words)
+{
+    Mafsa m;
+    for (const auto& word : words) {
+        m.insert(word);
+    }
+    m.reduce();
+    return Tatrie::make(m);
+}
+
+TEST_CASE("Tatrie")
+{
+    Tatrie tt = make_tatrie(DICT);
+    for (const auto& word : DICT) {
+        CHECK(tt.isword(word));
+    }
+    for (const auto& word : MISSING) {
+        CHECK(!tt.isword(word));
+    }
+}
+
 TEST_CASE("Datrie2")
 {
     Datrie2 dt;
@@ -326,9 +347,9 @@ TEST_CASE("MAFSA reduce simple word list")
         }
     }
 
-    std::cout << "# of states before: " << m.numstates() << "\n";
+    // std::cout << "# of states before: " << m.numstates() << "\n";
     m.reduce();
-    std::cout << "# of states after : " << m.numstates() << "\n";
+    // std::cout << "# of states after : " << m.numstates() << "\n";
 
 #if 1
     SECTION("Verify find word still correct after reduce")
@@ -493,10 +514,10 @@ TEST_CASE("DATRIE from MA-FSA")
     }
     m.reduce();
 
-    std::cout << "Nodes:\n";
-    for (std::size_t i = 0; i < m.ns.size(); ++i) {
-        std::cout << i << ": " << m.ns[i] << "\n";
-    }
+    // std::cout << "Nodes:\n";
+    // for (std::size_t i = 0; i < m.ns.size(); ++i) {
+    //     std::cout << i << ": " << m.ns[i] << "\n";
+    // }
 
     const Tatrie t = Tatrie::make(m);
 

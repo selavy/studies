@@ -3,6 +3,7 @@
 #include <string>
 #include <climits>
 #include <memory>
+#include <chrono>
 #include "dawg.h"
 #include "mafsa.h"
 
@@ -86,9 +87,14 @@ bool load_dict_mafsa(Mafsa& m, std::string path, int max_words=INT_MAX) {
 
 template <class T>
 bool test_dfa(const T& m, std::string path, int max_words=INT_MAX) {
-    return foreach_in_dictionary(path, max_words, /*action*/"find",
-        [&m](const std::string& word) { return m.isword(word); });
 
+    auto start = std::chrono::steady_clock::now();
+    auto result = foreach_in_dictionary(path, max_words, /*action*/"find",
+        [&m](const std::string& word) { return m.isword(word); });
+    auto stop  = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = stop - start;
+    std::cout << "TestDFA took " << diff.count() << " seconds";
+    return result;
 }
 
 int main(int argc, char** argv)
@@ -169,13 +175,39 @@ int main(int argc, char** argv)
         std::cout << "MAFSA Passed!" << std::endl;
 
 
-        SDFA tt = SDFA::make(m);
-        std::cout << "Checking words...\n";
-        if (!test_dfa(m, filename, max_check_words)) {
-            std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
-            return 1;
+        { // SDFA
+            std::cout << "Using SDFA implementation\n";
+            SDFA tt = SDFA::make(m);
+            std::cout << "Checking words...\n";
+            for (int i = 0; i < 10; ++i) {
+                if (!test_dfa(m, filename, max_check_words)) {
+                    std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
+                    return 1;
+                }
+            }
+            std::cout << "SDFA memory usage: " << tt.size() << " x 4 = " << (tt.size() * 4) << std::endl;
         }
-        std::cout << "SDFA memory usage: " << tt.size() << " x 4 = " << (tt.size() * 4) << std::endl;
+
+        { // TATRIE
+            std::cout << "Using Tatrie implementation\n";
+            Tatrie tt = Tatrie::make(m);
+            std::cout << "Checking words...\n";
+            for (int i = 0; i < 10; ++i) {
+                if (!test_dfa(m, filename, max_check_words)) {
+                    std::cerr << "error: failed to find all inserted words after reduce" << std::endl;
+                    return 1;
+                }
+            }
+            auto& bases = tt.bases;
+            auto& nexts = tt.nexts;
+            auto& checks = tt.checks;
+            auto total_size = (bases.size() + nexts.size() + checks.size()) * 4;
+            std::cout << "TATRIE memory usage: "
+                << "bases  = " << bases.size() << " x 4 = "  << (bases.size() * 4) << "\n"
+                << "nexts  = " << nexts.size() << " x 4 = "  << (nexts.size() * 4) << "\n"
+                << "checks = " << checks.size() << " x 4 = " << (checks.size() * 4) << "\n"
+                << "total = " << total_size << "\n";
+        }
     }
 
     return 0;

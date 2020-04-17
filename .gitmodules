@@ -4,3 +4,6 @@
 [submodule "third_party/cgreen"]
 	path = third_party/cgreen
 	url = git@github.com:cgreen-devs/cgreen.git
+[submodule "flatbuffers/flatbuffers"]
+	path = flatbuffers/flatbuffers
+	url = https://github.com/google/flatbuffers

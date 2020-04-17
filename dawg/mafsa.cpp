@@ -276,18 +276,18 @@ bool SDFA::isword(const char* const word) const
 
 bool Tatrie::isword(const char* const word) const
 {
-    DEBUG("isword: %s", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = base(s) + c;
-        DEBUG("\tisword: s=%d ch='%c' c=%d base[s]=%d t=%d check[t]=%d next[t]=%d", s, ch, c, base(s), t, check(t), next(t));
-        if (check(t) != s) {
+        // DEBUG("\tisword: s=%d ch='%c' c=%d base[s]=%d t=%d check[t]=%d next[t]=%d", s, ch, c, base(s), t, check(t), next(t));
+        if (t < 0 || check(t) != s) {
             return false;
         }
-        // s = nexts[t]; // TODO(peter): revisit -- if check(t) == s then should always be able to index into nexts[]
-        s = next(t);
+        assert(0 <= t && static_cast<std::size_t>(t) < nexts.size());
+        s = nexts[static_cast<std::size_t>(t)]; // TODO(peter): revisit -- if check(t) == s then should always be able to index into nexts[]
+        // s = next(t);
     }
     return term(s);
 }
@@ -414,7 +414,7 @@ const int* findbase(const int* const ckbegin, const int* const ckend, const int*
             auto s = static_cast<std::size_t>(ss);
             assert(0 <= ss && s < m.ns.size());
             auto& node = m.ns[s];
-            DEBUG("visit_pre: '%c' (%d)", static_cast<char>(node.val + 'A'), ss);
+            // DEBUG("visit_pre: '%c' (%d)", static_cast<char>(node.val + 'A'), ss);
             if (node.kids.empty()) {
                 result.setbase(s, UNSET_BASE, node.term);
                 return;
@@ -423,7 +423,7 @@ const int* findbase(const int* const ckbegin, const int* const ckend, const int*
             auto vals  = getkeys_plus_one(node.kids);
             const int  base_ = find_base_or_extend(vals);
             result.setbase(s, base_, node.term);
-            DEBUG("\tbase = %d", base_);
+            // DEBUG("\tbase = %d", base_);
             assert(0 <= ss && s < bases.size());
             for (auto&& [val, next_] : node.kids) {
                 std::size_t c = static_cast<std::size_t>(val + 1);
@@ -433,8 +433,8 @@ const int* findbase(const int* const ckbegin, const int* const ckend, const int*
                 assert(i < nexts.size());
                 assert(nexts[i]  == UNSET_NEXT);
                 assert(checks[i] == UNSET_CHECK);
-                DEBUG("\t\tchild='%c' => next[%zu] = %d check[%zu] = %d",
-                        static_cast<char>(val + 'A'), i, next_, i, ss);
+                // DEBUG("\t\tchild='%c' => next[%zu] = %d check[%zu] = %d",
+                //         static_cast<char>(val + 'A'), i, next_, i, ss);
                 nexts [i] = next_;
                 checks[i] = ss;
             }
