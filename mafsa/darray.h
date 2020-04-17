@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <optional>
 
 
 struct Darray
@@ -46,4 +47,6 @@ private:
     static constexpr int UNSET_CHECK  = MAX_BASE;
     static constexpr int UNSET_TERM   =  0;
 
+    // TODO(peter): maybe move this to a "serializers.h"?
+    static std::optional<Darray> deserialize(const std::string& filename);
 };

@@ -2,6 +2,8 @@
 #include <climits>
 #include <cstddef>
 #include <cassert>
+#include <fstream>
+#include "darray_generated.h"
 #include "iconv.h"
 
 // TODO: remove
@@ -255,4 +257,27 @@ bool Darray::isword(const char* const word) const
         s = t;
     }
     return getterm(s);
+}
+
+std::optional<Darray> Darray::deserialize(const std::string& filename)
+{
+    std::ifstream infile;
+    infile.open(filename, std::ios::binary);
+    infile.seekg(0, std::ios::end);
+    int length = infile.tellg();
+    infile.seekg(0, std::ios::beg);
+    std::vector<char> data(length);
+    infile.read(data.data(), length);
+    infile.close();
+
+    auto serial_darray = GetSerialDarray(data.data());
+    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    assert(serial_darray->Verify(v));
+
+    Darray darray;
+    auto* bases  = serial_darray->bases();
+    auto* checks = serial_darray->checks();
+    darray.bases .assign(bases ->begin(), bases ->end());
+    darray.checks.assign(checks->begin(), checks->end());
+    return darray;
 }
