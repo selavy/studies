@@ -348,8 +348,7 @@ const int* findbase(const int* const ckbegin, const int* const ckend, const int*
     auto baseworks = [=](const int* const check)
     {
         for (const int* valp = vbegin; valp != vend; ++valp) {
-            // const int val = *valp - *vbegin;
-            const int val = *valp;
+            const int val = *valp - *vbegin;
             assert((ckbegin + val) < ckend);
             if (check[val] != Tatrie::UNSET_CHECK) {
                 return false;
@@ -389,43 +388,22 @@ const int* findbase(const int* const ckbegin, const int* const ckend, const int*
     auto find_base_or_extend = [&](const std::vector<int>& vals) -> int
     {
         assert(std::is_sorted(vals.begin(), vals.end()));
-
-        // for (std::size_t i = 0; i < checks.size(); ++i) {
-        //     if (std::all_of(std::begin(vals), std::end(vals),
-        //             [&](int cc)
-        //             {
-        //                 auto c = static_cast<std::size_t>(cc);
-        //                 return i + c < checks.size() && checks[i+c] == UNSET_CHECK;
-        //             })
-        //     )
-        //     {
-        //         return static_cast<int>(i);
-        //     }
-        // }
-
-        // assert(0);
-        // return -1;
-
-
         std::size_t start = 0;
         std::size_t maxv  = !vals.empty() ? static_cast<std::size_t>(vals.back()) : 0;
         for (;;) {
             assert(maxv <= checks.size());
-            // const std::size_t chkend = std::max(start, checks.size() - maxv);
-            const std::size_t chkend = checks.size();
+            const std::size_t chkend = std::max(start, checks.size() - maxv);
             const int* p = findbase(&checks[start], &checks[chkend], &vals[0], &vals[vals.size()]);
             if (p != nullptr) {
-                int diff = static_cast<int>(p - &checks[start]);
-                return diff + static_cast<int>(start);
-                // const int first_value = !vals.empty() ? vals[0] : 0;
-                // const int index = static_cast<int>(p - &checks[start]) - first_value + static_cast<int>(start);
-                // assert(0 <= (index + first_value));
-                // assert(static_cast<std::size_t>(index + first_value) < checks.size());
-                // assert(checks[static_cast<std::size_t>(index + first_value)] == UNSET_CHECK);
-                // return index;
+                const int first_value = !vals.empty() ? vals[0] : 0;
+                const int index = static_cast<int>(p - &checks[start]) - first_value + static_cast<int>(start);
+                assert(0 <= (index + first_value));
+                assert(static_cast<std::size_t>(index + first_value) < checks.size());
+                assert(checks[static_cast<std::size_t>(index + first_value)] == UNSET_CHECK);
+                return index;
             }
-            // const std::size_t lookback = !vals.empty() ? static_cast<std::size_t>(vals.back()) : 1;
-            // start = checks.size() > lookback ? checks.size() - lookback : 0;
+            const std::size_t lookback = !vals.empty() ? static_cast<std::size_t>(vals.back()) : 1;
+            start = checks.size() > lookback ? checks.size() - lookback : 0;
             extendarrays(10);
         }
     };
