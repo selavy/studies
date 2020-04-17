@@ -19,6 +19,9 @@ struct Darray
     bool isword(const char* const word)  const;
     bool isword(const std::string& word) const { return isword(word.c_str()); }
 
+    // TODO(peter): maybe move this to a "serializers.h"?
+    static std::optional<Darray> deserialize(const std::string& filename);
+
 private:
     int  getbase(int index) const;
     int  getcheck(int index) const;
@@ -46,7 +49,4 @@ private:
     static constexpr u32 UNSET_BASE   =  0;
     static constexpr int UNSET_CHECK  = MAX_BASE;
     static constexpr int UNSET_TERM   =  0;
-
-    // TODO(peter): maybe move this to a "serializers.h"?
-    static std::optional<Darray> deserialize(const std::string& filename);
 };
