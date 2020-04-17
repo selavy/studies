@@ -47,6 +47,48 @@ std::optional<T> load_dictionary(std::string path, int max_words)
     return dict;
 }
 
+template <class T>
+bool test_dictionary(const T& dict, std::string path, int max_words)
+{
+    std::string word;
+    std::ifstream ifs{path};
+    int n_words = 0;
+    if (!ifs) {
+        std::cerr << "error: unable to open input file\n";
+        return false;
+    }
+    while (ifs >> word) {
+        if (word.empty()) {
+            continue;
+        }
+        if (word.size() < 2 || word.size() > 15) {
+            std::cerr << "warning: skipping invalid word: \"" << word << "\"\n";
+        }
+        bool valid_word = true;
+        for (std::size_t i = 0; i < word.size(); ++i) {
+            char c = word[i];
+            if ('a' <= c && c <= 'z') {
+                word[i] = (c - 'a') + 'A';
+            } else if ('A' <= c && c <= 'Z') {
+                word[i] = c;
+            } else {
+                std::cerr << "warning: invalid character '" << c << "' in word \"" << word << "\"\n";
+                valid_word = false;
+                break;
+            }
+        }
+        if (valid_word) {
+            if (!dict.isword(word)) {
+                return false;
+            }
+            if (++n_words >= max_words) {
+                break;
+            }
+        }
+    }
+    return true;
+}
+
 std::string make_out_filename(std::string inname)
 {
     const std::string ext    = ".txt";
@@ -58,6 +100,25 @@ std::string make_out_filename(std::string inname)
         assert(pos < inname.size());
         return inname.replace(pos, ext.size(), newext);
     }
+}
+
+bool write_data(const std::string& filename, const uint8_t* buf, std::size_t length)
+{
+    std::ofstream ofs;
+    ofs.open(filename, std::ios::binary);
+    ofs.write(reinterpret_cast<const char*>(buf), length);
+    ofs.close();
+    return true;
+}
+
+bool write_darray(const Darray& darray, const std::string& filename)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    auto serial_darray = CreateSerialDarrayDirect(builder, &darray.bases, &darray.checks);
+    builder.Finish(serial_darray);
+    auto* buf = builder.GetBufferPointer();
+    auto  len = builder.GetSize();
+    return write_data(filename, buf, len);
 }
 
 int main(int argc, char** argv)
@@ -88,6 +149,13 @@ int main(int argc, char** argv)
         return 1;
     }
     const auto& darray = *maybe_darray;
+
+    if (!test_dictionary<Darray>(darray, inname, max_words)) {
+        std::cerr << "dictionary test failed!" << std::endl;
+        return 1;
+    }
+
+    write_darray(darray, outname);
 
     return 0;
 }
