@@ -22,18 +22,18 @@ struct Tarraysep
     std::vector<int> checks;
     std::vector<int> nexts;
 
-    explicit Tarraysep(std::size_t n_states=50);
-    bool isword(const char* const word)  const;
-    bool isword(const std::string& word) const { return isword(word.c_str()); }
+    explicit Tarraysep(std::size_t n_states=50) noexcept;
+    bool isword(const char* const word)  const noexcept;
+    bool isword(const std::string& word) const noexcept { return isword(word.c_str()); }
 
     // TODO(peter): maybe move this to a "serializers.h"?
     static std::optional<Tarraysep> deserialize(const std::string& filename);
 
 private:
     friend struct Mafsa;
-    int base(int s)  const;
-    int check(int s) const;
-    int term(int s)  const;
-    int next(int s)  const;
-    void setbase(std::size_t s, int base, bool term);
+    int base(int s)  const noexcept;
+    int check(int s) const noexcept;
+    int term(int s)  const noexcept;
+    int next(int s)  const noexcept;
+    void setbase(std::size_t s, int base, bool term) noexcept;
 };

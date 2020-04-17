@@ -5,14 +5,14 @@
 #include "iconv.h"
 #include "tarray_generated.h"
 
-Tarraysep::Tarraysep(std::size_t n_states)
+Tarraysep::Tarraysep(std::size_t n_states) noexcept
     : bases (n_states, UNSET_BASE)
     , checks(n_states, UNSET_CHECK)
     , nexts (n_states, UNSET_NEXT)
 {
 }
 
-bool Tarraysep::isword(const char* const word) const
+bool Tarraysep::isword(const char* const word) const noexcept
 {
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -27,35 +27,35 @@ bool Tarraysep::isword(const char* const word) const
     return term(s);
 }
 
-int Tarraysep::base(int index) const
+int Tarraysep::base(int index) const noexcept
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < bases.size() ? static_cast<int>(bases[s]) >> 1 : NO_BASE;
 }
 
-int Tarraysep::check(int index) const
+int Tarraysep::check(int index) const noexcept
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < checks.size() ? checks[s] : UNSET_CHECK;
 }
 
-int Tarraysep::term(int index) const
+int Tarraysep::term(int index) const noexcept
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < bases.size() ? (bases[s] & 0x1u) != 0 : false;
 }
 
-int Tarraysep::next(int index) const
+int Tarraysep::next(int index) const noexcept
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < nexts.size() ? nexts[s] : 0;
 }
 
-void Tarraysep::setbase(std::size_t n, int val, bool term)
+void Tarraysep::setbase(std::size_t n, int val, bool term) noexcept
 {
     u32 uval  = static_cast<u32>(val);
     u32 uterm = static_cast<u32>(term);
