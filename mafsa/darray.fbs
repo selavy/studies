@@ -1,0 +1,7 @@
+table SerialDarray
+{
+    bases  : [uint32];
+    checks : [ int32];
+}
+
+root_type SerialDarray;
