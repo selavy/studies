@@ -160,7 +160,7 @@ int main(int argc, char** argv)
     }
 
 
-    if (1) {
+    if (0) {
         auto maybe_darray = load_dictionary<Darray>(inname, max_words);
         if (!maybe_darray) {
             return 1;
@@ -180,16 +180,15 @@ int main(int argc, char** argv)
         if (!maybe_mafsa) {
             return 1;
         }
-        const auto& mafsa = *maybe_mafsa;
+        auto& mafsa = *maybe_mafsa;
+        mafsa.reduce();
 
-        if (1) {
-            const auto& tarray = mafsa.make_tarray();
-            if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
-                std::cerr << "dictionary test failed!" << std::endl;
-                return 1;
-            }
-            write_tarray(tarray, toutname);
+        const auto& tarray = mafsa.make_tarray();
+        if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
+            std::cerr << "dictionary test failed!" << std::endl;
+            return 1;
         }
+        write_tarray(tarray, toutname);
     }
 
     return 0;
