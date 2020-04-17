@@ -1,11 +1,17 @@
-add_library(DArray darray.h darray.cpp)
-target_link_libraries(DArray PUBLIC cxx_project_options)
+add_library(Arrays
+    iconv.h
+    darray.h
+    darray.cpp
+    tarraysep.h
+    tarraysep.cpp
+)
+target_link_libraries(Arrays PUBLIC cxx_project_options)
 
 add_executable(mkarrays mkarrays.cpp)
 target_link_libraries(mkarrays
     PUBLIC
         cxx_project_options
-        DArray
+        Arrays
 )
 
 add_executable(test_arrays test_arrays.cpp)
@@ -13,13 +19,13 @@ target_link_libraries(test_arrays
     PUBLIC
         cxx_project_options
         Catch
-        DArray
+        Arrays
 )
 
 add_executable(bench_arrays bench_arrays.cpp)
 target_link_libraries(bench_arrays
     PUBLIC
         cxx_project_options
-        DArray
+        Arrays
         Google::Benchmark
 )
