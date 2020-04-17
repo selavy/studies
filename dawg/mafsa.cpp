@@ -1,6 +1,10 @@
 #include "mafsa.h"
 #include "iconv.h"
 #include <iostream>
+#include <cstring>
+#include <algorithm>
+
+#define DEBUG(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__);
 
 Mafsa::Mafsa()
 {
@@ -270,45 +274,193 @@ bool SDFA::isword(const char* const word) const
     return result;
 }
 
-bool DATrie::isword(const char* const word) const
+bool Tatrie::isword(const char* const word) const
 {
+    DEBUG("isword: %s", word);
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
         const int  c  = iconv(ch) + 1;
         const int  t  = base(s) + c;
+        DEBUG("\tisword: s=%d ch='%c' c=%d base[s]=%d t=%d check[t]=%d next[t]=%d", s, ch, c, base(s), t, check(t), next(t));
         if (check(t) != s) {
             return false;
         }
-        s = t;
+        // s = nexts[t]; // TODO(peter): revisit -- if check(t) == s then should always be able to index into nexts[]
+        s = next(t);
     }
     return term(s);
 }
 
-int DATrie::base(int index) const
+int Tatrie::base(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < base_.size() ? static_cast<int>(base_[s] >> 1) : NO_BASE;
+    // return s < bases.size() ? bases[s].base : NO_BASE;
+    return s < bases.size() ? static_cast<int>(bases[s]) >> 1 : NO_BASE;
 }
 
-int DATrie::check(int index) const
+int Tatrie::check(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < check_.size() ? check_[s] : UNSET_CHECK;
+    return s < checks.size() ? checks[s] : UNSET_CHECK;
 }
 
-int DATrie::term(int index) const
+int Tatrie::term(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    return s < base_.size() ? (base_[s] & TERM_MASK) != 0 : false;
+    // return s < bases.size() ? bases[s].term : false;
+    return s < bases.size() ? (bases[s] & 0x1u) != 0 : false;
 }
 
-#if 0
-/*static*/ DATrie DATrie::make(const Mafsa& m)
+int Tatrie::next(int index) const
 {
-    std::map<std::size_t, std::size_t> conv; // state # -> base index
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    return s < nexts.size() ? nexts[s] : 0;
 }
-#endif
+
+void Tatrie::setbase(std::size_t n, int val, bool term)
+{
+    u32 uval  = static_cast<u32>(val);
+    u32 uterm = static_cast<u32>(term);
+    bases[n] = (uval << 1) | (uterm & 0x1u);
+}
+
+template <class Cont>
+auto getkeys_plus_one(const Cont& c)
+{
+    std::vector<typename Cont::key_type> keys;
+    for (auto&& [key, val] : c) {
+        keys.emplace_back(key + 1);
+    }
+    return keys;
+}
+
+
+const int* findbase(const int* const ckbegin, const int* const ckend, const int* const vbegin, const int* const vend)
+{
+    // precondition: values in [vbegin, vend) are sorted
+    // assert(std::is_sorted(vbegin, vend));
+
+    auto baseworks = [=](const int* const check)
+    {
+        for (const int* valp = vbegin; valp != vend; ++valp) {
+            // const int val = *valp - *vbegin;
+            const int val = *valp;
+            assert((ckbegin + val) < ckend);
+            if (check[val] != Tatrie::UNSET_CHECK) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    for (const int* ckp = ckbegin; ckp != ckend; ++ckp) {
+        if (baseworks(ckp)) {
+            return ckp;
+        }
+    }
+    return nullptr;
+}
+
+/*static*/ Tatrie Tatrie::make([[maybe_unused]] const Mafsa& m)
+{
+    const auto n_states = std::max<std::size_t>(static_cast<std::size_t>(m.numstates()), 50);
+    Tatrie result;
+    result.bases  = std::vector<u32>(n_states, UNSET_BASE);
+    result.checks = std::vector<int>(n_states, UNSET_CHECK);
+    result.nexts  = std::vector<int>(n_states, UNSET_NEXT);
+    auto& bases  = result.bases;
+    auto& checks = result.checks;
+    auto& nexts  = result.nexts;
+
+    bases[0] = 0;
+    checks[0] = 0;
+
+    [[maybe_unused]] auto extendarrays = [&](const std::size_t need)
+    {
+        nexts.insert(nexts.end()  , need, UNSET_NEXT);
+        checks.insert(checks.end(), need, UNSET_CHECK);
+    };
+
+    auto find_base_or_extend = [&](const std::vector<int>& vals) -> int
+    {
+        assert(std::is_sorted(vals.begin(), vals.end()));
+
+        // for (std::size_t i = 0; i < checks.size(); ++i) {
+        //     if (std::all_of(std::begin(vals), std::end(vals),
+        //             [&](int cc)
+        //             {
+        //                 auto c = static_cast<std::size_t>(cc);
+        //                 return i + c < checks.size() && checks[i+c] == UNSET_CHECK;
+        //             })
+        //     )
+        //     {
+        //         return static_cast<int>(i);
+        //     }
+        // }
+
+        // assert(0);
+        // return -1;
+
+
+        std::size_t start = 0;
+        std::size_t maxv  = !vals.empty() ? static_cast<std::size_t>(vals.back()) : 0;
+        for (;;) {
+            assert(maxv <= checks.size());
+            // const std::size_t chkend = std::max(start, checks.size() - maxv);
+            const std::size_t chkend = checks.size();
+            const int* p = findbase(&checks[start], &checks[chkend], &vals[0], &vals[vals.size()]);
+            if (p != nullptr) {
+                int diff = static_cast<int>(p - &checks[start]);
+                return diff + static_cast<int>(start);
+                // const int first_value = !vals.empty() ? vals[0] : 0;
+                // const int index = static_cast<int>(p - &checks[start]) - first_value + static_cast<int>(start);
+                // assert(0 <= (index + first_value));
+                // assert(static_cast<std::size_t>(index + first_value) < checks.size());
+                // assert(checks[static_cast<std::size_t>(index + first_value)] == UNSET_CHECK);
+                // return index;
+            }
+            // const std::size_t lookback = !vals.empty() ? static_cast<std::size_t>(vals.back()) : 1;
+            // start = checks.size() > lookback ? checks.size() - lookback : 0;
+            extendarrays(10);
+        }
+    };
+
+    m.visit_pre(0,
+        [&](int ss)
+        {
+            auto s = static_cast<std::size_t>(ss);
+            assert(0 <= ss && s < m.ns.size());
+            auto& node = m.ns[s];
+            DEBUG("visit_pre: '%c' (%d)", static_cast<char>(node.val + 'A'), ss);
+            if (node.kids.empty()) {
+                result.setbase(s, UNSET_BASE, node.term);
+                return;
+            }
+
+            auto vals  = getkeys_plus_one(node.kids);
+            const int  base_ = find_base_or_extend(vals);
+            result.setbase(s, base_, node.term);
+            DEBUG("\tbase = %d", base_);
+            assert(0 <= ss && s < bases.size());
+            for (auto&& [val, next_] : node.kids) {
+                std::size_t c = static_cast<std::size_t>(val + 1);
+                assert(base_ + static_cast<int>(c) >= 0);
+                std::size_t i = static_cast<std::size_t>(base_) + c;
+                assert(i < checks.size());
+                assert(i < nexts.size());
+                assert(nexts[i]  == UNSET_NEXT);
+                assert(checks[i] == UNSET_CHECK);
+                DEBUG("\t\tchild='%c' => next[%zu] = %d check[%zu] = %d",
+                        static_cast<char>(val + 'A'), i, next_, i, ss);
+                nexts [i] = next_;
+                checks[i] = ss;
+            }
+        });
+
+    return result;
+}

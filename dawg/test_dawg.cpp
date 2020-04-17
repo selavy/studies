@@ -475,6 +475,7 @@ void setterm_mimic_clang(Base2* rdi, std::size_t rsi, bool edx) noexcept
     rdi[rsi] = eax; // move dword ptr [rdi + 4*rsi], eax
 }
 
+// implementation comparisons: https://gcc.godbolt.org/z/pKzwLS
 TEST_CASE("DATRIE from MA-FSA")
 {
     const std::vector<std::string> words = {
@@ -497,6 +498,17 @@ TEST_CASE("DATRIE from MA-FSA")
         std::cout << i << ": " << m.ns[i] << "\n";
     }
 
+    const Tatrie t = Tatrie::make(m);
+
+    for (const auto& word : words) {
+        CHECK(t.isword(word));
+    }
+
+#if 1
+    for (const auto& word : MISSING) {
+        CHECK(!t.isword(word));
+    }
+
     SECTION("Unsigned magic")
     {
         constexpr int N = 16;
@@ -512,7 +524,7 @@ TEST_CASE("DATRIE from MA-FSA")
         std::vector<bool> correct_terms;
 
         srand(42);
-        for (int iter = 0; iter < 10000; ++iter) {
+        for (int iter = 0; iter < 10; ++iter) {
             correct_bases.clear();
             correct_terms.clear();
 
@@ -543,6 +555,6 @@ TEST_CASE("DATRIE from MA-FSA")
             }
         }
     }
+#endif
 
-    printf("Passed!\n");
 }
