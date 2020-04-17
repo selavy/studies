@@ -3,6 +3,7 @@
 #include "tarraysep.h"
 #include <string>
 #include <vector>
+#include <iostream>
 
 static const std::string darray_dictionary = "csw19.ddic";
 static const std::string tarray_dictionary = "csw19.tdic";
@@ -130,6 +131,8 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
         throw std::runtime_error("failed to deserialize darray!");
     }
     const auto& darray = *maybe_darray;
+    darray.dump_stats(std::cout);
+
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {
@@ -150,6 +153,8 @@ static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
         throw std::runtime_error("failed to deserialize darray!");
     }
     const auto& tarray = *maybe_tarray;
+    tarray.dump_stats(std::cout);
+
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {

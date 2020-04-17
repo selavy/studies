@@ -17,8 +17,8 @@ bool Tarraysep::isword(const char* const word) const noexcept
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
-        const int  c  = iconv(ch) + 1;
-        const int  t  = base(s) + c;
+        const int c = iconv(ch) + 1;
+        const int t = base(s) + c;
         if (t < 0 || check(t) != s) {
             return false;
         }
@@ -85,4 +85,23 @@ std::optional<Tarraysep> Tarraysep::deserialize(const std::string& filename)
     tarray.checks.assign(checks->begin(), checks->end());
     tarray.nexts .assign(nexts ->begin(), nexts ->end());
     return tarray;
+}
+
+template <class Cont>
+void vec_stats(std::ostream& os, Cont& vec, std::string name, std::size_t& items, std::size_t& bytes)
+{
+    os << name << " : items=" << vec.size() << ", bytes=" << (vec.size() * sizeof(vec[0])) << "\n";
+    items += vec.size();
+    bytes += vec.size() * sizeof(vec[0]);
+}
+
+void Tarraysep::dump_stats(std::ostream& os) const
+{
+    std::size_t total_items = 0;
+    std::size_t total_bytes = 0;
+    os << "TarraySep Stats:\n";
+    vec_stats(os, bases , "base ", total_items, total_bytes);
+    vec_stats(os, checks, "check", total_items, total_bytes);
+    vec_stats(os, nexts , "next ", total_items, total_bytes);
+    os << "total items=" << total_items << ", total bytes=" << total_bytes << "\n";
 }

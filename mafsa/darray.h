@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <iosfwd>
 
 
 struct Darray
@@ -22,6 +23,8 @@ struct Darray
     // TODO(peter): maybe move this to a "serializers.h"?
     static std::optional<Darray> deserialize(const std::string& filename);
 
+    void dump_stats(std::ostream& os) const;
+
 private:
     int  getbase(int index) const;
     int  getcheck(int index) const;
@@ -37,7 +40,6 @@ private:
     int  countchildren(int s, int* childs) const;
     static int  findbase(const int* const first, const int* const last, int c);
     static int  findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend);
-
 
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include "darray_generated.h"
 #include "iconv.h"
 
@@ -280,4 +281,23 @@ std::optional<Darray> Darray::deserialize(const std::string& filename)
     darray.bases .assign(bases ->begin(), bases ->end());
     darray.checks.assign(checks->begin(), checks->end());
     return darray;
+}
+
+
+template <class Cont>
+void vec_stats(std::ostream& os, Cont& vec, std::string name, std::size_t& items, std::size_t& bytes)
+{
+    os << name << " : items=" << vec.size() << ", bytes=" << (vec.size() * sizeof(vec[0])) << "\n";
+    items += vec.size();
+    bytes += vec.size() * sizeof(vec[0]);
+}
+
+void Darray::dump_stats(std::ostream& os) const
+{
+    std::size_t total_items = 0;
+    std::size_t total_bytes = 0;
+    os << "Darray Stats:\n";
+    vec_stats(os, bases , "base ", total_items, total_bytes);
+    vec_stats(os, checks, "check", total_items, total_bytes);
+    os << "total items=" << total_items << ", total bytes=" << total_bytes << "\n";
 }

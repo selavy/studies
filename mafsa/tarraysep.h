@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <iosfwd>
 
 struct Tarraysep
 {
@@ -28,6 +29,8 @@ struct Tarraysep
 
     // TODO(peter): maybe move this to a "serializers.h"?
     static std::optional<Tarraysep> deserialize(const std::string& filename);
+
+    void dump_stats(std::ostream& os) const;
 
 private:
     friend struct Mafsa;
