@@ -15,3 +15,11 @@ target_link_libraries(test_arrays
         Catch
         DArray
 )
+
+add_executable(bench_arrays bench_arrays.cpp)
+target_link_libraries(bench_arrays
+    PUBLIC
+        cxx_project_options
+        DArray
+        Google::Benchmark
+)

@@ -7,3 +7,6 @@
 [submodule "flatbuffers/flatbuffers"]
 	path = flatbuffers/flatbuffers
 	url = https://github.com/google/flatbuffers
+[submodule "third_party/benchmark"]
+	path = third_party/benchmark
+	url = git@github.com:google/benchmark.git
