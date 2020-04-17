@@ -1,0 +1,27 @@
+struct TripleEntry
+{
+    base:int;
+    check:int;
+    next:int;
+    term:bool;
+}
+
+table TripleArray
+{
+    entries:[TripleEntry];
+}
+
+struct DoubleEntry
+{
+    base:int;
+    check:int;
+    term:bool;
+}
+
+table DoubleArray
+{
+    entries:[DoubleEntry];
+}
+
+root_type DoubleArray;
+// root_type TripleArray;

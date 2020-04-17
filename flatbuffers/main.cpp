@@ -3,9 +3,71 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-
+#include "trie_generated.h"
 
 using namespace MyGame::Sample;
+
+#if 1
+void read_trie(const char* filename)
+{
+    std::ifstream infile;
+    infile.open(filename, std::ios::binary | std::ios::in);
+    infile.seekg(0, std::ios::end);
+    int length = infile.tellg();
+    infile.seekg(0, std::ios::beg);
+    std::vector<char> data(length);
+    infile.read(data.data(), length);
+    infile.close();
+
+    auto trie = GetDoubleArray(data.data());
+    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    assert(trie->Verify(v));
+
+    auto es = trie->entries();
+    auto es_len = es->size();
+    std::cout << "# of entries: " << es_len << "\n";
+    for (std::size_t i = 0; i < es_len; ++i) {
+        const auto& e = es->Get(i);
+        std::cout << "\t" << e->base() << " " << e->check() << " " << e->term() << "\n";
+    }
+}
+#endif
+
+void trie_tests()
+{
+    std::vector<int>  bases  = {  0, 1, 2, 3, 4, 5 };
+    std::vector<int>  checks = { -1, 0, 0, 1, 0, 6 };
+    std::vector<bool> terms  = { true, true, false, false, false, false };
+    std::vector<DoubleEntry> entries;
+    for (std::size_t i = 0; i < bases.size(); ++i) {
+        entries.emplace_back(bases[i], checks[i], terms[i]);
+    }
+
+    flatbuffers::FlatBufferBuilder builder(1024);
+    // auto es = builder.CreateVectorOfStructs(entries.data(), entries.size());
+    // DoubleArrayBuilder double_array_builder(builder);
+    // double_array_builder.add_entries(es);
+    // auto double_array = double_array_builder.Finish();
+    auto double_array = CreateDoubleArrayDirect(builder, &entries);
+    builder.Finish(double_array);
+
+    uint8_t* buf  = builder.GetBufferPointer();
+    int      size = builder.GetSize();
+
+    const char* filename = "dictionary.bin";
+    FILE* fp = fopen(filename, "wb");
+    if (!fp) {
+        fprintf(stderr, "Unable to open file for writing!\n");
+        exit(1);
+    }
+    if (fwrite(buf, size, 1, fp) != 1) {
+        fprintf(stderr, "error: unable to write to file: %d\n", errno);
+        exit(1);
+    }
+    fclose(fp);
+
+    read_trie(filename);
+}
 
 void read_monster(const char* filename)
 {
@@ -87,6 +149,8 @@ int main(int argc, char** argv)
     fclose(fp);
 
     read_monster(filename);
+
+    trie_tests();
 
     return 0;
 }
