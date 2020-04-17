@@ -4,4 +4,6 @@ table SerialDarray
     checks : [ int32];
 }
 
+file_identifier "DDIC";
+file_extension  "ddic";
 root_type SerialDarray;

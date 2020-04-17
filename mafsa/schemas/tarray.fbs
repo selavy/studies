@@ -1,0 +1,10 @@
+table SerialTarray
+{
+    bases  : [uint32];
+    checks : [ int32];
+    nexts  : [ int32];
+}
+
+file_identifier "TDIC";
+file_extension  "tdic";
+root_type SerialTarray;

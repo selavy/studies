@@ -1,7 +1,9 @@
 #include "tarraysep.h"
 #include <cassert>
 #include <cstddef>
+#include <fstream>
 #include "iconv.h"
+#include "tarray_generated.h"
 
 
 bool Tarraysep::isword(const char* const word) const
@@ -52,4 +54,29 @@ void Tarraysep::setbase(std::size_t n, int val, bool term)
     u32 uval  = static_cast<u32>(val);
     u32 uterm = static_cast<u32>(term);
     bases[n] = (uval << 1) | (uterm & 0x1u);
+}
+
+std::optional<Tarraysep> Tarraysep::deserialize(const std::string& filename)
+{
+    std::ifstream infile;
+    infile.open(filename, std::ios::binary);
+    infile.seekg(0, std::ios::end);
+    int length = infile.tellg();
+    infile.seekg(0, std::ios::beg);
+    std::vector<char> data(length);
+    infile.read(data.data(), length);
+    infile.close();
+
+    auto serial_tarray = GetSerialTarray(data.data());
+    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    assert(serial_tarray->Verify(v));
+
+    Tarraysep tarray;
+    auto* bases  = serial_tarray->bases();
+    auto* checks = serial_tarray->checks();
+    auto* nexts  = serial_tarray->nexts();
+    tarray.bases .assign(bases ->begin(), bases ->end());
+    tarray.checks.assign(checks->begin(), checks->end());
+    tarray.nexts .assign(nexts ->begin(), nexts ->end());
+    return tarray;
 }

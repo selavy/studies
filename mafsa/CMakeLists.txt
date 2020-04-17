@@ -4,6 +4,9 @@ add_library(Arrays
     darray.cpp
     tarraysep.h
     tarraysep.cpp
+
+    darray_generated.h
+    tarray_generated.h
 )
 target_link_libraries(Arrays PUBLIC cxx_project_options)
 

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <optional>
 
 struct Tarraysep
 {
@@ -14,6 +15,9 @@ struct Tarraysep
 
     bool isword(const char* const word)  const;
     bool isword(const std::string& word) const { return isword(word.c_str()); }
+
+    // TODO(peter): maybe move this to a "serializers.h"?
+    static std::optional<Tarraysep> deserialize(const std::string& filename);
 
 private:
     static constexpr int MIN_CHILD_OFFSET = 1;

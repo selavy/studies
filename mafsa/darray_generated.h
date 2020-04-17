@@ -82,26 +82,39 @@ inline const SerialDarray *GetSizePrefixedSerialDarray(const void *buf) {
   return flatbuffers::GetSizePrefixedRoot<SerialDarray>(buf);
 }
 
+inline const char *SerialDarrayIdentifier() {
+  return "DDIC";
+}
+
+inline bool SerialDarrayBufferHasIdentifier(const void *buf) {
+  return flatbuffers::BufferHasIdentifier(
+      buf, SerialDarrayIdentifier());
+}
+
 inline bool VerifySerialDarrayBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<SerialDarray>(nullptr);
+  return verifier.VerifyBuffer<SerialDarray>(SerialDarrayIdentifier());
 }
 
 inline bool VerifySizePrefixedSerialDarrayBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<SerialDarray>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<SerialDarray>(SerialDarrayIdentifier());
+}
+
+inline const char *SerialDarrayExtension() {
+  return "ddic";
 }
 
 inline void FinishSerialDarrayBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<SerialDarray> root) {
-  fbb.Finish(root);
+  fbb.Finish(root, SerialDarrayIdentifier());
 }
 
 inline void FinishSizePrefixedSerialDarrayBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<SerialDarray> root) {
-  fbb.FinishSizePrefixed(root);
+  fbb.FinishSizePrefixed(root, SerialDarrayIdentifier());
 }
 
 #endif  // FLATBUFFERS_GENERATED_DARRAY_H_
