@@ -12,6 +12,7 @@ std::optional<T> load_dictionary(std::string path, int max_words)
     T dict;
     std::string word;
     std::ifstream ifs{path};
+    int n_words = 0;
     if (!ifs) {
         std::cerr << "error: unable to open input file\n";
         return std::nullopt;
@@ -38,9 +39,25 @@ std::optional<T> load_dictionary(std::string path, int max_words)
         }
         if (valid_word) {
             dict.insert(word);
+            if (++n_words >= max_words) {
+                break;
+            }
         }
     }
     return dict;
+}
+
+std::string make_out_filename(std::string inname)
+{
+    const std::string ext    = ".txt";
+    const std::string newext = ".bin";
+    auto pos = inname.rfind(ext);
+    if (pos == std::string::npos) {
+        return inname + newext;
+    } else {
+        assert(pos < inname.size());
+        return inname.replace(pos, ext.size(), newext);
+    }
 }
 
 int main(int argc, char** argv)
@@ -51,14 +68,22 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    const char* filename = argc >= 1 ? argv[1]       : nullptr;
-    const int max_words  = argc >= 2 ? atoi(argv[2]) : INT_MAX;
-    if (!filename || max_words <= 0) {
+    const std::string inname    = argc >= 2 ? argv[1]       : "";
+    const int         max_words = argc >= 3 ? atoi(argv[2]) : INT_MAX;
+    const std::string outname   = argc >= 4 ? argv[3]       : make_out_filename(inname);
+
+    std::cout << "INPUT:     " << inname    << "\n"
+              << "OUTPUT   : " << outname   << "\n"
+              << "MAX WORDS: " << max_words << "\n"
+              ;
+
+    if (inname.empty() || max_words <= 0) {
         std::cerr << "error: invalid arguments";
         return 1;
     }
 
-    auto maybe_darray = load_dictionary<Darray>(filename, max_words);
+
+    auto maybe_darray = load_dictionary<Darray>(inname, max_words);
     if (!maybe_darray) {
         return 1;
     }
