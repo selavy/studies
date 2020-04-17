@@ -4,6 +4,9 @@
 #include <cassert>
 #include "iconv.h"
 
+// TODO: remove
+#define AsIdx(x) static_cast<std::size_t>(x)
+
 Darray::Darray()
     : bases {1000, UNSET_BASE }
     , checks{1000, UNSET_CHECK} // should it be initialized to 0?
@@ -95,9 +98,148 @@ void Darray::clrterm(int index)
     bases[s] &= ~TERM_MASK;
 }
 
+int Darray::countchildren(int s, int* children) const
+{
+    int n_children = 0;
+    for (int c = 1; c <= 27; ++c) {
+        if (getcheck(getbase(s) + c) == s) {
+            children[n_children++] = c;
+        }
+    }
+    return n_children;
+}
+
+int Darray::findbase(const int* const first, const int* const last, int c)
+{
+    for (const int* p = first; p != last; ++p) {
+        if (p[c] == UNSET_CHECK) {
+            return static_cast<int>(p - first);
+        }
+    }
+    return -1;
+}
+
+int Darray::findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
+{
+    auto baseworks = [](const int* const check, const int* const cs, const int* const csend)
+    {
+        for (const int* c = cs; c != csend; ++c) {
+            assert(1 <= *c && *c <= 27);
+            if (check[*c] != UNSET_CHECK) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    for (const int* chck = first; chck != last; ++chck) {
+        if (baseworks(chck, cs, csend)) {
+            return static_cast<int>(chck - first);
+        }
+    }
+    return -1;
+}
+
+void Darray::relocate(int s, int b, int* childs, int n_childs)
+{
+    // TODO: remove
+    auto base  = [this](int x) { return this->getbase(x); };
+    auto term  = [this](int x) { return this->getterm(x); };
+    auto check = [this](int x) { return this->getcheck(x); };
+    for (int i = 0; i < n_childs; ++i) {
+        assert(1 <= childs[i] && childs[i] <= 27);
+        const int c = childs[i];
+        const int t_old = base(s) + c;
+        const int t_new = b + c;
+        assert(check(t_old) == s);
+        setcheck(t_new, s);
+        setbase(t_new, base(t_old));
+        setterm(t_new, term(t_old));
+        // update grand children
+        for (int d = 1; d <= 27; ++d) {
+            if (check(base(t_old) + d) == t_old) {
+                setcheck(base(t_old) + d, t_new);
+            }
+        }
+        clrcheck(t_old);
+        clrbase(t_old);  // TODO(peter): remove -- just for debugging
+        clrterm(t_old);  // TODO(peter): remove -- just for debugging
+    }
+    setbase(s, b);
+}
+
 void Darray::insert(const char* const word)
 {
-    // TODO: 
+    auto check = [this](int x) { return this->getcheck(x); }; // TODO: remove
+    auto extendarrays = [this](std::size_t need)
+    {
+        this->bases.insert (this->bases.end() , need, UNSET_BASE );
+        this->checks.insert(this->checks.end(), need, UNSET_CHECK);
+    };
+
+    int childs[26];
+    int s = 0;
+    for (const char* p = word; *p != '\0'; ++p) {
+        const char ch  = *p;
+        const int  c   = iconv(ch) + 1;
+        const int  t   = getbase(s) + c;
+        if (check(t) == s) {
+            s = t;
+            continue;
+        }
+
+        // TODO: Can I mark the current branch as a child? Not sure if the logic will work
+        //       trying to move an uninstall node.
+        int n_childs = countchildren(s, &childs[0]);
+        if (n_childs > 0) {
+            if (AsIdx(t) < checks.size() && check(t) == UNSET_CHECK) { // slot is available
+                setcheck(t, s);
+                s = t;
+            } else {
+                childs[n_childs++] = c;
+                std::size_t start = 0;
+                int b_new;
+                for (;;) {
+                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
+                    const std::size_t last = checks.size() - maxc;
+                    assert(checks.size() > maxc);
+                    b_new = findbaserange(&checks[start], &checks[last], &childs[0], &childs[n_childs]);
+                    if (b_new >= 0) {
+                        b_new = b_new + static_cast<int>(start);
+                        break;
+                    }
+                    const std::size_t lookback = 26;
+                    start = checks.size() > lookback ? checks.size() - lookback : 0;
+                    extendarrays(50);
+                }
+                assert(0 <= b_new && AsIdx(b_new) < checks.size());
+
+                --n_childs;
+                relocate(s, b_new, &childs[0], n_childs);
+                setcheck(b_new + c, s);
+                s = b_new + c;
+            }
+        } else {
+            std::size_t start = 0;
+            int b_new;
+            for (;;) {
+                const std::size_t chck_end = checks.size() - AsIdx(c);
+                b_new = findbase(&checks[start], &checks[chck_end], c);
+                if (b_new >= 0) {
+                    b_new = b_new + static_cast<int>(start);
+                    break;
+                }
+                start = checks.size();
+                extendarrays(50);
+            }
+            assert(0 <= b_new && AsIdx(b_new) < checks.size());
+            setbase(s, b_new);
+            setcheck(b_new + c, s);
+            s = b_new + c;
+        }
+    }
+
+    setterm(s, true);
 }
 
 bool Darray::isword(const char* const word) const
