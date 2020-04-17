@@ -1,9 +1,11 @@
 #include <benchmark/benchmark.h>
 #include "darray.h"
+#include "tarraysep.h"
 #include <string>
 #include <vector>
 
-static const std::string darray_dictionary = "darray_csw19.bin";
+static const std::string darray_dictionary = "csw19.ddic";
+static const std::string tarray_dictionary = "csw19.tdic";
 
 // clang-format off
 static const std::vector<std::string> words = {
@@ -140,5 +142,25 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
     }
 }
 BENCHMARK(BM_Darray_IsWord_AllWords);
+
+static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
+{
+    auto maybe_tarray = Tarraysep::deserialize(tarray_dictionary);
+    if (!maybe_tarray) {
+        throw std::runtime_error("failed to deserialize darray!");
+    }
+    const auto& tarray = *maybe_tarray;
+    bool is_word = true;
+    for (auto _ : state) {
+        for (const auto& word : words) {
+            is_word &= tarray.isword(word);
+        }
+    }
+    state.SetBytesProcessed(state.iterations() * total_word_bytes);
+    if (!is_word) {
+        throw std::runtime_error("test failed");
+    }
+}
+BENCHMARK(BM_TarraySep_IsWord_AllWords);
 
 BENCHMARK_MAIN();

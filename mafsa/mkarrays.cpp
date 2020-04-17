@@ -145,8 +145,8 @@ int main(int argc, char** argv)
 
     const std::string inname    = argc >= 2 ? argv[1]       : "";
     const int         max_words = argc >= 3 ? atoi(argv[2]) : INT_MAX;
-    const std::string doutname  = argc >= 4 ? argv[3]       : make_out_filename(inname, "ddic");
-    const std::string toutname  = argc >= 5 ? argv[4]       : make_out_filename(inname, "tdic");
+    const std::string doutname  = argc >= 4 ? argv[3]       : make_out_filename(inname, ".ddic");
+    const std::string toutname  = argc >= 5 ? argv[4]       : make_out_filename(inname, ".tdic");
 
     std::cout << "INPUT:     " << inname    << "\n"
               << "OUTPUT   : " << doutname  << "\n"
