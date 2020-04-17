@@ -126,12 +126,17 @@ static const std::size_t total_word_bytes = countbytes();
 
 static void BM_Darray_IsWord_AllWords(benchmark::State& state)
 {
+    static bool stats_dumped = false;
+
     auto maybe_darray = Darray::deserialize(darray_dictionary);
     if (!maybe_darray) {
         throw std::runtime_error("failed to deserialize darray!");
     }
     const auto& darray = *maybe_darray;
-    darray.dump_stats(std::cout);
+    if (!stats_dumped) {
+        darray.dump_stats(std::cout);
+        stats_dumped = true;
+    }
 
     bool is_word = true;
     for (auto _ : state) {
@@ -148,12 +153,17 @@ BENCHMARK(BM_Darray_IsWord_AllWords);
 
 static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
 {
+    static bool stats_dumped = false;
+
     auto maybe_tarray = Tarraysep::deserialize(tarray_dictionary);
     if (!maybe_tarray) {
         throw std::runtime_error("failed to deserialize darray!");
     }
     const auto& tarray = *maybe_tarray;
-    tarray.dump_stats(std::cout);
+    if (!stats_dumped) {
+        tarray.dump_stats(std::cout);
+        stats_dumped = true;
+    }
 
     bool is_word = true;
     for (auto _ : state) {
