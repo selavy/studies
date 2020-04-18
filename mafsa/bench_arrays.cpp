@@ -8,7 +8,7 @@
 #include <iostream>
 
 static const std::string darray_dictionary = "csw19.ddic";
-static const std::string tarray_dictionary = "csw19.tdic";
+static const std::string tarray_dictionary = "csw19.tdic.gz";
 
 // clang-format off
 static const std::vector<std::string> words = {

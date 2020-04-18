@@ -7,12 +7,6 @@
 #include "tarray_util.h"
 
 
-Tarray::Tarray(std::size_t n_states) noexcept
-    : bases(n_states, UNSET_BASE)
-    , xtns (n_states)
-{
-}
-
 bool Tarray::isword(const char* const word) const noexcept
 {
     int s = 0;

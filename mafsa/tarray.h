@@ -31,7 +31,6 @@ struct Tarray
     std::vector<u32> bases;
     std::vector<Xtn> xtns;
 
-    explicit Tarray(std::size_t n_states=50) noexcept;
     bool isword(const char* const word)  const noexcept;
     bool isword(const std::string& word) const noexcept { return isword(word.c_str()); }
 

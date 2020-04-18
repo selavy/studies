@@ -70,7 +70,6 @@ std::optional<Tarraysep> Tarraysep::deserialize(const std::string& filename)
     auto serial_tarray = GetSerialTarray(buf.data());
     flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
     assert(serial_tarray->Verify(v));
-
     Tarraysep tarray;
     auto* bases  = serial_tarray->bases();
     auto* checks = serial_tarray->checks();
