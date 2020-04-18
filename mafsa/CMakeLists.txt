@@ -2,6 +2,7 @@ add_library(Arrays
     iconv.h
     tarray_util.h
     tarray_util.cpp
+
     darray.h
     darray.cpp
     tarraysep.h
@@ -33,7 +34,7 @@ target_link_libraries(test_arrays
         Arrays
 )
 
-add_executable(bench_arrays bench_arrays.cpp)
+add_executable(bench_arrays bench_data.h bench_arrays.cpp)
 target_link_libraries(bench_arrays
     PUBLIC
         cxx_project_options

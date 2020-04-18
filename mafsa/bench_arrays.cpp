@@ -1,127 +1,16 @@
 #include <benchmark/benchmark.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#include "bench_data.h"
 #include "darray.h"
 #include "tarray.h"
 #include "tarraysep.h"
 #include "tarraydelta.h"
-#include <string>
-#include <vector>
-#include <iostream>
 
-static const std::string darray_dictionary = "csw19.ddic";
+
+static const std::string darray_dictionary = "csw19.ddic.gz";
 static const std::string tarray_dictionary = "csw19.tdic.gz";
-
-// clang-format off
-static const std::vector<std::string> words = {
-    "JAMBIYAHS",
-    "KAUMATUAS",
-    "BEDRAL",
-    "LEWIS",
-    "SACERDOTALIST",
-    "DODECAGONS",
-    "KHANATES",
-    "PHOTOELECTRICAL",
-    "DROVERS",
-    "RECEMENTED",
-    "FURSHLUGGINER",
-    "EMBLEMING",
-    "TRANSPOSABLE",
-    "MISSHAPES",
-    "GELSEMINE",
-    "SKIKJORERS",
-    "BONDAGERS",
-    "GLORIOSA",
-    "SWATHIER",
-    "MARACA",
-    "CRIMINATORS",
-    "HYPERREALIST",
-    "SUK",
-    "EXCELLENTLY",
-    "GLEAMIEST",
-    "MODISH",
-    "KLUDGIER",
-    "PELVIMETER",
-    "NIGHTWATCHMAN",
-    "AKEES",
-    "RUMBLER",
-    "TRIADICS",
-    "PHOSPHORYLATIVE",
-    "RUSTICISM",
-    "ECHELONED",
-    "TARAKIHIS",
-    "SAVOURERS",
-    "SPIROCHAETOSIS",
-    "POTBOILER",
-    "ANTIRABIES",
-    "PEDALIER",
-    "CIRCULATES",
-    "UNSUBMITTING",
-    "SUBURBIA",
-    "DROPPERFULS",
-    "VERMINIEST",
-    "PIDGINISE",
-    "BEGINS",
-    "OCTOPODANS",
-    "CARTELISTS",
-    "SNELL",
-    "MERCURIALIST",
-    "CORPULENTLY",
-    "OENOPHILE",
-    "BUCKHORN",
-    "PREFUNDED",
-    "RADULAE",
-    "GYROSCOPICALLY",
-    "GRATINATE",
-    "EMBRYOLOGIST",
-    "AERODYNE",
-    "TERFE",
-    "PREDISCOVERY",
-    "GNOSEOLOGIES",
-    "SLUICE",
-    "CRITICALITIES",
-    "RENCOUNTERS",
-    "PESSIMISMS",
-    "BRITTLENESSES",
-    "SLUNGSHOT",
-    "PSYCHES",
-    "ROSEWATER",
-    "MONTICLES",
-    "PICOGRAM",
-    "SCRIMMAGER",
-    "KILD",
-    "GROUPIES",
-    "CARBURISATIONS",
-    "BRUSHMARKS",
-    "OVERGRAZED",
-    "KIRKYARD",
-    "BATS",
-    "RUMMELGUMPTIONS",
-    "SHONKIEST",
-    "WOLVED",
-    "MISCALLING",
-    "VERBIFICATIONS",
-    "HYPERAEMIC",
-    "ADRIFT",
-    "VAMBRACES",
-    "SMIRKED",
-    "SYRPHID",
-    "INTEL",
-    "UPRISTS",
-    "SPEARMEN",
-    "SPYCAM",
-    "FENI",
-    "STEALTHINESSES",
-    "BROILS",
-    "RAMMISHNESS",
-    "ZYMURGIES",
-    "ZYMURGY",
-    "ZYTHUM",
-    "ZYTHUMS",
-    "ZYZZYVA",
-    "ZYZZYVAS",
-    "ZZZ",
-    "ZZZS",
-};
-// clang-format on
 
 static std::size_t countbytes()
 {

@@ -4,8 +4,10 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include "darray_generated.h"
 #include "iconv.h"
+#include "darray_generated.h"
+#include "tarray_util.h"
+
 
 // TODO: remove
 #define AsIdx(x) static_cast<std::size_t>(x)
@@ -262,19 +264,10 @@ bool Darray::isword(const char* const word) const
 
 std::optional<Darray> Darray::deserialize(const std::string& filename)
 {
-    std::ifstream infile;
-    infile.open(filename, std::ios::binary);
-    infile.seekg(0, std::ios::end);
-    int length = infile.tellg();
-    infile.seekg(0, std::ios::beg);
-    std::vector<char> data(length);
-    infile.read(data.data(), length);
-    infile.close();
-
-    auto serial_darray = GetSerialDarray(data.data());
-    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    auto buf = read_dict_file(filename);
+    auto serial_darray = GetSerialDarray(buf.data());
+    flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
     assert(serial_darray->Verify(v));
-
     Darray darray;
     auto* bases  = serial_darray->bases();
     auto* checks = serial_darray->checks();
