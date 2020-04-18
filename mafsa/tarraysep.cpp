@@ -21,7 +21,7 @@ bool Tarraysep::isword(const char* const word) const noexcept
         const char ch = *p;
         const int c = iconv(ch) + 1;
         const int t = base(s) + c;
-        if (t < 0 || check(t) != s) {
+        if (check(t) != s) {
             return false;
         }
         s = nexts[static_cast<std::size_t>(t)];
@@ -31,28 +31,24 @@ bool Tarraysep::isword(const char* const word) const noexcept
 
 int Tarraysep::base(int index) const noexcept
 {
-    assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < bases.size() ? static_cast<int>(bases[s]) >> 1 : NO_BASE;
 }
 
 int Tarraysep::check(int index) const noexcept
 {
-    assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < checks.size() ? checks[s] : UNSET_CHECK;
 }
 
 int Tarraysep::term(int index) const noexcept
 {
-    assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < bases.size() ? (bases[s] & 0x1u) != 0 : false;
 }
 
 int Tarraysep::next(int index) const noexcept
 {
-    assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < nexts.size() ? nexts[s] : 0;
 }
