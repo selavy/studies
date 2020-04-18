@@ -14,10 +14,10 @@ set_project_warnings(project_warnings)
 add_library(cxx_project_options INTERFACE)
 target_compile_features(cxx_project_options INTERFACE cxx_std_17)
 include(cmake/Sanitizers.cmake)
-# if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     message("-- enabling sanitizers")
     enable_sanitizers(cxx_project_options)
-# endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Test Infrastructure:
 add_subdirectory(third_party)
