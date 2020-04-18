@@ -4,6 +4,8 @@
 #include <fstream>
 #include "iconv.h"
 #include "tarray_generated.h"
+#include "tarray_util.h"
+
 
 Tarraysep::Tarraysep(std::size_t n_states) noexcept
     : bases (n_states, UNSET_BASE)
@@ -64,17 +66,9 @@ void Tarraysep::setbase(std::size_t n, int val, bool term) noexcept
 
 std::optional<Tarraysep> Tarraysep::deserialize(const std::string& filename)
 {
-    std::ifstream infile;
-    infile.open(filename, std::ios::binary);
-    infile.seekg(0, std::ios::end);
-    int length = infile.tellg();
-    infile.seekg(0, std::ios::beg);
-    std::vector<char> data(length);
-    infile.read(data.data(), length);
-    infile.close();
-
-    auto serial_tarray = GetSerialTarray(data.data());
-    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    auto buf = read_dict_file(filename);
+    auto serial_tarray = GetSerialTarray(buf.data());
+    flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
     assert(serial_tarray->Verify(v));
 
     Tarraysep tarray;

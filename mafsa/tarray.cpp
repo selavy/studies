@@ -58,7 +58,7 @@ std::optional<Tarray> Tarray::deserialize(const std::string& filename)
 {
     auto buf = read_dict_file(filename);
     auto serial_tarray = GetSerialTarray(buf.data());
-    flatbuffers::Verifier v((const uint8_t*)buf.data(), buf.size());
+    flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
     assert(serial_tarray->Verify(v));
     auto* bases  = serial_tarray->bases();
     auto* checks = serial_tarray->checks();

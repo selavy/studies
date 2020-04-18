@@ -139,7 +139,6 @@ static const std::size_t total_word_bytes = countbytes();
 static void BM_Darray_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
-
     auto maybe_darray = Darray::deserialize(darray_dictionary);
     if (!maybe_darray) {
         throw std::runtime_error("failed to deserialize darray!");
@@ -151,7 +150,6 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
         std::cout << "\n";
         stats_dumped = true;
     }
-
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {
@@ -167,11 +165,10 @@ BENCHMARK(BM_Darray_IsWord_AllWords);
 #endif
 
 
-#if 0
+#if 1
 static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
-
     auto maybe_tarray = Tarraysep::deserialize(tarray_dictionary);
     if (!maybe_tarray) {
         throw std::runtime_error("failed to deserialize darray!");
@@ -183,7 +180,6 @@ static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
         std::cout << "\n";
         stats_dumped = true;
     }
-
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {
@@ -203,7 +199,6 @@ BENCHMARK(BM_TarraySep_IsWord_AllWords);
 static void BM_TarrayDelta_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
-
     auto maybe_tarray = TarrayDelta::deserialize(tarray_dictionary);
     if (!maybe_tarray) {
         throw std::runtime_error("failed to deserialize darray!");
@@ -215,7 +210,6 @@ static void BM_TarrayDelta_IsWord_AllWords(benchmark::State& state)
         std::cout << "\n";
         stats_dumped = true;
     }
-
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {
@@ -235,7 +229,6 @@ BENCHMARK(BM_TarrayDelta_IsWord_AllWords);
 static void BM_TarrayCombo_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
-
     auto maybe_tarray = Tarray::deserialize(tarray_dictionary);
     if (!maybe_tarray) {
         throw std::runtime_error("failed to deserialize darray!");
@@ -247,7 +240,6 @@ static void BM_TarrayCombo_IsWord_AllWords(benchmark::State& state)
         std::cout << "\n";
         stats_dumped = true;
     }
-
     bool is_word = true;
     for (auto _ : state) {
         for (const auto& word : words) {
