@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 #include "darray.h"
+#include "tarray.h"
 #include "tarraysep.h"
 #include "mafsa.h"
 
@@ -161,5 +162,14 @@ TEST_CASE("Tarray")
 
     for (const auto& word : MISSING) {
         CHECK(d.isword(word) == false);
+    }
+
+    const auto tarray = Tarray::make(d.bases.begin(), d.bases.end(), d.checks.begin(), d.checks.end(), d.nexts.begin(), d.nexts.end());
+    for (const auto& word : DICT) {
+        CHECK(tarray.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(tarray.isword(word) == false);
     }
 }

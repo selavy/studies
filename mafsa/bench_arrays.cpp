@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include "darray.h"
+#include "tarray.h"
 #include "tarraysep.h"
 #include "tarraydelta.h"
 #include <string>
@@ -134,6 +135,7 @@ static std::size_t countbytes()
 static const std::size_t total_word_bytes = countbytes();
 
 
+#if 1
 static void BM_Darray_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
@@ -160,8 +162,10 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
     }
 }
 BENCHMARK(BM_Darray_IsWord_AllWords);
+#endif
 
 
+#if 1
 static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
@@ -188,6 +192,7 @@ static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
     }
 }
 BENCHMARK(BM_TarraySep_IsWord_AllWords);
+#endif
 
 
 #if 0
@@ -217,6 +222,36 @@ static void BM_TarrayDelta_IsWord_AllWords(benchmark::State& state)
     }
 }
 BENCHMARK(BM_TarrayDelta_IsWord_AllWords);
+#endif
+
+
+#if 1
+static void BM_TarrayCombo_IsWord_AllWords(benchmark::State& state)
+{
+    static bool stats_dumped = false;
+
+    auto maybe_tarray = Tarray::deserialize(tarray_dictionary);
+    if (!maybe_tarray) {
+        throw std::runtime_error("failed to deserialize darray!");
+    }
+    const auto& tarray = *maybe_tarray;
+    if (!stats_dumped) {
+        tarray.dump_stats(std::cout);
+        stats_dumped = true;
+    }
+
+    bool is_word = true;
+    for (auto _ : state) {
+        for (const auto& word : words) {
+            is_word &= tarray.isword(word);
+        }
+    }
+    state.SetBytesProcessed(state.iterations() * total_word_bytes);
+    if (!is_word) {
+        throw std::runtime_error("test failed");
+    }
+}
+BENCHMARK(BM_TarrayCombo_IsWord_AllWords);
 #endif
 
 
