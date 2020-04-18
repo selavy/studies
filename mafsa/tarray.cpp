@@ -12,7 +12,7 @@ bool Tarray::isword(const char* const word) const noexcept
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
-        const int c = iconv(ch) + 1;
+        const int c = sconv(ch);
         const int t = base(s) + c;
         const auto [check, next] = xtn(t);
         if (check != s) {

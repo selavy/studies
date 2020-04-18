@@ -14,6 +14,16 @@ constexpr int iconv_table[128] = {
     -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
     15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
 };
+constexpr int sconv_table[128] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1, -1, -1, -1, -1,
+    -1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1, -1, -1, -1, -1,
+};
 
 constexpr int iconv(char c) noexcept {
 #ifndef NDEBUG
@@ -21,6 +31,16 @@ constexpr int iconv(char c) noexcept {
     return iconv_table[static_cast<unsigned char>(c & 0x7Fu)];
 #else
     return iconv_table[static_cast<unsigned char>(c)];
+#endif
+}
+
+
+constexpr int sconv(char c) noexcept {
+#ifndef NDEBUG
+    assert(('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z'));
+    return sconv_table[static_cast<unsigned char>(c & 0x7Fu)];
+#else
+    return sconv_table[static_cast<unsigned char>(c)];
 #endif
 }
 

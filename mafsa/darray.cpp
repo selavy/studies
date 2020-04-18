@@ -184,7 +184,7 @@ void Darray::insert(const char* const word)
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch  = *p;
-        const int  c   = iconv(ch) + 1;
+        const int  c   = sconv(ch);
         const int  t   = getbase(s) + c;
         if (check(t) == s) {
             s = t;
@@ -250,7 +250,7 @@ bool Darray::isword(const char* const word) const
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const char ch = *p;
-        const int  c  = iconv(ch) + 1;
+        const int  c  = sconv(ch);
         const int  t  = getbase(s) + c;
         if (getcheck(t) != s) {
             return false;

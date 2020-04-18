@@ -65,13 +65,6 @@ int Mafsa::numstates() const
             ++count;
         }
     }
-    // for (const auto& n : ns) {
-    //     if (0 <= n.val && n.val <= 26) {
-    //         ++count;
-    //     } else {
-    //         assert(n.val == -1);
-    //     }
-    // }
     return count;
 }
 
