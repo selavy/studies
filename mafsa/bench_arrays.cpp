@@ -146,7 +146,9 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
     }
     const auto& darray = *maybe_darray;
     if (!stats_dumped) {
+        std::cout << "\n";
         darray.dump_stats(std::cout);
+        std::cout << "\n";
         stats_dumped = true;
     }
 
@@ -165,7 +167,7 @@ BENCHMARK(BM_Darray_IsWord_AllWords);
 #endif
 
 
-#if 1
+#if 0
 static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
@@ -176,7 +178,9 @@ static void BM_TarraySep_IsWord_AllWords(benchmark::State& state)
     }
     const auto& tarray = *maybe_tarray;
     if (!stats_dumped) {
+        std::cout << "\n";
         tarray.dump_stats(std::cout);
+        std::cout << "\n";
         stats_dumped = true;
     }
 
@@ -206,7 +210,9 @@ static void BM_TarrayDelta_IsWord_AllWords(benchmark::State& state)
     }
     const auto& tarray = *maybe_tarray;
     if (!stats_dumped) {
+        std::cout << "\n";
         tarray.dump_stats(std::cout);
+        std::cout << "\n";
         stats_dumped = true;
     }
 
@@ -236,7 +242,9 @@ static void BM_TarrayCombo_IsWord_AllWords(benchmark::State& state)
     }
     const auto& tarray = *maybe_tarray;
     if (!stats_dumped) {
+        std::cout << "\n";
         tarray.dump_stats(std::cout);
+        std::cout << "\n";
         stats_dumped = true;
     }
 

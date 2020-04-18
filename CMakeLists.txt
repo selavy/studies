@@ -19,6 +19,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     enable_sanitizers(cxx_project_options)
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+find_package(ZLIB REQUIRED)
+
 # Test Infrastructure:
 add_subdirectory(third_party)
 

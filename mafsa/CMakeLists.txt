@@ -1,5 +1,7 @@
 add_library(Arrays
     iconv.h
+    tarray_util.h
+    tarray_util.cpp
     darray.h
     darray.cpp
     tarraysep.h
@@ -14,7 +16,7 @@ add_library(Arrays
     darray_generated.h
     tarray_generated.h
 )
-target_link_libraries(Arrays PUBLIC cxx_project_options)
+target_link_libraries(Arrays PUBLIC cxx_project_options ZLIB::ZLIB)
 
 add_executable(mkarrays mkarrays.cpp)
 target_link_libraries(mkarrays

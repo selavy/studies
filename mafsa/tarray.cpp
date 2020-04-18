@@ -4,6 +4,7 @@
 #include <fstream>
 #include "iconv.h"
 #include "tarray_generated.h"
+#include "tarray_util.h"
 
 
 Tarray::Tarray(std::size_t n_states) noexcept
@@ -55,33 +56,14 @@ void Tarray::setbase(std::size_t n, int val, bool term) noexcept
 
 std::optional<Tarray> Tarray::deserialize(const std::string& filename)
 {
-    std::ifstream infile;
-    infile.open(filename, std::ios::binary);
-    infile.seekg(0, std::ios::end);
-    int length = infile.tellg();
-    infile.seekg(0, std::ios::beg);
-    std::vector<char> data(length);
-    infile.read(data.data(), length);
-    infile.close();
-
-    auto serial_tarray = GetSerialTarray(data.data());
-    flatbuffers::Verifier v((const uint8_t*)data.data(), data.size());
+    auto buf = read_dict_file(filename);
+    auto serial_tarray = GetSerialTarray(buf.data());
+    flatbuffers::Verifier v((const uint8_t*)buf.data(), buf.size());
     assert(serial_tarray->Verify(v));
-
     auto* bases  = serial_tarray->bases();
     auto* checks = serial_tarray->checks();
     auto* nexts  = serial_tarray->nexts();
     return Tarray::make(bases->begin(), bases->end(), checks->begin(), checks->end(), nexts->begin(), nexts->end());
-    // Tarray tarray;
-    // tarray.bases.assign(bases ->begin(), bases ->end());
-    // tarray.xtns.reserve(checks->size());
-    // assert(checks->size() == nexts->size());
-    // for (std::size_t i = 0; i < nexts->size(); ++i) {
-    //     tarray.xtns.emplace_back();
-    //     tarray.xtns.back().check = (*checks)[i];
-    //     tarray.xtns.back().next  = (*nexts )[i];
-    // }
-    // return tarray;
 }
 
 template <class Cont>
