@@ -98,16 +98,6 @@ int Darray2::countchildren(int s, int* children) const
     return n_children;
 }
 
-int Darray2::findbase(const int* const first, const int* const last, int c)
-{
-    for (const int* p = first; p != last; ++p) {
-        if (p[c] == UNSET_CHECK) {
-            return static_cast<int>(p - first);
-        }
-    }
-    return -1;
-}
-
 int Darray2::findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
 {
     auto baseworks = [](const int* const check, const int* const cs, const int* const csend)
@@ -160,6 +150,18 @@ void Darray2::insert(const char* const word)
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
     };
 
+    auto findbase = [&extendarrays](const std::vector<int>& checks, int c) -> int
+    {
+        for (;;) {
+            for (std::size_t i = 0, n = checks.size() - c; i < n; ++i) {
+                if (checks[i] == UNSET_CHECK) {
+                    return static_cast<int>(i) - c;
+                }
+            }
+            extendarrays(50);
+        }
+    };
+
     int childs[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -200,18 +202,7 @@ void Darray2::insert(const char* const word)
                 s = b_new + c;
             }
         } else {
-            std::size_t start = 0;
-            int b_new;
-            for (;;) {
-                const std::size_t chck_end = checks.size() - AsIdx(c);
-                b_new = findbase(&checks[start], &checks[chck_end], c);
-                if (b_new >= 0) {
-                    b_new = b_new + static_cast<int>(start);
-                    break;
-                }
-                start = checks.size();
-                extendarrays(50);
-            }
+            const int b_new = findbase(checks, c);
             setbase(s, b_new, term(s));
             setcheck(b_new + c, s);
             s = b_new + c;
