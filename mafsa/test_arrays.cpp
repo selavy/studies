@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 #include "darray.h"
+#include "darray2.h"
 #include "tarray.h"
 #include "tarraysep.h"
 #include "mafsa.h"
@@ -94,6 +95,34 @@ const std::vector<std::string> MISSING = {
 TEST_CASE("Darray")
 {
     Darray d;
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+}
+
+TEST_CASE("Darray2")
+{
+    Darray2 d;
     for (const auto& word : DICT) {
         d.insert(word);
     }
