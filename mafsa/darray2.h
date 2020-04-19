@@ -27,12 +27,12 @@ private:
     int  base(int index) const;
     int  check(int index) const;
     bool term(int index) const;
-    void setbase(int index, int val);
+    void setbase(int index, int val, bool term);
+    // void setbase(int index, int val);
     void setcheck(int index, int val);
     void setterm(int index, bool val);
     void clrbase(int index);
     void clrcheck(int index);
-    void clrterm(int index);
 
     void relocate(int s, int b, int* childs, int n_childs);
     int  countchildren(int s, int* childs) const;
@@ -41,12 +41,7 @@ private:
 
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
-    static constexpr int TERM_BIT     = 31;
-    static constexpr u32 TERM_MASK    = 1u << TERM_BIT;
-    static constexpr u32 BASE_MASK    = ~TERM_MASK;
-    static constexpr u32 MAX_BASE     = (1u << 30) - MAX_CHILD_OFFSET; // exclusive
-    static constexpr int MISSING_BASE = static_cast<int>(MAX_BASE);
-    static constexpr u32 UNSET_BASE   =  0;
-    static constexpr int UNSET_CHECK  = MAX_BASE;
-    static constexpr int UNSET_TERM   =  0;
+    static constexpr int MAX_BASE    = (1 << 30) - MAX_CHILD_OFFSET;
+    static constexpr u32 UNSET_BASE  = 0;
+    static constexpr int UNSET_CHECK = MAX_BASE;
 };

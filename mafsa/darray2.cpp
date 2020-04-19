@@ -15,92 +15,76 @@
 Darray2::Darray2()
     : bases {1000, UNSET_BASE }
     , checks{1000, UNSET_CHECK} // should it be initialized to 0?
-{
-    bases[0] = 0;
-    static_assert((UNSET_BASE   & TERM_MASK) == 0, "unset base must not have terminal bit set");
-    static_assert((MISSING_BASE & TERM_MASK) == 0, "missing base must not have terminal bit set");
-    static_assert((MISSING_BASE + static_cast<u32>(MAX_CHILD_OFFSET)) < static_cast<u32>(INT_MAX),
-            "adding max child offset would overflow missing base");
-    static_assert((UNSET_BASE + static_cast<u32>(MAX_CHILD_OFFSET)) < static_cast<u32>(INT_MAX),
-            "adding max child offset would overflow missing base");
-
-}
+{}
 
 int Darray2::base(int index) const
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    if (s < bases.size()) {
-        return static_cast<int>(bases[s] & BASE_MASK);
-    } else {
-        return MISSING_BASE;
-    }
+    auto n = static_cast<std::size_t>(index);
+    return n < bases.size() ? static_cast<int>(bases[n]) >> 1 : MAX_BASE;
 }
 
 int Darray2::check(int index) const
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    return s < checks.size() ? checks[s] : UNSET_CHECK;
+    auto n = static_cast<std::size_t>(index);
+    return n < checks.size() ? checks[n] : UNSET_CHECK;
 }
 
 bool Darray2::term(int index) const
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    return s < bases.size() ? (bases[s] & TERM_MASK) != 0 : false;
+    auto n = static_cast<std::size_t>(index);
+    return n < bases.size() ? (bases[n] & 0x1u) != 0 : false;
 }
 
-void Darray2::setbase(int index, int val)
+void Darray2::setbase(int index, int val, bool term)
 {
-    assert(index >= 0);
-    assert(val  >= 0);
-    assert(static_cast<u32>(val) < MAX_BASE);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < bases.size());
-    assert((UNSET_BASE & TERM_MASK) == 0);
-    bases[s] = (bases[s] & TERM_MASK) | static_cast<u32>(val);
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    u32 uval  = static_cast<u32>(val);
+    u32 uterm = static_cast<u32>(term);
+    assert(n < bases.size());
+    bases[n] = (uval << 1) | (uterm & 0x1u);
 }
+
+// void Darray2::setbase(int index, int val)
+// {
+//     assert(0 <= index);
+//     auto n = static_cast<std::size_t>(index);
+//     u32 uval  = static_cast<u32>(val);
+//     assert(n < bases.size());
+//     bases[n] = (uval << 1) | (bases[n] & 0x1u);
+// }
 
 void Darray2::setcheck(int index, int val)
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < checks.size());
-    checks[s] = val;
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    assert(n < checks.size());
+    checks[n] = val;
 }
 
-void Darray2::setterm(int index, bool val)
+void Darray2::setterm(int index, bool term)
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < bases.size());
-    const u32 bit = val ? 1u : 0u;
-    bases[s] |= (bit << TERM_BIT);
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    u32 uterm = static_cast<u32>(term);
+    assert(n < bases.size());
+    bases[n] = (bases[n] & ~0x1u) | (uterm & 0x1u);
 }
 
 void Darray2::clrbase(int index)
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < bases.size());
-    bases[s] = UNSET_BASE;
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    assert(n < bases.size());
+    bases[n] = 0;
 }
 
 void Darray2::clrcheck(int index)
 {
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < checks.size());
-    checks[s] = UNSET_CHECK;
-}
-
-void Darray2::clrterm(int index)
-{
-    assert(index >= 0);
-    auto s = static_cast<std::size_t>(index);
-    assert(s < checks.size());
-    bases[s] &= ~TERM_MASK;
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    assert(n < checks.size());
+    checks[n] = UNSET_CHECK;
 }
 
 int Darray2::countchildren(int s, int* children) const
@@ -155,8 +139,7 @@ void Darray2::relocate(int s, int b, int* childs, int n_childs)
         const int t_new = b + c;
         assert(check(t_old) == s);
         setcheck(t_new, s);
-        setbase(t_new, base(t_old));
-        setterm(t_new, term(t_old));
+        setbase(t_new, base(t_old), term(t_old));
         // update grand children
         for (int d = 1; d <= 27; ++d) {
             if (check(base(t_old) + d) == t_old) {
@@ -165,16 +148,15 @@ void Darray2::relocate(int s, int b, int* childs, int n_childs)
         }
         clrcheck(t_old);
         clrbase(t_old);  // TODO(peter): remove -- just for debugging
-        clrterm(t_old);  // TODO(peter): remove -- just for debugging
     }
-    setbase(s, b);
+    setbase(s, b, term(s));
 }
 
 void Darray2::insert(const char* const word)
 {
     auto extendarrays = [this](std::size_t need)
     {
-        this->bases.insert (this->bases.end() , need, UNSET_BASE );
+        this->bases .insert(this->bases.end() , need, UNSET_BASE );
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
     };
 
@@ -212,8 +194,6 @@ void Darray2::insert(const char* const word)
                     start = checks.size() > lookback ? checks.size() - lookback : 0;
                     extendarrays(50);
                 }
-                assert(0 <= b_new && AsIdx(b_new) < checks.size());
-
                 --n_childs;
                 relocate(s, b_new, &childs[0], n_childs);
                 setcheck(b_new + c, s);
@@ -232,8 +212,7 @@ void Darray2::insert(const char* const word)
                 start = checks.size();
                 extendarrays(50);
             }
-            assert(0 <= b_new && AsIdx(b_new) < checks.size());
-            setbase(s, b_new);
+            setbase(s, b_new, term(s));
             setcheck(b_new + c, s);
             s = b_new + c;
         }

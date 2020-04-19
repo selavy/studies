@@ -89,6 +89,82 @@ const std::vector<std::string> MISSING = {
     "AAAA",
     "AZZZZ",
     "YZY",
+
+    "AALA",
+    "AALB",
+    "AALC",
+    "AALD",
+    "AALE",
+    "AALF",
+    "AALG",
+    "AALH",
+    "AALI",
+    "AALJ",
+    "AALK",
+    "AALL",
+    "AALM",
+    "AALN",
+    "AALO",
+    "AALP",
+    "AALQ",
+    "AALR",
+    "AALT",
+    "AALU",
+    "AALV",
+    "AALW",
+    "AALX",
+    "AALY",
+    "AALZ",
+
+    "YAMA",
+    "YAMB",
+    "YAMC",
+    "YAMD",
+    "YAME",
+    "YAMF",
+    "YAMG",
+    "YAMH",
+    "YAMI",
+    "YAMJ",
+    "YAMK",
+    "YAML",
+    "YAMM",
+    "YAMN",
+    "YAMO",
+    "YAMP",
+    "YAMQ",
+    "YAMR",
+    "YAMT",
+    "YAMU",
+    "YAMV",
+    "YAMW",
+    "YAMZ",
+
+    "MIDYA",
+    "MIDYB",
+    "MIDYC",
+    "MIDYD",
+    "MIDYF",
+    "MIDYG",
+    "MIDYH",
+    "MIDYI",
+    "MIDYJ",
+    "MIDYK",
+    "MIDYL",
+    "MIDYM",
+    "MIDYN",
+    "MIDYO",
+    "MIDYP",
+    "MIDYQ",
+    "MIDYR",
+    "MIDYS",
+    "MIDYT",
+    "MIDYU",
+    "MIDYV",
+    "MIDYW",
+    "MIDYX",
+    "MIDYY",
+    "MIDYZ",
 };
 // clang-format on
 
@@ -126,12 +202,17 @@ TEST_CASE("Darray2")
     for (const auto& word : DICT) {
         d.insert(word);
     }
+    // for (const auto& word : DICT) {
+    //     d.insert(word);
+    // }
 
     for (const auto& word : DICT) {
+        INFO("Checking present word: " << word);
         CHECK(d.isword(word) == true);
     }
 
     for (const auto& word : MISSING) {
+        INFO("Checking missing word: " << word);
         CHECK(d.isword(word) == false);
     }
 
@@ -144,6 +225,7 @@ TEST_CASE("Darray2")
     }
 
     for (const auto& word : MISSING) {
+        INFO("Checking missing word: " << word);
         CHECK(d.isword(word) == false);
     }
 }
