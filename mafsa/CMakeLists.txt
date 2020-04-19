@@ -5,6 +5,8 @@ add_library(Arrays
 
     darray.h
     darray.cpp
+    darray2.h
+    darray2.cpp
     tarraysep.h
     tarraysep.cpp
     tarraydelta.h
