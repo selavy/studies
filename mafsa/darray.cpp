@@ -13,8 +13,8 @@
 #define AsIdx(x) static_cast<std::size_t>(x)
 
 Darray::Darray()
-    : bases {1000, UNSET_BASE }
-    , checks{1000, UNSET_CHECK} // should it be initialized to 0?
+    : bases (1000, UNSET_BASE )
+    , checks(1000, UNSET_CHECK) // should it be initialized to 0?
 {
     bases[0] = 0;
     static_assert((UNSET_BASE   & TERM_MASK) == 0, "unset base must not have terminal bit set");

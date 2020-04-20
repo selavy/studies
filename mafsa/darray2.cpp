@@ -4,6 +4,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include "iconv.h"
 // #include "darray_generated.h"
 #include "tarray_util.h"
@@ -148,11 +149,23 @@ void Darray2::insert(const char* const word)
     {
         this->bases .insert(this->bases.end() , need, UNSET_BASE );
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
+        std::cout << "EXTENDARRAYS: +" << need << " -> " << this->checks.size() << "\n";
     };
 
     auto findbase = [&extendarrays](const std::vector<int>& checks, int c) -> int
     {
         for (;;) {
+            // auto it = std::find(checks.begin(), checks.end(), UNSET_CHECK);
+            // if (it == checks.end()) {
+            //     extendarrays(50);
+            // } else {
+            //     auto result = std::distance(checks.begin(), it);
+            //     if (result + c >= checks.size()) {
+            //         extendarrays((result + c) - checks.size() + 1);
+            //         assert(result + c < checks.size());
+            //     }
+            //     return result;
+            // }
             for (std::size_t i = 0, n = checks.size() - c; i < n; ++i) {
                 if (checks[i] == UNSET_CHECK) {
                     return static_cast<int>(i) - c;
