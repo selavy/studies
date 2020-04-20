@@ -114,17 +114,19 @@ int Darray2::findbaserange(const int* const first, const int* const last, const 
     auto baseworks = [](const int* const check, const int* const cs, const int* const csend)
     {
         for (const int* c = cs; c != csend; ++c) {
+            const int lowc = *cs;
             assert(1 <= *c && *c <= 27);
-            if (check[*c] != UNSET_CHECK) {
+            if (check[*c - lowc] != UNSET_CHECK) {
                 return false;
             }
         }
         return true;
     };
 
+    const int lowc = cs != csend ? *cs : 0;
     for (const int* chck = first; chck != last; ++chck) {
         if (baseworks(chck, cs, csend)) {
-            return static_cast<int>(chck - first);
+            return static_cast<int>(chck - first) - lowc;
         }
     }
     return -1;
@@ -175,18 +177,23 @@ void Darray2::insert(const char* const word)
 
     auto findbasevec = [&](const int* const cfirst, const int* const clast)
     {
-        std::size_t start = 1;
-        int b_new;
-        for (;;) {
-            const std::size_t maxc = AsIdx(*(clast - 1));
-            const std::size_t last = checks.size() - maxc;
-            assert(checks.size() > maxc);
-            b_new = findbaserange(&checks[start], &checks[last], cfirst, clast);
-            if (b_new >= 0) {
-                return b_new + static_cast<int>(start);
+        auto works = [cfirst, clast](const int* const first, const int* const last)
+        {
+            for (const int* c = cfirst; c != clast; ++c) {
+                assert(1 <= *c && *c <= 27);
+                if (first + *c >= last || first[*c] != UNSET_CHECK) {
+                    return false;
+                }
             }
-            const std::size_t lookback = 26;
-            start = checks.size() > lookback ? checks.size() - lookback : 0;
+            return true;
+        };
+        for (;;) {
+            const int clo = cfirst != clast ? *cfirst : 0;
+            for (std::size_t i = 0; i < checks.size(); ++i) {
+                if (works(&checks[i - clo], &checks[checks.size()])) {
+                    return static_cast<int>(i) - clo;
+                }
+            }
             extendarrays(50);
         }
     };
@@ -212,6 +219,7 @@ void Darray2::insert(const char* const word)
                 childs[n_childs++] = c;
                 const int b_new = findbasevec(&childs[0], &childs[n_childs]);
                 assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
+                assert(checks[AsIdx(b_new + c)] == UNSET_CHECK);
                 --n_childs;
                 relocate(s, b_new, &childs[0], n_childs);
                 setcheck(b_new + c, s);

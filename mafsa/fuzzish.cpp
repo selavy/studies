@@ -59,8 +59,8 @@ int main(int argc, char** argv)
 
     using STLDict = std::unordered_set<std::string>;
     auto maybe_words = load_dictionary<STLDict>(inname, max_words);
-    auto maybe_dict  = load_dictionary<Darray> (inname, max_words);
-    // auto maybe_dict  = load_dictionary<Darray2>(inname, max_words);
+    // auto maybe_dict  = load_dictionary<Darray> (inname, max_words);
+    auto maybe_dict  = load_dictionary<Darray2>(inname, max_words);
     if (!maybe_words || !maybe_dict) {
         std::cerr << "error: unable to load dictionary" << std::endl;
         return 1;
