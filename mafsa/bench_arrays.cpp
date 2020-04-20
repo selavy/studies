@@ -4,6 +4,7 @@
 #include <iostream>
 #include "bench_data.h"
 #include "darray.h"
+#include "darray2.h"
 #include "tarray.h"
 #include "tarraysep.h"
 #include "tarraydelta.h"
@@ -25,10 +26,11 @@ static const std::size_t total_word_bytes = countbytes();
 
 
 #if 1
-static void BM_Darray_IsWord_AllWords(benchmark::State& state)
+template <class T>
+static void BM_DarrayT_IsWord_AllWords(benchmark::State& state)
 {
     static bool stats_dumped = false;
-    auto maybe_darray = Darray::deserialize(darray_dictionary);
+    auto maybe_darray = T::deserialize(darray_dictionary); // Darray::deserialize(darray_dictionary);
     if (!maybe_darray) {
         throw std::runtime_error("failed to deserialize darray!");
     }
@@ -50,7 +52,8 @@ static void BM_Darray_IsWord_AllWords(benchmark::State& state)
         throw std::runtime_error("test failed");
     }
 }
-BENCHMARK(BM_Darray_IsWord_AllWords);
+BENCHMARK_TEMPLATE(BM_DarrayT_IsWord_AllWords, Darray);
+BENCHMARK_TEMPLATE(BM_DarrayT_IsWord_AllWords, Darray2);
 #endif
 
 

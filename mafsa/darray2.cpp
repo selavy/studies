@@ -6,7 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include "iconv.h"
-// #include "darray_generated.h"
+#include "darray_generated.h"
 #include "tarray_util.h"
 
 
@@ -234,21 +234,33 @@ bool Darray2::isword(const char* const word) const
     return term(s);
 }
 
-#if 0
 std::optional<Darray2> Darray2::deserialize(const std::string& filename)
 {
     auto buf = read_dict_file(filename);
-    auto serial_darray = GetSerialDarray2(buf.data());
+    auto serial_darray = GetSerialDarray(buf.data());
     flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
     assert(serial_darray->Verify(v));
     Darray2 darray;
     auto* bases  = serial_darray->bases();
     auto* checks = serial_darray->checks();
-    darray.bases .assign(bases ->begin(), bases ->end());
-    darray.checks.assign(checks->begin(), checks->end());
+
+    // TODO: these must be kept up-to-date with Darray getbase/getcheck/getterm
+    //       until I switch the format of serialized Darrays
+    auto getbase  = [&](std::size_t s) { return static_cast<int>((*bases)[s] & ~(1u << 31)); };
+    auto getcheck = [&](std::size_t s) { return (*checks)[s]; };
+    auto getterm  = [&](std::size_t s) { return ((*bases)[s] & (1u << 31)) != 0; };
+
+    darray.bases .clear();
+    darray.checks.clear();
+    darray.bases .insert(darray.bases .end(), bases ->size(), UNSET_BASE);
+    darray.checks.insert(darray.checks.end(), checks->size(), UNSET_CHECK);
+    for (std::size_t i = 0; i < bases->size(); ++i) {
+        darray.setbase(static_cast<int>(i), getbase(i), getterm(i));
+        darray.setcheck(static_cast<int>(i), getcheck(i));
+    }
+
     return darray;
 }
-#endif
 
 template <class Cont>
 void vec_stats(std::ostream& os, Cont& vec, std::string name, std::size_t& items, std::size_t& bytes)

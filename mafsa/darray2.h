@@ -19,7 +19,7 @@ struct Darray2
     bool isword(const std::string& word) const { return isword(word.c_str()); }
 
     // TODO(peter): maybe move this to a "serializers.h"?
-    // static std::optional<Darray2> deserialize(const std::string& filename);
+    static std::optional<Darray2> deserialize(const std::string& filename);
 
     void dump_stats(std::ostream& os) const;
 
