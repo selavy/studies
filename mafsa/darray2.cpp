@@ -14,8 +14,8 @@
 #define AsIdx(x) static_cast<std::size_t>(x)
 
 Darray2::Darray2()
-    : bases (1000, UNSET_BASE )
-    , checks(1000, UNSET_CHECK)
+    : bases (27, UNSET_BASE )
+    , checks(27, UNSET_CHECK)
 {}
 
 int Darray2::base(int index) const
@@ -154,9 +154,9 @@ void Darray2::insert(const char* const word)
     {
         for (;;) {
             // TODO: be smarter about way to start search from on second try
-            for (std::size_t i = 0, n = checks.size() - static_cast<std::size_t>(c); i < n; ++i) {
-                if (checks[i+c] == UNSET_CHECK) {
-                    return static_cast<int>(i); //  - c;
+            for (std::size_t i = 1, n = checks.size() - static_cast<std::size_t>(c); i < n; ++i) {
+                if (checks[i] == UNSET_CHECK) {
+                    return static_cast<int>(i) - c;
                 }
             }
             extendarrays(50);
@@ -165,7 +165,7 @@ void Darray2::insert(const char* const word)
 
     auto findbasevec = [&](const int* const cfirst, const int* const clast)
     {
-        std::size_t start = 0;
+        std::size_t start = 1;
         int b_new;
         for (;;) {
             const std::size_t maxc = AsIdx(*(clast - 1));
@@ -211,6 +211,7 @@ void Darray2::insert(const char* const word)
             std::size_t start = 0;
             int b_new = findbase(c);
             assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
+            assert(checks[AsIdx(b_new + c)] == UNSET_CHECK);
             setbase(s, b_new/*, term(s)*/);
             setcheck(b_new + c, s);
             s = b_new + c;
