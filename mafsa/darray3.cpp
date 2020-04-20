@@ -123,27 +123,6 @@ int Darray3::countchildren(int s, int* children) const
     return n_children;
 }
 
-int Darray3::findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
-{
-    auto baseworks = [](const int* const check, const int* const cs, const int* const csend)
-    {
-        for (const int* c = cs; c != csend; ++c) {
-            assert(1 <= *c && *c <= 27);
-            if (check[*c] != UNSET_CHECK) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    for (const int* chck = first; chck != last; ++chck) {
-        if (baseworks(chck, cs, csend)) {
-            return static_cast<int>(chck - first);
-        }
-    }
-    return -1;
-}
-
 void Darray3::relocate(int s, int b, int* childs, int n_childs)
 {
     // TODO: remove
@@ -189,7 +168,30 @@ void Darray3::insert(const char* const word)
         }
     };
 
-    int childs[26];
+    auto findnewbase = [&](const int* children, int n_children)
+    {
+        auto baseok = [](const int* const checks, const int* children, int n_children)
+        {
+            for (int i = 0; i < n_children; ++i) {
+                assert(1 <= children[i] && children[i] <= 27);
+                if (checks[children[i]] != UNSET_CHECK) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        for (;;) {
+            for (auto it = checks.begin(), endit = checks.end(); it != endit; ++it) {
+                if (baseok(&*it, &children[0], n_children)) {
+                    return static_cast<int>(std::distance(checks.begin(), it));
+                }
+            }
+            extendarrays(50);
+        }
+    };
+
+    int children[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const int c = sconv(*p);
@@ -201,32 +203,18 @@ void Darray3::insert(const char* const word)
 
         // TODO: Can I mark the current branch as a child? Not sure if the logic will work
         //       trying to move an uninstall node.
-        int n_childs = countchildren(s, &childs[0]);
-        if (n_childs > 0) {
+        int n_children = countchildren(s, &children[0]);
+        if (n_children > 0) {
             if (AsIdx(t) < checks.size() && check(t) == UNSET_CHECK) { // slot is available
                 setcheck(t, s);
                 s = t;
             } else {
-                childs[n_childs++] = c;
+                children[n_children++] = c;
                 std::size_t start = 0;
-                int b_new;
-                for (;;) {
-                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
-                    const std::size_t last = checks.size() - maxc;
-                    assert(checks.size() > maxc);
-                    b_new = findbaserange(&checks[start], &checks[last], &childs[0], &childs[n_childs]);
-                    if (b_new >= 0) {
-                        b_new = b_new + static_cast<int>(start);
-                        break;
-                    }
-                    const std::size_t lookback = 26;
-                    start = checks.size() > lookback ? checks.size() - lookback : 0;
-                    extendarrays(50);
-                }
-                assert(0 <= b_new && AsIdx(b_new) < checks.size());
-
-                --n_childs;
-                relocate(s, b_new, &childs[0], n_childs);
+                const int b_new = findnewbase(&children[0], n_children);
+                assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
+                assert(checks[AsIdx(b_new + c)] == UNSET_CHECK);
+                relocate(s, b_new, &children[0], n_children - 1);
                 setcheck(b_new + c, s);
                 s = b_new + c;
             }

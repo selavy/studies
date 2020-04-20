@@ -39,7 +39,6 @@ private:
 
     void relocate(int s, int b, int* childs, int n_childs);
     int  countchildren(int s, int* childs) const;
-    static int findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend);
 
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
