@@ -43,3 +43,10 @@ target_link_libraries(bench_arrays
         Arrays
         Google::Benchmark
 )
+
+add_executable(fuzzish fuzzish.cpp)
+target_link_libraries(fuzzish
+    PUBLIC
+        cxx_project_options
+        Arrays
+)

@@ -28,7 +28,7 @@ private:
     int  check(int index) const;
     bool term(int index) const;
     void setbase(int index, int val, bool term);
-    // void setbase(int index, int val);
+    void setbase(int index, int val);
     void setcheck(int index, int val);
     void setterm(int index, bool val);
     void clrbase(int index);
@@ -41,6 +41,6 @@ private:
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
     static constexpr int MAX_BASE    = (1 << 30) - MAX_CHILD_OFFSET;
-    static constexpr u32 UNSET_BASE  = 0;
+    static constexpr u32 UNSET_BASE  = MAX_BASE;
     static constexpr int UNSET_CHECK = MAX_BASE;
 };

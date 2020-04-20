@@ -1,4 +1,6 @@
 #include <catch2/catch.hpp>
+#include <vector>
+#include <unordered_set>
 #include "darray.h"
 #include "darray2.h"
 #include "tarray.h"
@@ -68,6 +70,13 @@ const std::vector<std::string> DICT = {
     "ZYMOSIS",
 };
 // clang-format on
+
+const std::unordered_set<std::string> WORDSET{DICT.begin(), DICT.end()};
+
+bool isword(const std::string& s) noexcept
+{
+    return WORDSET.count(s) != 0;
+}
 
 // clang-format off
 const std::vector<std::string> MISSING = {
@@ -194,17 +203,36 @@ TEST_CASE("Darray")
     for (const auto& word : MISSING) {
         CHECK(d.isword(word) == false);
     }
+
+
+    for (const auto& word_ : DICT) {
+        auto word = word_;
+
+        // add letter to end of word
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            word += c;
+            CHECK(d.isword(word) == isword(word));
+            word.pop_back();
+        }
+
+        // remove last letter of word
+        word.pop_back();
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            word += c;
+            CHECK(d.isword(word) == isword(word));
+            word.pop_back();
+        }
+    }
+
 }
 
+#if 0
 TEST_CASE("Darray2")
 {
     Darray2 d;
     for (const auto& word : DICT) {
         d.insert(word);
     }
-    // for (const auto& word : DICT) {
-    //     d.insert(word);
-    // }
 
     for (const auto& word : DICT) {
         INFO("Checking present word: " << word);
@@ -216,19 +244,32 @@ TEST_CASE("Darray2")
         CHECK(d.isword(word) == false);
     }
 
-    for (const auto& word : DICT) {
-        d.insert(word);
-    }
-
-    for (const auto& word : DICT) {
-        CHECK(d.isword(word) == true);
-    }
-
+    const std::unordered_set<std::string> words{DICT.begin(), DICT.end()};
+    auto isword = [&words](const std::string& s) { return words.count(s) != 0; };
     for (const auto& word : MISSING) {
-        INFO("Checking missing word: " << word);
-        CHECK(d.isword(word) == false);
+        auto w = word;
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            w += c;
+            INFO("Checking " << w);
+            CHECK(d.isword(word) == isword(w));
+            w.pop_back();
+        }
     }
+
+    // for (const auto& word : DICT) {
+    //     d.insert(word);
+    // }
+
+    // for (const auto& word : DICT) {
+    //     CHECK(d.isword(word) == true);
+    // }
+
+    // for (const auto& word : MISSING) {
+    //     INFO("Checking missing word: " << word);
+    //     CHECK(d.isword(word) == false);
+    // }
 }
+#endif
 
 TEST_CASE("Mafsa")
 {

@@ -14,8 +14,8 @@
 #define AsIdx(x) static_cast<std::size_t>(x)
 
 Darray2::Darray2()
-    : bases {1000, UNSET_BASE }
-    , checks{1000, UNSET_CHECK} // should it be initialized to 0?
+    : bases (1000, UNSET_BASE )
+    , checks(1000, UNSET_CHECK) // should it be initialized to 0?
 {}
 
 int Darray2::base(int index) const
@@ -46,14 +46,14 @@ void Darray2::setbase(int index, int val, bool term)
     bases[n] = (uval << 1) | (uterm & 0x1u);
 }
 
-// void Darray2::setbase(int index, int val)
-// {
-//     assert(0 <= index);
-//     auto n = static_cast<std::size_t>(index);
-//     u32 uval  = static_cast<u32>(val);
-//     assert(n < bases.size());
-//     bases[n] = (uval << 1) | (bases[n] & 0x1u);
-// }
+void Darray2::setbase(int index, int val)
+{
+    assert(0 <= index);
+    auto n = static_cast<std::size_t>(index);
+    u32 uval  = static_cast<u32>(val);
+    assert(n < bases.size());
+    bases[n] = (uval << 1) | (bases[n] & 0x1u);
+}
 
 void Darray2::setcheck(int index, int val)
 {
@@ -77,7 +77,7 @@ void Darray2::clrbase(int index)
     assert(0 <= index);
     auto n = static_cast<std::size_t>(index);
     assert(n < bases.size());
-    bases[n] = 0;
+    bases[n] = UNSET_BASE;
 }
 
 void Darray2::clrcheck(int index)
@@ -122,7 +122,6 @@ int Darray2::findbaserange(const int* const first, const int* const last, const 
 
 void Darray2::relocate(int s, int b, int* childs, int n_childs)
 {
-    // TODO: remove
     for (int i = 0; i < n_childs; ++i) {
         assert(1 <= childs[i] && childs[i] <= 27);
         const int c = childs[i];
@@ -140,46 +139,32 @@ void Darray2::relocate(int s, int b, int* childs, int n_childs)
         clrcheck(t_old);
         clrbase(t_old);  // TODO(peter): remove -- just for debugging
     }
-    setbase(s, b, term(s));
+    setbase(s, b/*, term(s)*/);
 }
 
 void Darray2::insert(const char* const word)
 {
     auto extendarrays = [this](std::size_t need)
     {
-        this->bases .insert(this->bases.end() , need, UNSET_BASE );
+        this->bases.insert (this->bases.end() , need, UNSET_BASE );
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
-        std::cout << "EXTENDARRAYS: +" << need << " -> " << this->checks.size() << "\n";
     };
-
-    auto findbase = [&extendarrays](const std::vector<int>& checks, int c) -> int
+    auto findbase = [](const int* const first, const int* const last, int c)
     {
-        for (;;) {
-            // auto it = std::find(checks.begin(), checks.end(), UNSET_CHECK);
-            // if (it == checks.end()) {
-            //     extendarrays(50);
-            // } else {
-            //     auto result = std::distance(checks.begin(), it);
-            //     if (result + c >= checks.size()) {
-            //         extendarrays((result + c) - checks.size() + 1);
-            //         assert(result + c < checks.size());
-            //     }
-            //     return result;
-            // }
-            for (std::size_t i = 0, n = checks.size() - c; i < n; ++i) {
-                if (checks[i] == UNSET_CHECK) {
-                    return static_cast<int>(i) - c;
-                }
+        for (const int* p = first; p != last; ++p) {
+            if (p[c] == UNSET_CHECK) {
+                return static_cast<int>(p - first);
             }
-            extendarrays(50);
         }
+        return -1;
     };
 
     int childs[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
-        const int c = sconv(*p);
-        const int t = base(s) + c;
+        const char ch = *p;
+        const int  c  = sconv(ch);
+        const int  t  = base(s) + c;
         if (check(t) == s) {
             s = t;
             continue;
@@ -209,14 +194,28 @@ void Darray2::insert(const char* const word)
                     start = checks.size() > lookback ? checks.size() - lookback : 0;
                     extendarrays(50);
                 }
+                assert(0 <= b_new && AsIdx(b_new) < checks.size());
+
                 --n_childs;
                 relocate(s, b_new, &childs[0], n_childs);
                 setcheck(b_new + c, s);
                 s = b_new + c;
             }
         } else {
-            const int b_new = findbase(checks, c);
-            setbase(s, b_new, term(s));
+            std::size_t start = 0;
+            int b_new;
+            for (;;) {
+                const std::size_t chck_end = checks.size() - AsIdx(c);
+                b_new = findbase(&checks[start], &checks[chck_end], c);
+                if (b_new >= 0) {
+                    b_new = b_new + static_cast<int>(start);
+                    break;
+                }
+                start = checks.size();
+                extendarrays(50);
+            }
+            assert(0 <= b_new && AsIdx(b_new) < checks.size());
+            setbase(s, b_new/*, term(s)*/);
             setcheck(b_new + c, s);
             s = b_new + c;
         }
