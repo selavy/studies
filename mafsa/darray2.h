@@ -41,6 +41,6 @@ private:
     static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
     static constexpr int MAX_BASE    = (1 << 30) - MAX_CHILD_OFFSET;
-    static constexpr u32 UNSET_BASE  = MAX_BASE;
+    static constexpr u32 UNSET_BASE  = MAX_BASE << 1;
     static constexpr int UNSET_CHECK = MAX_BASE;
 };

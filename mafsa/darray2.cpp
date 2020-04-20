@@ -15,7 +15,7 @@
 
 Darray2::Darray2()
     : bases (1000, UNSET_BASE )
-    , checks(1000, UNSET_CHECK) // should it be initialized to 0?
+    , checks(1000, UNSET_CHECK)
 {}
 
 int Darray2::base(int index) const
