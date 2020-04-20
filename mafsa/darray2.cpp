@@ -149,14 +149,18 @@ void Darray2::insert(const char* const word)
         this->bases.insert (this->bases.end() , need, UNSET_BASE );
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
     };
-    auto findbase = [](const int* const first, const int* const last, int c)
+
+    auto findbase = [&](int c) -> int
     {
-        for (const int* p = first; p != last; ++p) {
-            if (p[c] == UNSET_CHECK) {
-                return static_cast<int>(p - first);
+        for (;;) {
+            // TODO: be smarter about way to start search from on second try
+            for (std::size_t i = 0, n = checks.size() - static_cast<std::size_t>(c); i < n; ++i) {
+                if (checks[i+c] == UNSET_CHECK) {
+                    return static_cast<int>(i); //  - c;
+                }
             }
+            extendarrays(50);
         }
-        return -1;
     };
 
     int childs[26];
@@ -202,18 +206,8 @@ void Darray2::insert(const char* const word)
             }
         } else {
             std::size_t start = 0;
-            int b_new;
-            for (;;) {
-                const std::size_t chck_end = checks.size() - AsIdx(c);
-                b_new = findbase(&checks[start], &checks[chck_end], c);
-                if (b_new >= 0) {
-                    b_new = b_new + static_cast<int>(start);
-                    break;
-                }
-                start = checks.size();
-                extendarrays(50);
-            }
-            assert(0 <= b_new && AsIdx(b_new) < checks.size());
+            int b_new = findbase(c);
+            assert(0 <= (b_new + c) && (b_new + c) < checks.size());
             setbase(s, b_new/*, term(s)*/);
             setcheck(b_new + c, s);
             s = b_new + c;
