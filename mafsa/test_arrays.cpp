@@ -226,7 +226,7 @@ TEST_CASE("Darray")
 
 }
 
-#if 0
+#if 1
 TEST_CASE("Darray2")
 {
     Darray2 d;

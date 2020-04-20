@@ -73,7 +73,6 @@ int main(int argc, char** argv)
     std::uniform_int_distribution<> dis(static_cast<int>('A'), static_cast<int>('Z'));
     auto nextch = [&]() { return static_cast<char>(dis(gen)); };
 
-
     int nfail = 0;
     int ntest = 0;
     int npass = 0;
@@ -98,6 +97,27 @@ int main(int argc, char** argv)
             w += nextch();
         }
         dotest(w);
+    }
+
+    for (auto word : words) {
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            word += c;
+            dotest(word);
+            word.pop_back();
+        }
+
+        auto ww = word;
+        for (int ii = 0; ii < 10; ++ii) {
+            ww += nextch();
+            if (ww.size() > 15) {
+                break;
+            }
+            for (char c = 'A'; c <= 'Z'; ++c) {
+                ww += c;
+                dotest(word);
+                ww.pop_back();
+            }
+        }
     }
 
     printf("# pass = %d; # fail = %d; # test = %d\n", npass, nfail, ntest);
