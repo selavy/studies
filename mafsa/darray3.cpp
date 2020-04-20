@@ -35,7 +35,7 @@ void Darray3::trim()
     checks.shrink_to_fit();
 }
 
-int Darray3::getbase(int index) const
+int Darray3::base(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -46,14 +46,14 @@ int Darray3::getbase(int index) const
     }
 }
 
-int Darray3::getcheck(int index) const
+int Darray3::check(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
     return s < checks.size() ? checks[s] : UNSET_CHECK;
 }
 
-bool Darray3::getterm(int index) const
+bool Darray3::term(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
@@ -116,7 +116,7 @@ int Darray3::countchildren(int s, int* children) const
 {
     int n_children = 0;
     for (int c = 1; c <= 27; ++c) {
-        if (getcheck(getbase(s) + c) == s) {
+        if (check(base(s) + c) == s) {
             children[n_children++] = c;
         }
     }
@@ -157,9 +157,6 @@ int Darray3::findbaserange(const int* const first, const int* const last, const 
 void Darray3::relocate(int s, int b, int* childs, int n_childs)
 {
     // TODO: remove
-    auto base  = [this](int x) { return this->getbase(x); };
-    auto term  = [this](int x) { return this->getterm(x); };
-    auto check = [this](int x) { return this->getcheck(x); };
     for (int i = 0; i < n_childs; ++i) {
         assert(1 <= childs[i] && childs[i] <= 27);
         const int c = childs[i];
@@ -184,7 +181,6 @@ void Darray3::relocate(int s, int b, int* childs, int n_childs)
 
 void Darray3::insert(const char* const word)
 {
-    auto check = [this](int x) { return this->getcheck(x); }; // TODO: remove
     auto extendarrays = [this](std::size_t need)
     {
         this->bases.insert (this->bases.end() , need, UNSET_BASE );
@@ -194,9 +190,8 @@ void Darray3::insert(const char* const word)
     int childs[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
-        const char ch  = *p;
-        const int  c   = sconv(ch);
-        const int  t   = getbase(s) + c;
+        const int c = sconv(*p);
+        const int t = base(s) + c;
         if (check(t) == s) {
             s = t;
             continue;
@@ -260,15 +255,14 @@ bool Darray3::isword(const char* const word) const
 {
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
-        const char ch = *p;
-        const int  c  = sconv(ch);
-        const int  t  = getbase(s) + c;
-        if (getcheck(t) != s) {
+        const int c = sconv(*p);
+        const int t = base(s) + c;
+        if (check(t) != s) {
             return false;
         }
         s = t;
     }
-    return getterm(s);
+    return term(s);
 }
 
 #if 0

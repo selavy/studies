@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include "darray.h"
 #include "darray2.h"
+#include "darray3.h"
 #include "tarray.h"
 #include "tarraysep.h"
 #include "mafsa.h"
@@ -280,6 +281,70 @@ TEST_CASE("Darray2")
     for (const auto& word : MISSING) {
         INFO("Checking missing word: " << word);
         CHECK(d.isword(word) == false);
+    }
+
+    SECTION("Trim works")
+    {
+        // std::cout << "size before: " << d.bases.size() << "\n";
+        d.trim();
+        // std::cout << "size after : " << d.bases.size() << "\n";
+
+        for (const auto& word : DICT) {
+            CHECK(d.isword(word) == true);
+        }
+
+        for (const auto& word : MISSING) {
+            INFO("Checking missing word: " << word);
+            CHECK(d.isword(word) == false);
+        }
+    }
+}
+
+TEST_CASE("Darray3")
+{
+    Darray3 d;
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
+
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
+
+    for (const auto& word : MISSING) {
+        CHECK(d.isword(word) == false);
+    }
+
+
+    for (const auto& word_ : DICT) {
+        auto word = word_;
+
+        // add letter to end of word
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            word += c;
+            CHECK(d.isword(word) == isword(word));
+            word.pop_back();
+        }
+
+        // remove last letter of word
+        word.pop_back();
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            word += c;
+            CHECK(d.isword(word) == isword(word));
+            word.pop_back();
+        }
     }
 
     SECTION("Trim works")

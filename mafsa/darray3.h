@@ -27,9 +27,9 @@ struct Darray3
     void dump_stats(std::ostream& os) const;
 
 private:
-    int  getbase(int index) const;
-    int  getcheck(int index) const;
-    bool getterm(int index) const;
+    int  base(int index) const;
+    int  check(int index) const;
+    bool term(int index) const;
     void setbase(int index, int val);
     void setcheck(int index, int val);
     void setterm(int index, bool val);
