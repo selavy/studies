@@ -226,7 +226,6 @@ TEST_CASE("Darray")
 
 }
 
-#if 1
 TEST_CASE("Darray2")
 {
     Darray2 d;
@@ -244,32 +243,29 @@ TEST_CASE("Darray2")
         CHECK(d.isword(word) == false);
     }
 
-    const std::unordered_set<std::string> words{DICT.begin(), DICT.end()};
-    auto isword = [&words](const std::string& s) { return words.count(s) != 0; };
     for (const auto& word : MISSING) {
         auto w = word;
         for (char c = 'A'; c <= 'Z'; ++c) {
             w += c;
             INFO("Checking " << w);
-            CHECK(d.isword(word) == isword(w));
+            CHECK(d.isword(w) == isword(w));
             w.pop_back();
         }
     }
 
-    // for (const auto& word : DICT) {
-    //     d.insert(word);
-    // }
+    for (const auto& word : DICT) {
+        d.insert(word);
+    }
 
-    // for (const auto& word : DICT) {
-    //     CHECK(d.isword(word) == true);
-    // }
+    for (const auto& word : DICT) {
+        CHECK(d.isword(word) == true);
+    }
 
-    // for (const auto& word : MISSING) {
-    //     INFO("Checking missing word: " << word);
-    //     CHECK(d.isword(word) == false);
-    // }
+    for (const auto& word : MISSING) {
+        INFO("Checking missing word: " << word);
+        CHECK(d.isword(word) == false);
+    }
 }
-#endif
 
 TEST_CASE("Mafsa")
 {

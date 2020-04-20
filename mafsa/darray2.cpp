@@ -195,7 +195,6 @@ void Darray2::insert(const char* const word)
                     extendarrays(50);
                 }
                 assert(0 <= b_new && AsIdx(b_new) < checks.size());
-
                 --n_childs;
                 relocate(s, b_new, &childs[0], n_childs);
                 setcheck(b_new + c, s);
@@ -270,4 +269,34 @@ void Darray2::dump_stats(std::ostream& os) const
     vec_stats(os, bases , "base ", total_items, total_bytes);
     vec_stats(os, checks, "check", total_items, total_bytes);
     os << "total items=" << total_items << ", total bytes=" << total_bytes << "\n";
+}
+
+void Darray2::dumpstate() const
+{
+    const int N = 20;
+    const char* FMT = " %2d";
+
+    printf("INDEX:  |");
+    for (int i = 0; i < N; ++i) {
+        printf(FMT, i);
+    }
+    printf("\n");
+
+    printf("BASE :  |");
+    for (int i = 0; i < N; ++i) {
+        printf(FMT, base(i));
+    }
+    printf("\n");
+
+    printf("CHECK:  |");
+    for (int i = 0; i < N; ++i) {
+        printf(FMT, check(i));
+    }
+    printf("\n");
+
+    printf("TERM :  |");
+    for (int i = 0; i < N; ++i) {
+        printf(FMT, term(i)?1:0);
+    }
+    printf("\n");
 }

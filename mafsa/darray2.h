@@ -23,6 +23,8 @@ struct Darray2
 
     void dump_stats(std::ostream& os) const;
 
+    void dumpstate() const;
+
 private:
     int  base(int index) const;
     int  check(int index) const;
