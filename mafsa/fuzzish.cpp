@@ -73,9 +73,23 @@ int main(int argc, char** argv)
     std::uniform_int_distribution<> dis(static_cast<int>('A'), static_cast<int>('Z'));
     auto nextch = [&]() { return static_cast<char>(dis(gen)); };
 
+
     int nfail = 0;
     int ntest = 0;
     int npass = 0;
+
+    auto dotest = [&](const std::string& word)
+    {
+        bool actual = dict.isword(word);
+        bool expect = isword(word);
+        if (expect != actual) {
+            printf("FAILURE: word=%s expect=%s actual=%s", word.c_str(), bstr(expect), bstr(actual));
+            ++nfail;
+        } else {
+            ++npass;
+        }
+        ++ntest;
+    };
 
     std::string w;
     for (int i = 0; i < 100000; ++i) {
@@ -83,14 +97,7 @@ int main(int argc, char** argv)
         for (int jj = 0; jj < 5; ++jj) {
             w += nextch();
         }
-
-        if (dict.isword(w) != isword(w)) {
-            printf("FAILURE: word=%s expect=%s actual=%s", w.c_str(), bstr(dict.isword(w)), bstr(isword(w)));
-            ++nfail;
-        } else {
-            ++npass;
-        }
-        ++ntest;
+        dotest(w);
     }
 
     printf("# pass = %d; # fail = %d; # test = %d\n", npass, nfail, ntest);
