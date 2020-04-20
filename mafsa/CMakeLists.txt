@@ -7,12 +7,16 @@ add_library(Arrays
     darray.cpp
     darray2.h
     darray2.cpp
+	darray3.h
+	darray3.cpp
+
     tarraysep.h
     tarraysep.cpp
     tarraydelta.h
     tarraydelta.cpp
     tarray.h
     tarray.cpp
+
     mafsa.h
     mafsa.cpp
 
