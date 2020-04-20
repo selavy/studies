@@ -163,12 +163,29 @@ void Darray2::insert(const char* const word)
         }
     };
 
+    auto findbasevec = [&](const int* const cfirst, const int* const clast)
+    {
+        std::size_t start = 0;
+        int b_new;
+        for (;;) {
+            const std::size_t maxc = AsIdx(*(clast - 1));
+            const std::size_t last = checks.size() - maxc;
+            assert(checks.size() > maxc);
+            b_new = findbaserange(&checks[start], &checks[last], cfirst, clast);
+            if (b_new >= 0) {
+                return b_new + static_cast<int>(start);
+            }
+            const std::size_t lookback = 26;
+            start = checks.size() > lookback ? checks.size() - lookback : 0;
+            extendarrays(50);
+        }
+    };
+
     int childs[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
-        const char ch = *p;
-        const int  c  = sconv(ch);
-        const int  t  = base(s) + c;
+        const int c = sconv(*p);
+        const int t = base(s) + c;
         if (check(t) == s) {
             s = t;
             continue;
@@ -183,22 +200,8 @@ void Darray2::insert(const char* const word)
                 s = t;
             } else {
                 childs[n_childs++] = c;
-                std::size_t start = 0;
-                int b_new;
-                for (;;) {
-                    const std::size_t maxc = AsIdx(childs[n_childs - 1]);
-                    const std::size_t last = checks.size() - maxc;
-                    assert(checks.size() > maxc);
-                    b_new = findbaserange(&checks[start], &checks[last], &childs[0], &childs[n_childs]);
-                    if (b_new >= 0) {
-                        b_new = b_new + static_cast<int>(start);
-                        break;
-                    }
-                    const std::size_t lookback = 26;
-                    start = checks.size() > lookback ? checks.size() - lookback : 0;
-                    extendarrays(50);
-                }
-                assert(0 <= b_new && AsIdx(b_new) < checks.size());
+                const int b_new = findbasevec(&childs[0], &childs[n_childs]);
+                assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
                 --n_childs;
                 relocate(s, b_new, &childs[0], n_childs);
                 setcheck(b_new + c, s);
@@ -207,7 +210,7 @@ void Darray2::insert(const char* const word)
         } else {
             std::size_t start = 0;
             int b_new = findbase(c);
-            assert(0 <= (b_new + c) && (b_new + c) < checks.size());
+            assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
             setbase(s, b_new/*, term(s)*/);
             setcheck(b_new + c, s);
             s = b_new + c;
