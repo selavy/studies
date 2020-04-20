@@ -39,11 +39,7 @@ int Darray3::base(int index) const
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    if (s < bases.size()) {
-        return static_cast<int>(bases[s] & BASE_MASK);
-    } else {
-        return MISSING_BASE;
-    }
+    return s < bases.size() ? static_cast<int>(bases[s] & BASE_MASK) : MISSING_BASE;
 }
 
 int Darray3::check(int index) const
@@ -60,15 +56,23 @@ bool Darray3::term(int index) const
     return s < bases.size() ? (bases[s] & TERM_MASK) != 0 : false;
 }
 
+bool Darray3::intail(int index) const
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    return s < bases.size() ? (bases[s] & TAIL_MASK) != 0 : false;
+}
+
 void Darray3::setbase(int index, int val)
 {
+    assert((UNSET_BASE & TERM_MASK) == 0);
+    assert((UNSET_BASE & TAIL_MASK) == 0);
     assert(index >= 0);
     assert(val  >= 0);
     assert(static_cast<u32>(val) < MAX_BASE);
     auto s = static_cast<std::size_t>(index);
     assert(s < bases.size());
-    assert((UNSET_BASE & TERM_MASK) == 0);
-    bases[s] = (bases[s] & TERM_MASK) | static_cast<u32>(val);
+    bases[s] = (bases[s] & (TAIL_MASK | TERM_MASK)) | static_cast<u32>(val);
 }
 
 void Darray3::setcheck(int index, int val)
@@ -85,7 +89,16 @@ void Darray3::setterm(int index, bool val)
     auto s = static_cast<std::size_t>(index);
     assert(s < bases.size());
     const u32 bit = val ? 1u : 0u;
-    bases[s] |= (bit << TERM_BIT);
+    bases[s] |= bit << TERM_BIT;
+}
+
+void Darray3::setintail(int index, bool val)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < bases.size());
+    const u32 bit = val ? 1u : 0u;
+    bases[s] |= bit << TAIL_BIT;
 }
 
 void Darray3::clrbase(int index)
@@ -108,8 +121,16 @@ void Darray3::clrterm(int index)
 {
     assert(index >= 0);
     auto s = static_cast<std::size_t>(index);
-    assert(s < checks.size());
+    assert(s < bases.size());
     bases[s] &= ~TERM_MASK;
+}
+
+void Darray3::clrintail(int index)
+{
+    assert(index >= 0);
+    auto s = static_cast<std::size_t>(index);
+    assert(s < bases.size());
+    bases[s] &= ~TAIL_MASK;
 }
 
 int Darray3::countchildren(int s, int* children) const
@@ -200,9 +221,6 @@ void Darray3::insert(const char* const word)
             s = t;
             continue;
         }
-
-        // TODO: Can I mark the current branch as a child? Not sure if the logic will work
-        //       trying to move an uninstall node.
         int n_children = countchildren(s, &children[0]);
         if (n_children > 0) {
             if (AsIdx(t) < checks.size() && check(t) == UNSET_CHECK) { // slot is available
@@ -228,7 +246,6 @@ void Darray3::insert(const char* const word)
             s = b_new + c;
         }
     }
-
     setterm(s, true);
 }
 
