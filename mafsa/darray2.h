@@ -13,6 +13,7 @@ struct Darray2
     std::vector<int> checks;
 
     Darray2();
+    void trim();
     void insert(const char* const word);
     void insert(const std::string& word) { return insert(word.c_str()); }
     bool isword(const char* const word)  const;

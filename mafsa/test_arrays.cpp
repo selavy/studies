@@ -1,4 +1,5 @@
 #include <catch2/catch.hpp>
+#include <iostream>
 #include <vector>
 #include <unordered_set>
 #include "darray.h"
@@ -224,6 +225,21 @@ TEST_CASE("Darray")
         }
     }
 
+    SECTION("Trim works")
+    {
+        // std::cout << "size before: " << d.bases.size() << "\n";
+        d.trim();
+        // std::cout << "size after : " << d.bases.size() << "\n";
+
+        for (const auto& word : DICT) {
+            CHECK(d.isword(word) == true);
+        }
+
+        for (const auto& word : MISSING) {
+            INFO("Checking missing word: " << word);
+            CHECK(d.isword(word) == false);
+        }
+    }
 }
 
 TEST_CASE("Darray2")
@@ -264,6 +280,22 @@ TEST_CASE("Darray2")
     for (const auto& word : MISSING) {
         INFO("Checking missing word: " << word);
         CHECK(d.isword(word) == false);
+    }
+
+    SECTION("Trim works")
+    {
+        // std::cout << "size before: " << d.bases.size() << "\n";
+        d.trim();
+        // std::cout << "size after : " << d.bases.size() << "\n";
+
+        for (const auto& word : DICT) {
+            CHECK(d.isword(word) == true);
+        }
+
+        for (const auto& word : MISSING) {
+            INFO("Checking missing word: " << word);
+            CHECK(d.isword(word) == false);
+        }
     }
 }
 

@@ -5,6 +5,7 @@
 #include <climits>
 #include <random>
 #include "darray.h"
+#include "darray2.h"
 
 
 template <class T>
@@ -57,14 +58,18 @@ int main(int argc, char** argv)
     const int         seed      = argc > 3 ? atoi(argv[3]) : rd();
 
     using STLDict = std::unordered_set<std::string>;
-    const auto maybe_words = load_dictionary<STLDict>(inname, max_words);
-    const auto maybe_dict  = load_dictionary<Darray> (inname, max_words);
+    auto maybe_words = load_dictionary<STLDict>(inname, max_words);
+    auto maybe_dict  = load_dictionary<Darray> (inname, max_words);
+    // auto maybe_dict  = load_dictionary<Darray2>(inname, max_words);
     if (!maybe_words || !maybe_dict) {
         std::cerr << "error: unable to load dictionary" << std::endl;
         return 1;
     }
     const auto& words = *maybe_words;
-    const auto& dict  = *maybe_dict;
+    auto& dict  = *maybe_dict;
+    std::cout << "size before: " << dict.bases.size() << "\n";
+    dict.trim();
+    std::cout << "size after : " << dict.bases.size() << "\n";
 
     auto isword = [&](const std::string& word) { return words.count(word) != 0; };
     auto bstr   = [](bool b) { return b ? "true" : "false"; };

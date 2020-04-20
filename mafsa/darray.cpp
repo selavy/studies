@@ -23,7 +23,16 @@ Darray::Darray()
             "adding max child offset would overflow missing base");
     static_assert((UNSET_BASE + static_cast<u32>(MAX_CHILD_OFFSET)) < static_cast<u32>(INT_MAX),
             "adding max child offset would overflow missing base");
+}
 
+void Darray::trim()
+{
+    while (checks.size() >= 27 && checks.back() == UNSET_CHECK) {
+        bases .pop_back();
+        checks.pop_back();
+    }
+    bases .shrink_to_fit();
+    checks.shrink_to_fit();
 }
 
 int Darray::getbase(int index) const

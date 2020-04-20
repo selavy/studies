@@ -18,6 +18,16 @@ Darray2::Darray2()
     , checks(27, UNSET_CHECK)
 {}
 
+void Darray2::trim()
+{
+    while (checks.size() >= 27 && checks.back() == UNSET_CHECK) {
+        bases .pop_back();
+        checks.pop_back();
+    }
+    bases .shrink_to_fit();
+    checks.shrink_to_fit();
+}
+
 int Darray2::base(int index) const
 {
     auto n = static_cast<std::size_t>(index);
