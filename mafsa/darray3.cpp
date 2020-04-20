@@ -123,16 +123,6 @@ int Darray3::countchildren(int s, int* children) const
     return n_children;
 }
 
-int Darray3::findbase(const int* const first, const int* const last, int c)
-{
-    for (const int* p = first; p != last; ++p) {
-        if (p[c] == UNSET_CHECK) {
-            return static_cast<int>(p - first);
-        }
-    }
-    return -1;
-}
-
 int Darray3::findbaserange(const int* const first, const int* const last, const int* const cs, const int* const csend)
 {
     auto baseworks = [](const int* const check, const int* const cs, const int* const csend)
@@ -187,6 +177,18 @@ void Darray3::insert(const char* const word)
         this->checks.insert(this->checks.end(), need, UNSET_CHECK);
     };
 
+    auto findbase = [&](const int* const first, const int* const last, int c)
+    {
+        for (;;) {
+            for (const int* p = first; p != last; ++p) {
+                if (p[c] == UNSET_CHECK) {
+                    return static_cast<int>(p - first);
+                }
+            }
+            extendarrays(50);
+        }
+    };
+
     int childs[26];
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
@@ -230,18 +232,9 @@ void Darray3::insert(const char* const word)
             }
         } else {
             std::size_t start = 0;
-            int b_new;
-            for (;;) {
-                const std::size_t chck_end = checks.size() - AsIdx(c);
-                b_new = findbase(&checks[start], &checks[chck_end], c);
-                if (b_new >= 0) {
-                    b_new = b_new + static_cast<int>(start);
-                    break;
-                }
-                start = checks.size();
-                extendarrays(50);
-            }
-            assert(0 <= b_new && AsIdx(b_new) < checks.size());
+            const int b_new = findbase(&*checks.begin(), &*checks.end(), c);
+            assert(0 <= (b_new + c) && AsIdx(b_new + c) < checks.size());
+            assert(checks[AsIdx(b_new + c)] == UNSET_CHECK);
             setbase(s, b_new);
             setcheck(b_new + c, s);
             s = b_new + c;
