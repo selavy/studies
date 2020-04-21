@@ -214,12 +214,13 @@ std::optional<Mafsa> Mafsa::deserialize(const std::string& filename)
     auto buf = read_dict_file(filename);
     auto serial_mafsa = GetSerialMafsa(buf.data());
     flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
-    assert(serial_darray->Verify(v));
+    assert(serial_mafsa->Verify(v));
     Mafsa mafsa;
+    mafsa.ns.clear();
     for (const auto* node : *serial_mafsa->nodes()) {
         mafsa.ns.emplace_back();
         auto& n = mafsa.ns.back();
-        n.val = node->value();
+        n.val  = node->value();
         n.term = node->term();
         for (const auto* link : *node->children()) {
             n.kids[link->value()] = link->next();

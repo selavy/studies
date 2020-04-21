@@ -62,7 +62,7 @@ BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Darray   , DarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Darray2  , DarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Tarraysep, TarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Tarray   , TarrayDictionary);
-// BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Mafsa    ,  MafsaDictionary);
+BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Mafsa    ,  MafsaDictionary);
 
 
 BENCHMARK_MAIN();

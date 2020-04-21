@@ -84,6 +84,7 @@ bool test_dictionary(const T& dict, std::string path, int max_words)
         }
         if (valid_word) {
             if (!dict.isword(word)) {
+                std::cerr << "Failed on word: " << word << "\n";
                 return false;
             }
             if (++n_words >= max_words) {
@@ -160,6 +161,16 @@ bool write_mafsa(const Mafsa& mafsa, const std::string& filename)
     return write_data(filename, buf, len);
 }
 
+std::ostream& operator<<(std::ostream& os, const Mafsa::Node& n)
+{
+    os << "value=" << n.val << ", term=" << (n.term ? "TRUE":"FALSE") << ", kids=[ ";
+    for (auto [value, next] : n.kids) {
+        os << "(" << value << ", " << next << ") ";
+    }
+    os << "]";
+    return os;
+}
+
 int main(int argc, char** argv)
 {
     // TODO: real command line parser
@@ -209,13 +220,46 @@ int main(int argc, char** argv)
         }
         auto& mafsa = *maybe_mafsa;
         mafsa.reduce();
-        write_mafsa(mafsa, moutname);
-        const auto& tarray = mafsa.make_tarray();
-        if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
-            std::cerr << "dictionary test failed!" << std::endl;
+        if (!test_dictionary<Mafsa>(mafsa, inname, max_words)) {
+            std::cerr << "Mafsa test failed!" << std::endl;
             return 1;
         }
-        write_tarray(tarray, toutname);
+
+        write_mafsa(mafsa, moutname);
+
+        {
+            auto maybe_m2 = Mafsa::deserialize(moutname);
+            if (!maybe_m2) {
+                std::cerr << "error: unable to deserialize mafsa!" << std::endl;
+                return 1;
+            }
+            auto& m2 = *maybe_m2;
+
+#if 0
+            std::cout << "mafsa nodes: " << mafsa.ns.size() << "\n";
+            std::cout << "m2    nodes: " << m2   .ns.size() << "\n";
+            if (mafsa.ns.size() == m2.ns.size()) {
+                for (std::size_t i = 0; i < m2.ns.size(); ++i) {
+                    std::cout << "Mafsa Node: " << mafsa.ns[i] << "\n";
+                    std::cout << "M2    Node: " << m2   .ns[i] << "\n";
+                }
+            }
+#endif
+
+            if (!test_dictionary<Mafsa>(m2, inname, max_words)) {
+                std::cerr << "Mafsa deserialize test failed!" << std::endl;
+                return 1;
+            }
+        }
+
+        if (0) {
+            const auto& tarray = mafsa.make_tarray();
+            if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
+                std::cerr << "dictionary test failed!" << std::endl;
+                return 1;
+            }
+            write_tarray(tarray, toutname);
+        }
     }
 
     return 0;
