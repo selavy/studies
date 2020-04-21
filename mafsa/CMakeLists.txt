@@ -22,6 +22,7 @@ add_library(Arrays
 
     darray_generated.h
     tarray_generated.h
+    mafsa_generated.h
 )
 target_link_libraries(Arrays PUBLIC cxx_project_options ZLIB::ZLIB)
 

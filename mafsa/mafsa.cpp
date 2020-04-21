@@ -5,6 +5,8 @@
 #include <iostream>
 #include <algorithm>
 #include "iconv.h"
+#include "tarray_util.h"
+#include "mafsa_generated.h"
 
 
 Mafsa::Mafsa()
@@ -200,6 +202,30 @@ void Mafsa::reduce()
     }
 
     ns = std::move(newnodes);
+}
+
+void Mafsa::dump_stats(std::ostream& os) const
+{
+    // TODO:
+}
+
+std::optional<Mafsa> Mafsa::deserialize(const std::string& filename)
+{
+    auto buf = read_dict_file(filename);
+    auto serial_mafsa = GetSerialMafsa(buf.data());
+    flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(buf.data()), buf.size());
+    assert(serial_darray->Verify(v));
+    Mafsa mafsa;
+    for (const auto* node : *serial_mafsa->nodes()) {
+        mafsa.ns.emplace_back();
+        auto& n = mafsa.ns.back();
+        n.val = node->value();
+        n.term = node->term();
+        for (const auto* link : *node->children()) {
+            n.kids[link->value()] = link->next();
+        }
+    }
+    return mafsa;
 }
 
 // ----------------------------------------------------------------------------

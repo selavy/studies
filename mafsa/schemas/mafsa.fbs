@@ -1,0 +1,21 @@
+struct SerialLink
+{
+    value: int;
+    next:  int;
+}
+
+table SerialNode
+{
+    value    : int;
+    term     : bool;
+    children : [SerialLink];
+}
+
+table SerialMafsa
+{
+    nodes : [SerialNode];
+}
+
+file_identifier "MFSA";
+file_extension  "mfsa";
+root_type SerialMafsa;

@@ -1,10 +1,12 @@
 #pragma once
 
+#include <iosfwd>
 #include <map>
 #include <vector>
 #include <string>
 #include <cassert>
 #include <cstdint>
+#include <optional>
 #include "tarraysep.h"
 
 
@@ -29,6 +31,10 @@ struct Mafsa
     int numstates() const;
     bool validstate(std::size_t i) const;
     void reduce();
+
+    void dump_stats(std::ostream& os) const;
+
+    static std::optional<Mafsa> deserialize(const std::string& filename);
 
     template <class F>
     void visit_post(int s, F&& f)

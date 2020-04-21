@@ -4,6 +4,7 @@
 #include <string>
 #include <climits>
 #include "mafsa.h"
+#include "mafsa_generated.h"
 #include "darray.h"
 #include "darray_generated.h"
 #include "tarraysep.h"
@@ -95,8 +96,7 @@ bool test_dictionary(const T& dict, std::string path, int max_words)
 
 std::string make_out_filename(std::string inname, std::string newext)
 {
-    const std::string ext    = ".txt";
-    // const std::string newext = ".bin";
+    const std::string ext = ".txt";
     auto pos = inname.rfind(ext);
     if (pos == std::string::npos) {
         return inname + newext;
@@ -135,6 +135,31 @@ bool write_tarray(const Tarraysep& tarray, const std::string& filename)
     return write_data(filename, buf, len);
 }
 
+bool write_mafsa(const Mafsa& mafsa, const std::string& filename)
+{
+    auto make_serial_links = [](const std::map<int, int>& children)
+    {
+        std::vector<SerialLink> result;
+        for (auto [value, next] : children) {
+            result.emplace_back(value, next);
+        }
+        return result;
+    };
+
+    flatbuffers::FlatBufferBuilder builder;
+    std::vector<flatbuffers::Offset<SerialNode>> nodes;
+    for (const auto& node : mafsa.ns) {
+        auto children = make_serial_links(node.kids);
+        auto serial_node = CreateSerialNodeDirect(builder, node.val, node.term, &children);
+        nodes.emplace_back(serial_node);
+    }
+    auto serial_mafsa = CreateSerialMafsaDirect(builder, &nodes);
+    builder.Finish(serial_mafsa);
+    auto* buf = builder.GetBufferPointer();
+    auto  len = builder.GetSize();
+    return write_data(filename, buf, len);
+}
+
 int main(int argc, char** argv)
 {
     // TODO: real command line parser
@@ -147,10 +172,12 @@ int main(int argc, char** argv)
     const int         max_words = argc >= 3 ? atoi(argv[2]) : INT_MAX;
     const std::string doutname  = argc >= 4 ? argv[3]       : make_out_filename(inname, ".ddic");
     const std::string toutname  = argc >= 5 ? argv[4]       : make_out_filename(inname, ".tdic");
+    const std::string moutname  = argc >= 6 ? argv[5]       : make_out_filename(inname, ".mfsa");
 
     std::cout << "INPUT:     " << inname    << "\n"
               << "OUTPUT   : " << doutname  << "\n"
               << "OUTPUT   : " << toutname  << "\n"
+              << "OUTPUT   : " << moutname  << "\n"
               << "MAX WORDS: " << max_words << "\n"
               ;
 
@@ -182,7 +209,7 @@ int main(int argc, char** argv)
         }
         auto& mafsa = *maybe_mafsa;
         mafsa.reduce();
-
+        write_mafsa(mafsa, moutname);
         const auto& tarray = mafsa.make_tarray();
         if (!test_dictionary<Tarraysep>(tarray, inname, max_words)) {
             std::cerr << "dictionary test failed!" << std::endl;

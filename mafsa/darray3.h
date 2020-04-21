@@ -10,14 +10,13 @@
 struct Darray3
 {
     using u32 = uint32_t;
+    using u8  = uint8_t;
 
     std::vector<u32> bases;
     std::vector<int> checks;
+    std::vector<u8 > suffixs;
 
     Darray3();
-    void trim();
-    void insert(const char* const word);
-    void insert(const std::string& word) { return insert(word.c_str()); }
     bool isword(const char* const word)  const;
     bool isword(const std::string& word) const { return isword(word.c_str()); }
 
@@ -35,15 +34,8 @@ private:
     void setcheck(int index, int val);
     void setterm(int index, bool val);
     void setintail(int index, bool val);
-    void clrbase(int index);
-    void clrcheck(int index);
-    void clrterm(int index);
-    void clrintail(int index);
+    bool istailsuffix(int index, const char* const word) const;
 
-    void relocate(int s, int b, int* childs, int n_childs);
-    int  countchildren(int s, int* childs) const;
-
-    static constexpr int MIN_CHILD_OFFSET = 1;
     static constexpr int MAX_CHILD_OFFSET = 27;
     static constexpr int TAIL_BIT     = 30;
     static constexpr u32 TAIL_MASK    = 1u << TAIL_BIT;

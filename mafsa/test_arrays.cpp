@@ -300,6 +300,7 @@ TEST_CASE("Darray2")
     }
 }
 
+#if 0
 TEST_CASE("Darray3")
 {
     Darray3 d;
@@ -363,6 +364,7 @@ TEST_CASE("Darray3")
         }
     }
 }
+#endif
 
 TEST_CASE("Mafsa")
 {
