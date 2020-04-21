@@ -19,6 +19,8 @@ add_library(Arrays
 
     mafsa.h
     mafsa.cpp
+    mafsa2.h
+    mafsa2.cpp
 
     darray_generated.h
     tarray_generated.h

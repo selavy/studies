@@ -9,6 +9,7 @@
 #include "tarraysep.h"
 #include "tarraydelta.h"
 #include "mafsa.h"
+#include "mafsa2.h"
 
 
 static const std::array<std::string, 3> DictionaryFilenames = {
@@ -63,6 +64,7 @@ BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Darray2  , DarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Tarraysep, TarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Tarray   , TarrayDictionary);
 BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Mafsa    ,  MafsaDictionary);
+BENCHMARK_TEMPLATE(BM_IsWord_AllWords, Mafsa2   ,  MafsaDictionary);
 
 
 BENCHMARK_MAIN();
