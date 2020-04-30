@@ -1,0 +1,2 @@
+add_executable(test_diffs diffs_test.cpp)
+target_link_libraries(test_diffs PUBLIC Catch cxx_project_options)
