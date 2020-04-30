@@ -349,3 +349,29 @@ TEST_CASE("Delete one price")
         CHECK(after == desired);
     }
 }
+
+TEST_CASE("Delete multiple prices")
+{
+    Quotes current = { Quote{1000, 1}, Quote{1002, 1}, Quote{1004, 2}, Quote{1005, 27}, Quote{1007, 42} };
+
+    std::vector<Quotes> cases = {
+        {                 Quote{1002, 1}, Quote{1004, 2}, Quote{1005, 27}, Quote{1007, 42} },
+        { Quote{1000, 1},                 Quote{1004, 2}, Quote{1005, 27}, Quote{1007, 42} },
+        { Quote{1000, 1}, Quote{1002, 1},                 Quote{1005, 27}, Quote{1007, 42} },
+        { Quote{1000, 1}, Quote{1002, 1}, Quote{1004, 2},                  Quote{1007, 42} },
+        { Quote{1000, 1},                 Quote{1004, 2},                  Quote{1007, 42} },
+        { Quote{1000, 1},                 Quote{1004, 2}, Quote{1005, 27}                  },
+        {                                 Quote{1004, 2}, Quote{1005, 27}, Quote{1007, 42} },
+        { Quote{1000, 1}, Quote{1002, 1}, Quote{1004, 2},                                  },
+        { Quote{1000, 1},                 Quote{1004, 2},                                  },
+        {                                 Quote{1004, 2},                                  },
+        {                                                                                  },
+    };
+
+    for (const auto& desired : cases) {
+        auto desire = desired;
+        auto result = diff(current, desire);
+        auto after  = apply_diffs(current, result);
+        CHECK(after == desired);
+    }
+}
