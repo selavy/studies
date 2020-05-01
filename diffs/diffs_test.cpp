@@ -41,7 +41,7 @@ const char* action_name(Action x)
 }
 
 constexpr int MaxPerSide = 5;
-using Quotes = std::array<Quote, MaxPerSide>;
+using Quotes = std::array<Quote, MaxPerSide+1>; // Last quote is a stub quote and not valid to touch
 // using Diffs  = std::array<Diff,  2*MaxPerSide>;
 using Diffs  = std::vector<Diff>;
 
@@ -184,7 +184,7 @@ Quotes apply_diffs(const Quotes& current, const Diffs& diffs) {
         }
     }
     Quotes result;
-    REQUIRE(qs.size() <= result.size());
+    REQUIRE(qs.size() <= MaxPerSide);
     std::fill(std::begin(result), std::end(result), Quote{});
     for (std::size_t i = 0; i < qs.size(); ++i) {
         result[i] = qs[i];
@@ -201,19 +201,22 @@ Diffs diff(const Quotes& current, Quotes desired)
     // TODO: add stub quote at the end of the array that is always invalid so
     //       don't have to check size
 
-    REQUIRE(std::is_sorted(std::begin(current), std::end(current), QuotePriceCmp{}));
-    REQUIRE(std::is_sorted(std::begin(desired), std::end(desired), QuotePriceCmp{}));
+    assert(std::is_sorted(std::begin(current), std::end(current), QuotePriceCmp{}));
+    assert(std::is_sorted(std::begin(desired), std::end(desired), QuotePriceCmp{}));
+    // Must have stub quote at the end
+    assert(current[MaxPerSide].qty == 0u);
+    assert(desired[MaxPerSide].qty == 0u);
 
     Diffs diffs;
     std::size_t idx1 = 0;
     std::size_t idx2 = 0;
-    while (1) {
-        if (!(idx1 < current.size())) {
-            break;
-        }
-        if (!(idx2 < desired.size())) {
-            break;
-        }
+    for (;;) {
+        // if (!(idx1 < current.size())) {
+        //     break;
+        // }
+        // if (!(idx2 < desired.size())) {
+        //     break;
+        // }
         if (current[idx1].qty == 0u) {
             break;
         }
@@ -255,7 +258,7 @@ Diffs diff(const Quotes& current, Quotes desired)
         }
     }
 
-    while (idx1 < current.size() && current[idx1].qty != 0u) {
+    while (/*idx1 < current.size() && */ current[idx1].qty != 0u) {
         Diff diff;
         diff.action = Action::eCancel;
         diff.px     = current[idx1].px;
@@ -264,7 +267,7 @@ Diffs diff(const Quotes& current, Quotes desired)
         idx1++;
     }
 
-    while (idx2 < desired.size() && desired[idx2].qty != 0u) {
+    while (/*idx2 < desired.size() && */ desired[idx2].qty != 0u) {
         Diff diff;
         diff.action = Action::eAdd;
         diff.px     = desired[idx2].px;
