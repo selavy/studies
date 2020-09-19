@@ -9,7 +9,7 @@ bool Mafsa2::isword(const char* const word) const noexcept
     int s = 0;
     for (const char* p = word; *p != '\0'; ++p) {
         const int c = iconv(*p);
-        assert(0 <= s && s < static_cast<int>(ns.size()));
+        assert(0 <= s && static_cast<std::size_t>(s) < nodes.size());
         assert(0 <= c && c <= 26);
         auto& node = nodes[static_cast<std::size_t>(s)];
         auto t = node.children[c];
