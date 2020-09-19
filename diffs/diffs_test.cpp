@@ -193,6 +193,14 @@ Quotes apply_diffs(const Quotes& current, const Diffs& diffs) {
     return result;
 }
 
+// Diffs diff2(Quotes current, Quotes desired)
+// {
+//     auto it1 = current.begin();
+//     auto it2 = desired.begin();
+// 
+// 
+// }
+
 Diffs diff(const Quotes& current, Quotes desired)
 {
     // std::sort(std::begin(current), std::end(current), QuotePriceCmp{});
