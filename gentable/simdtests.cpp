@@ -70,14 +70,5 @@ int main(int argc, const char** argv)
         }
     }
 
-
-
-    // __m128i result;
-    // int     mask;
-
-    // result = _mm_add_epi32(a, b);
-    // mask   = _mm_movemask_ps((__m128)result);
-
-
     return 0;
 }
