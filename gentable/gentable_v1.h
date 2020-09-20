@@ -1,14 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <fmt/ostream.h> // TEMP TEMP
 
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
-using s16 = int16_t;
-using s32 = int32_t;
-using s64 = int64_t;
-
+// TODO: clean this up
 #define LIKELY(x)   __builtin_expect(!!(x), true)
 #define UNLIKELY(x) __builtin_expect(!!(x), false)
 #define restrict __restrict
@@ -20,10 +15,11 @@ namespace v1 {
 struct Table
 {
 public:
-    constexpr static u64         INVALID = 0;
+    static constexpr std::size_t N       = 32;
     constexpr static std::size_t NO_SLOT = -1;
+    constexpr static uint64_t         INVALID = 0;
 
-    bool insert(u32 x, u32 y, u64 z) noexcept
+    bool insert(uint32_t x, uint32_t y, uint64_t z) noexcept
     {
         auto slot = find_open_slot(x, xs);
         if (LIKELY(slot != NO_SLOT)) {
@@ -35,7 +31,7 @@ public:
         return false;
     }
 
-    u64 find(u32 x, u32 y) const noexcept
+    uint64_t find(uint32_t x, uint32_t y) const noexcept
     {
         auto slot = find_slot(x, xs, y, ys);
         if (LIKELY(slot == NO_SLOT)) {
@@ -44,16 +40,23 @@ public:
         return zs[slot];
     }
 
-    int size(u32 x) const noexcept
+    int size(uint32_t x) const noexcept
     {
         return count_slots(x, xs);
     }
 
-private:
-    static constexpr std::size_t N = 32;
+    void dump(std::ostream& os)
+    {
+        fmt::print(os, "Table = {{\n");
+        for (std::size_t i = 0; i != N; ++i) {
+            fmt::print(os, "    {:08x} {:08x} {:016x}\n", xs[i], ys[i], zs[i]);
+        }
+        fmt::print(os, "}}\n");
+    }
 
+private:
     static std::size_t find_open_slot(
-            u32 x, const u32* restrict xs) noexcept
+            uint32_t x, const uint32_t* restrict xs) noexcept
     {
         for (std::size_t i = 0; i != N; ++i) {
             if (xs[i] != x) {
@@ -64,8 +67,8 @@ private:
     }
 
     static std::size_t find_slot(
-            u32 x, const u32* restrict xs,
-            u32 y, const u32* restrict ys) noexcept
+            uint32_t x, const uint32_t* restrict xs,
+            uint32_t y, const uint32_t* restrict ys) noexcept
     {
         for (std::size_t i = 0; i != N; ++i) {
             if (UNLIKELY(x == xs[i] && y == ys[i])) {
@@ -75,7 +78,7 @@ private:
         return NO_SLOT;
     }
 
-    static int count_slots(u32 x, const u32* restrict xs) noexcept
+    static int count_slots(uint32_t x, const uint32_t* restrict xs) noexcept
     {
         int result = 0;
         for (std::size_t i = 0; i != N; ++i) {
@@ -86,9 +89,9 @@ private:
         return result;
     }
 
-    u32 xs[N] = { 0 };
-    u32 ys[N] = { 0 };
-    u64 zs[N] = { 0 };
+    uint32_t xs[N] = { 0 };
+    uint32_t ys[N] = { 0 };
+    uint64_t zs[N] = { 0 };
 };
 
 } // namespace v1

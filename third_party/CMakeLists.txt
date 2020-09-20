@@ -31,3 +31,8 @@ option(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
 option(BENCHMARK_ENABLE_GTEST_TESTS OFF)
 add_subdirectory(benchmark)
 add_library(Google::Benchmark ALIAS benchmark)
+
+#
+# LibFMT
+#
+add_subdirectory(fmt)
