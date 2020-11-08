@@ -1,8 +1,9 @@
 #pragma once
 
 #include <iterator>
+#include <functional>
 
-namespace naive {
+namespace pl {
 
 #if 0
 template <class ForwardIter>
@@ -98,12 +99,17 @@ Iter search(Iter first, Iter last, Iter s_first, Iter s_last)
             typename std::iterator_traits<Iter>::iterator_category());
 }
 
-#if 0
-template <class ForwardIter, class BinaryPredicate = std::equal_to<>>>
-struct Naive : BinaryPredicate
+template <class Iter, class Searcher>
+Iter search(Iter first, Iter last, Searcher& searcher)
 {
-    Naive(ForwardIter pat_first, ForwardIter pat_last,
-            BinaryPredicate pred = BinaryPredicate) noexcept
+    return searcher(first, last).first;
+}
+
+template <class ForwardIter, class BinaryPredicate = std::equal_to<>>
+struct NaiveSearch : BinaryPredicate
+{
+    NaiveSearch(ForwardIter pat_first, ForwardIter pat_last,
+            BinaryPredicate pred = BinaryPredicate{}) noexcept
         : BinaryPredicate{pred}
         , s_first{pat_first}
         , s_last{pat_last}
@@ -115,13 +121,13 @@ struct Naive : BinaryPredicate
         auto iter = search(first, last, s_first, s_last);
         auto result = std::make_pair(iter, iter);
         if (result.first != last) {
-            result.
+            std::advance(result.second, std::distance(s_first, s_last));
         }
+        return result;
     }
 
     ForwardIter s_first;
     ForwardIter s_last;
 };
-#endif
 
-} // namespace naive
+} // namespace pl

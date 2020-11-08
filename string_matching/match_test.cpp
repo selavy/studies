@@ -13,7 +13,7 @@ TEST_CASE("Naive -- Empty text")
     SECTION("Forward Iterator")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end(),
                     std::forward_iterator_tag{}) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -26,7 +26,7 @@ TEST_CASE("Naive -- Empty text")
     SECTION("Random Access Iterator")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end(),
                     std::random_access_iterator_tag{}) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -39,7 +39,7 @@ TEST_CASE("Naive -- Empty text")
     SECTION("Tag Dispatch")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end()) != text.end();
             auto expect = std::search(text.begin(), text.end(),
                     pat.begin(), pat.end()) != text.end();
@@ -74,7 +74,7 @@ TEST_CASE("Naive -- Not empty text")
     SECTION("Forward Iterator")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end(),
                     std::forward_iterator_tag{}) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -87,7 +87,7 @@ TEST_CASE("Naive -- Not empty text")
     SECTION("Random Access Iterator")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end(),
                     std::random_access_iterator_tag{}) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -100,8 +100,21 @@ TEST_CASE("Naive -- Not empty text")
     SECTION("Tag Dispatch")
     {
         for (auto&& pat : pats) {
-            auto actual = naive::search(text.begin(), text.end(),
+            auto actual = pl::search(text.begin(), text.end(),
                     pat.begin(), pat.end()) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\"");
+            CHECK(actual == expect);
+        }
+    }
+
+    SECTION("Naive Searcher")
+    {
+        for (auto&& pat : pats) {
+            pl::NaiveSearch searcher(pat.begin(), pat.end());
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
             auto expect = std::search(text.begin(), text.end(),
                     pat.begin(), pat.end()) != text.end();
             INFO("Searching for pattern: \"" << pat << "\"");
