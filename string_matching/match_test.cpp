@@ -122,3 +122,60 @@ TEST_CASE("Naive -- Not empty text")
         }
     }
 }
+
+TEST_CASE("Naive Different Texts")
+{
+    std::string s = "a a";
+    s[1] = (char)-97;
+    std::vector<std::string> needles = {
+        s, "", "a", "aa", "aaa", "ab", "cd", "abcd", "abcdabcd", "abcabcd", "aaab",
+    };
+    std::vector<std::string> haystacks = {
+        s, "", "a", "aa", "aaa", "ab", "cd", "abcd", "abcdabcd", "abcabcd",
+        "aaaaaaa", "aabaa", "aaacab", "cdabcdab", "abcdabcd", "xyzabcdxyz",
+        "aaaaab",
+    };
+
+    SECTION("Forward Iterator")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                auto actual = pl::search(text.begin(), text.end(),
+                        pat.begin(), pat.end(),
+                        std::forward_iterator_tag{}) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
+
+    SECTION("Random Access Iterator")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                auto actual = pl::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
+
+    SECTION("Tag Dispatch")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                auto actual = pl::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
+}

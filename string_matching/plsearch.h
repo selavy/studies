@@ -40,14 +40,22 @@ ForwardIter search(ForwardIter first, ForwardIter last,
     if (first == last) {
         return last;
     }
-
+    // special case for 1 character search
+    auto p = s_first;
+    if (++p == s_last) {
+        return std::find(first, last, *s_first);
+    }
+    // general case:
     for (;;) {
         first = std::find(first, last, *s_first);
         if (first == last) {
             return last;
         }
         auto p1 = first;
-        auto p2 = s_first;
+        if (++p1 == last) {
+            return last;
+        }
+        auto p2 = p;
         while (*p1 == *p2) {
             if (++p2 == s_last) {
                 return first;
@@ -56,9 +64,9 @@ ForwardIter search(ForwardIter first, ForwardIter last,
                 return last;
             }
         }
-        first = p1;
+        ++first;
     }
-
+    __builtin_unreachable();
     return last;
 }
 
@@ -129,5 +137,7 @@ struct NaiveSearch : BinaryPredicate
     ForwardIter s_first;
     ForwardIter s_last;
 };
+
+// template <class BiDirIter>
 
 } // namespace pl
