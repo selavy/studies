@@ -26,43 +26,40 @@ ForwardIter search(ForwardIter first, ForwardIter last,
     return last;
 }
 
+template <class RandomAccessIter>
+RandomAccessIter search(RandomAccessIter first, RandomAccessIter last,
+        RandomAccessIter s_first, RandomAccessIter s_last,
+        std::random_access_iterator_tag)
+{
+    auto is_match = [](auto p1, auto p2, auto e2)
+    {
+        for (; p2 != e2; ++p1, ++p2) {
+            if (*p1 != *p2) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    auto n = std::distance(first, last);
+    auto m = std::distance(s_first, s_last);
+    if (m > n) {
+        return last;
+    }
+    auto t_last = std::prev(last, m - 1);
+    for (; first != t_last; ++first) {
+        if (is_match(first, s_first, s_last)) {
+            return first;
+        }
+    }
+    return last;
+}
+
 template <class Iter>
 Iter search(Iter first, Iter last, Iter s_first, Iter s_last)
 {
-    return search(first, last, s_first, s_last, std::forward_iterator_tag{});
+    return search(first, last, s_first, s_last,
+            typename std::iterator_traits<Iter>::iterator_category());
 }
-
-// namespace detail {
-// 
-// bool is_match(const char* p1, const char* p2, const char* e2)
-// {
-//     for (; p2 != e2; ++p1, ++p2) {
-//         if (*p1 != *p2) {
-//             return false;
-//         }
-//     }
-//     return true;
-// }
-// 
-// } // namespace detail
-// 
-// const char* search(const char* const first, const char* const last,
-//         const char* const s_first, const char* const s_last) noexcept
-// {
-//     auto n = last - first;
-//     auto m = s_last - s_first;
-//     if (m > n) {
-//         return last;
-//     }
-//     auto end = first + (n - m);
-// 
-//     for (auto p = first; p != end; ++p) {
-//         if (detail::is_match(p, s_first, s_last)) {
-//             return p;
-//         }
-//     }
-// 
-//     return last;
-// }
 
 } // namespace naive
