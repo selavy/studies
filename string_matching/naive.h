@@ -4,11 +4,13 @@
 
 namespace naive {
 
+#if 0
 template <class ForwardIter>
 ForwardIter search(ForwardIter first, ForwardIter last,
         ForwardIter s_first, ForwardIter s_last, std::forward_iterator_tag)
 {
-    auto is_match = [](auto p1, auto e1, auto p2, auto e2)
+    auto is_match = [](ForwardIter p1, ForwardIter e1, ForwardIter p2,
+                       ForwardIter e2)
     {
         for (; p1 != e1 && p2 != e2; ++p1, ++p2) {
             if (*p1 != *p2) {
@@ -25,13 +27,47 @@ ForwardIter search(ForwardIter first, ForwardIter last,
     }
     return last;
 }
+#endif
+
+template <class ForwardIter>
+ForwardIter search(ForwardIter first, ForwardIter last,
+        ForwardIter s_first, ForwardIter s_last, std::forward_iterator_tag)
+{
+    if (s_first == s_last) {
+        return first;
+    }
+    if (first == last) {
+        return last;
+    }
+
+    for (;;) {
+        first = std::find(first, last, *s_first);
+        if (first == last) {
+            return last;
+        }
+        auto p1 = first;
+        auto p2 = s_first;
+        while (*p1 == *p2) {
+            if (++p2 == s_last) {
+                return first;
+            }
+            if (++p1 == last) {
+                return last;
+            }
+        }
+        first = p1;
+    }
+
+    return last;
+}
 
 template <class RandomAccessIter>
 RandomAccessIter search(RandomAccessIter first, RandomAccessIter last,
         RandomAccessIter s_first, RandomAccessIter s_last,
         std::random_access_iterator_tag)
 {
-    auto is_match = [](auto p1, auto p2, auto e2)
+    auto is_match = [](RandomAccessIter p1, RandomAccessIter p2,
+                       RandomAccessIter e2)
     {
         for (; p2 != e2; ++p1, ++p2) {
             if (*p1 != *p2) {
@@ -61,5 +97,31 @@ Iter search(Iter first, Iter last, Iter s_first, Iter s_last)
     return search(first, last, s_first, s_last,
             typename std::iterator_traits<Iter>::iterator_category());
 }
+
+#if 0
+template <class ForwardIter, class BinaryPredicate = std::equal_to<>>>
+struct Naive : BinaryPredicate
+{
+    Naive(ForwardIter pat_first, ForwardIter pat_last,
+            BinaryPredicate pred = BinaryPredicate) noexcept
+        : BinaryPredicate{pred}
+        , s_first{pat_first}
+        , s_last{pat_last}
+    {}
+
+    std::pair<ForwardIter, ForwardIter> operator()(
+            ForwardIter first, ForwardIter last) noexcept
+    {
+        auto iter = search(first, last, s_first, s_last);
+        auto result = std::make_pair(iter, iter);
+        if (result.first != last) {
+            result.
+        }
+    }
+
+    ForwardIter s_first;
+    ForwardIter s_last;
+};
+#endif
 
 } // namespace naive
