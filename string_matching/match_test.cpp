@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include "naive.h"
+#include "plsearch.h"
 
 TEST_CASE("Naive -- Empty text")
 {
