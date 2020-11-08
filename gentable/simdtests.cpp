@@ -68,23 +68,38 @@ int main(int argc, const char** argv)
 #elif BITS_PER_OP == 256
         __m256i needle;
         __m256i haystk;
+#ifdef __AVX2__
         __m256i result;
+#else
+        __m256  result1;
+        __m256  result2;
+        __m256  result;
+#endif
         __m256i ones;
+        __m256  zeros;
         uint32_t mvmask;
 
         ones   = _mm256_set1_epi32(0xFFFFFFFFu);
+        zeros  = _mm256_set1_ps(0.);
         needle = _mm256_set1_epi32(vals[j]);
         haystk = _mm256_load_si256((__m256i const*)&keys[0]);
+#ifdef __AVX2__
         result = _mm256_cmpeq_epi32(needle, haystk);
         result = _mm256_xor_si256(result, ones);
         _mm256_store_si256((__m256i*)&outs[0], result);
+#else
+        result1 = _mm256_sub_ps((__m256)needle, (__m256)haystk);
+        result2 = _mm256_cmp_ps(result1, zeros, _CMP_EQ_OQ);
+        result  = _mm256_xor_si256(result, ones);
+        _mm256_store_ps((float*)&outs[0], result);
+#endif
         mvmask = _mm256_movemask_ps((__m256)result);
 #else
 #error "Invalid BITS_PER_OP"
 #endif
 
         fmt::print("j = {}\n", j);
-        dump("outs", outs);
+        // dump("outs", outs);
         for (size_t i = 0; i != STRIDE; ++i) {
             fmt::print("mvmask[{:d}] = {:d}\n", i, (mvmask >> i) & 0x1u);
         }
