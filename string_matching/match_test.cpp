@@ -249,6 +249,25 @@ TEST_CASE("Different Texts")
     }
 }
 
+TEST_CASE("All cases")
+{
+    const std::string text = "why aabaa waste ttttime learning, when ignorance is instanceous?";
+    auto len = text.size();
+    for (auto i = 0u; i != len; ++i) {
+        for (auto j = i+1; j != len; ++j) {
+            auto cnt = j - i;
+            auto pat = text.substr(i, cnt);
+            pl::NaiveSearch searcher(pat.cbegin(), pat.cend());
+            auto actual = pl::search(text.cbegin(), text.cend(), searcher);
+            auto expect = std::search(text.cbegin(), text.cend(),
+                    pat.cbegin(), pat.cend());
+            INFO("Searching for pattern: \"" << pat << "\"");
+            CHECK(actual == expect);
+        }
+    }
+
+}
+
 TEST_CASE("RabinKarp -- Not empty text")
 {
     const std::string text =

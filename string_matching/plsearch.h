@@ -108,7 +108,7 @@ Iter search(Iter first, Iter last, Iter s_first, Iter s_last)
 }
 
 template <class Iter, class Searcher>
-Iter search(Iter first, Iter last, Searcher& searcher)
+Iter search(Iter first, Iter last, const Searcher& searcher)
 {
     return searcher(first, last).first;
 }
@@ -125,7 +125,7 @@ struct NaiveSearch : BinaryPredicate
     {}
 
     std::pair<ForwardIter, ForwardIter> operator()(
-            ForwardIter first, ForwardIter last) noexcept
+            ForwardIter first, ForwardIter last) const noexcept
     {
         auto iter = search(first, last, s_first, s_last);
         auto result = std::make_pair(iter, iter);
@@ -148,7 +148,7 @@ struct RabinKarp
     RabinKarp(Iter first, Iter last) noexcept
         : s_first{first}, s_last{last} {}
 
-    std::pair<Iter, Iter> operator()(Iter first, Iter last) noexcept
+    std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
     {
         // preprocessing: calculate hashes
         uint64_t h = 1;
