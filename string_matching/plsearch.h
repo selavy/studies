@@ -113,6 +113,7 @@ Iter search(Iter first, Iter last, Searcher& searcher)
     return searcher(first, last).first;
 }
 
+// TODO: use BinaryPredicate
 template <class ForwardIter, class BinaryPredicate = std::equal_to<>>
 struct NaiveSearch : BinaryPredicate
 {
@@ -134,10 +135,70 @@ struct NaiveSearch : BinaryPredicate
         return result;
     }
 
-    ForwardIter s_first;
-    ForwardIter s_last;
+    ForwardIter s_first, s_last;
 };
 
-// template <class BiDirIter>
+template <class Iter>
+struct RabinKarp
+{
+    constexpr static auto q = 18446744073709551557ull;
+    // constexpr static auto q = 2147483647ull;
+    constexpr static auto d = 256ull;
+
+    RabinKarp(Iter first, Iter last) noexcept
+        : s_first{first}, s_last{last} {}
+
+    std::pair<Iter, Iter> operator()(Iter first, Iter last) noexcept
+    {
+        // preprocessing: calculate hashes
+        uint64_t h = 1;
+        uint64_t p = 0;
+        uint64_t t = 0;
+        auto m = 0u;
+        auto p1 = first;
+        auto p2 = s_first;
+        if (s_first == s_last) {
+            return std::make_pair(first, first);
+        }
+        for (; p2 != s_last;) {
+            if (p1 == last) { // pattern is longer than text
+                return std::make_pair(last, last);
+            }
+            auto c1 = static_cast<uint8_t>(*p1++);
+            auto c2 = static_cast<uint8_t>(*p2++);
+            h = (d*h     ) % q;
+            t = (d*t + c1) % q;
+            p = (d*p + c2) % q;
+            ++m;
+        }
+        h = (h / d) % q;
+
+        // matching
+        while (p1 != last) {
+            if (p == t) { // hash hit!
+                auto it = std::search(first, p1, s_first, s_last);
+                if (it == first) {
+                    return std::make_pair(first, p1);
+                }
+            }
+            auto c1 = static_cast<uint8_t>(*first);
+            auto c2 = static_cast<uint8_t>(*p1);
+            t = (d*(t - c1*h) + c2) % q;
+            ++first;
+            ++p1;
+        }
+
+        if (p == t) { // hash hit!
+            auto it = std::search(first, p1, s_first, s_last);
+            if (it == first) {
+                return std::make_pair(first, p1);
+            }
+        }
+
+        return std::make_pair(last, last);
+    }
+
+    Iter s_first, s_last;
+};
 
 } // namespace pl

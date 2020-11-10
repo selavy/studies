@@ -47,6 +47,32 @@ TEST_CASE("Naive -- Empty text")
             CHECK(actual == expect);
         }
     }
+
+    SECTION("NaiveSearch")
+    {
+        for (auto&& pat : pats) {
+            pl::NaiveSearch searcher{pat.begin(), pat.end()};
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\" in empty text");
+            CHECK(actual == expect);
+        }
+    }
+
+    SECTION("RabinKarp")
+    {
+        for (auto&& pat : pats) {
+            pl::RabinKarp searcher{pat.begin(), pat.end()};
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\" in empty text");
+            CHECK(actual == expect);
+        }
+    }
 }
 
 TEST_CASE("Naive -- Not empty text")
@@ -121,9 +147,22 @@ TEST_CASE("Naive -- Not empty text")
             CHECK(actual == expect);
         }
     }
+
+    SECTION("Naive Searcher")
+    {
+        for (auto&& pat : pats) {
+            pl::RabinKarp searcher(pat.begin(), pat.end());
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\"");
+            CHECK(actual == expect);
+        }
+    }
 }
 
-TEST_CASE("Naive Different Texts")
+TEST_CASE("Different Texts")
 {
     std::string s = "a a";
     s[1] = (char)-97;
@@ -178,4 +217,68 @@ TEST_CASE("Naive Different Texts")
             }
         }
     }
+
+    SECTION("Naive Searcher")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                pl::NaiveSearch searcher(pat.begin(), pat.end());
+                auto actual = pl::search(text.begin(), text.end(),
+                        searcher) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
+
+    SECTION("RabinKarp")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                pl::RabinKarp searcher(pat.begin(), pat.end());
+                auto actual = pl::search(text.begin(), text.end(),
+                        searcher) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
+}
+
+TEST_CASE("RabinKarp -- Not empty text")
+{
+    const std::string text =
+        "why waste time learning, when ignorance is instantaneous?";
+
+    const std::vector<std::string> pats = {
+        "learning",
+        "lemming",
+        "learning, when",
+        "why waste",
+        "time",
+        "instantaneous?",
+        "instantaneous?ly",
+        "asdf?",
+        "asdf?asdf;lkajsdfl;kjasdf",
+        "why waste time learning, when ignorance is instantaneous?",
+        "why waste time learning, when ignorance is instantaneous? With extra at end",
+        "why why",
+        "why a",
+        "",
+    };
+
+    for (auto&& pat : pats) {
+        pl::RabinKarp searcher{pat.begin(), pat.end()};
+        auto actual = pl::search(text.begin(), text.end(),
+                searcher) != text.end();
+        auto expect = std::search(text.begin(), text.end(),
+                pat.begin(), pat.end()) != text.end();
+        INFO("Searching for pattern: \"" << pat << "\"");
+        CHECK(actual == expect);
+    }
+
 }
