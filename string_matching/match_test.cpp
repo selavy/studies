@@ -155,6 +155,7 @@ TEST_CASE("Not empty text")
             auto expect = s2(text.cbegin(), text.cend());
             INFO("Searching for pattern: \"" << pat << "\" in text \"" << text << "\"");
             CHECK(actual.first  == expect.first);
+            INFO("Distance " << std::distance(actual.second, expect.second));
             CHECK(actual.second == expect.second);
         }
     };
@@ -173,12 +174,12 @@ TEST_CASE("Not empty text")
         });
     }
 
-    // SECTION("FMA")
-    // {
-    //     test_searcher([](const std::string& pat) {
-    //         return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
-    //     });
-    // }
+    SECTION("FMA")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
+        });
+    }
 }
 
 TEST_CASE("Different Texts")
@@ -265,12 +266,12 @@ TEST_CASE("Different Texts")
         });
     }
 
-    // SECTION("FMA")
-    // {
-    //     test_searcher([](const std::string& pat) {
-    //         return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
-    //     });
-    // }
+    SECTION("FMA")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
+        });
+    }
 }
 
 TEST_CASE("All cases")
@@ -309,10 +310,10 @@ TEST_CASE("All cases")
         });
     }
 
-    // SECTION("FMA")
-    // {
-    //     test_searcher([](const std::string& pat) {
-    //         return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
-    //     });
-    // }
+    SECTION("FMA")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
+        });
+    }
 }

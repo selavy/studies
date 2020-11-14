@@ -228,12 +228,7 @@ struct FiniteAutomata
     FiniteAutomata(Iter first, Iter last) noexcept
         : s_first{first}, s_last{last}, m(std::distance(s_first, s_last))
     {
-        // TODO(plesslie): probably better to just check in operator() for
-        // tt.empty(), but this is just proof-of-concept for now
-        if (s_first == s_last) {
-            // empty pattern
-            m = 1;
-            tt.insert(tt.cend(), m*n, m);
+        if (s_first == s_last) { // empty pattern matches with everything
             return;
         }
 
@@ -358,6 +353,10 @@ struct FiniteAutomata
 
     std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
     {
+        if (tt.empty()) {
+            return std::make_pair(first, first);
+        }
+
         int s = 0;
         int n;
         int a;
