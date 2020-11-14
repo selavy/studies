@@ -215,7 +215,8 @@ struct FiniteAutomata
 
     constexpr static auto to_value(uint8_t c) noexcept
     {
-        return static_cast<int>(c);
+        assert(0 <= c && c < n);
+        return c;
     }
 
     constexpr static auto to_letter(int x) noexcept
@@ -270,9 +271,11 @@ struct FiniteAutomata
 
     void dump(std::ostream& os) const
     {
+        constexpr int W = 3;
+
         os << "  |";
         for (int i = 0; i < n; ++i) {
-            os << " " << std::setw(2) << i;
+            os << " " << std::setw(W) << i;
         }
         os << '\n';
         for (int i = 0; i < 3*n+3; ++i) {
@@ -281,9 +284,41 @@ struct FiniteAutomata
         os << '\n';
 
         for (int i = 0; i < m; ++i) {
-            os << std::setw(2) << i << '|';
+            os << std::setw(W) << i << '|';
             for (int j = 0; j < n; ++j) {
-                os << ' ' << std::setw(2) << tt[ix(i, j)];
+                os << ' ' << std::setw(W) << tt[ix(i, j)];
+            }
+            os << '\n';
+        }
+
+        os << "\nTable dump:";
+        for (auto i = 0u; i < tt.size(); ++i) {
+            os << ' ' << tt[i];
+        }
+        os << '\n';
+    }
+
+    void dump2(std::ostream& os) const
+    {
+        constexpr int W = 3;
+
+        auto print_char = [&](int x, char c) {
+            for (int i = 0; i < x; ++i) {
+                os << c;
+            }
+        };
+
+        print_char(W, ' '); os << '|';
+        for (int i = 0; i < m; ++i) {
+            os << " " << std::setw(W) << i;
+        }
+        os << '\n';
+        print_char(3*m+3, '-'); os << '\n';
+        for (int j = 'a'; j <= 'z'; ++j) {
+            // os << std::setw(W) << j << '|';
+            print_char(W-1, ' '); os << ((char)j) << '|';
+            for (int i = 0; i < m; ++i) {
+                os << ' ' << std::setw(W) << tt[ix(i, j)];
             }
             os << '\n';
         }
@@ -324,13 +359,17 @@ struct FiniteAutomata
     std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
     {
         int s = 0;
+        int n;
         int a;
         for (; first != last; ++first) {
             a = to_value(*first);
-            s = tt[ix(s, a)];
-            if (s == m) {
+            n = tt[ix(s, a)];
+            // std::cout << "s=" << s << " a=" << a << " (" << *first << ")" << " n=" << n << "\n"; 
+            if (n == m) {
+                ++first;
                 return std::make_pair(first - m, first);
             }
+            s = n;
         }
         return std::make_pair(last, last);
     }
