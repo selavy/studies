@@ -3,6 +3,10 @@
 #include <iterator>
 #include <functional>
 
+// TEMP TEMP
+#include <iostream>
+#include <iomanip>
+
 namespace pl {
 
 #if 0
@@ -113,6 +117,7 @@ Iter search(Iter first, Iter last, const Searcher& searcher)
     return searcher(first, last).first;
 }
 
+// 32.1: The naive string-matching algorithm
 // TODO: use BinaryPredicate
 template <class ForwardIter, class BinaryPredicate = std::equal_to<>>
 struct NaiveSearch : BinaryPredicate
@@ -138,6 +143,7 @@ struct NaiveSearch : BinaryPredicate
     ForwardIter s_first, s_last;
 };
 
+// 32.2: The Rabin-Karp Algorithm
 template <class Iter>
 struct RabinKarp
 {
@@ -199,6 +205,139 @@ struct RabinKarp
     }
 
     Iter s_first, s_last;
+};
+
+// 32.3 String matching with finite automata
+template <class Iter>
+struct FiniteAutomata
+{
+    static constexpr auto n = 256;
+
+    constexpr static auto to_value(uint8_t c) noexcept
+    {
+        return static_cast<int>(c);
+    }
+
+    constexpr static auto to_letter(int x) noexcept
+    {
+        assert(0 <= x && x < n);
+        return static_cast<char>(x);
+    }
+
+    FiniteAutomata(Iter first, Iter last) noexcept
+        : s_first{first}, s_last{last}, m(std::distance(s_first, s_last))
+    {
+        // TODO(plesslie): probably better to just check in operator() for
+        // tt.empty(), but this is just proof-of-concept for now
+        if (s_first == s_last) {
+            // empty pattern
+            m = 1;
+            tt.insert(tt.cend(), m*n, m);
+            return;
+        }
+
+        std::string P_qA;
+        P_qA.reserve(m);
+
+        tt.insert(tt.cend(), m*n, 0);
+        assert(tt.size() == m*n);
+
+        for (int q = 0; q < m; ++q) {
+            // q := length of pattern
+
+            assert((s_first + q) <= s_last);
+            // P_qA += *(s_first + q);
+            P_qA = { s_first, s_first + q };
+
+            for (int a = 0; a < n; ++a) {
+                // a := next (potential) input character in the text
+                P_qA += to_letter(a);
+
+                // find longest `k` s.t. P_k is suffix of P_qA
+                int k = std::min(m, q + 1);
+                while (!is_suffix(s_first, s_first + k, P_qA)) {
+                    assert(0 <= k && k <= m);
+                    --k;
+                }
+
+                // std::cout << "q=" << q << ", a=" << a << ", PqA=" << P_qA << ", k=" << k << '\n';
+                tt[ix(q, a)] = k;
+
+                P_qA.pop_back();
+            }
+        }
+    }
+
+    void dump(std::ostream& os) const
+    {
+        os << "  |";
+        for (int i = 0; i < n; ++i) {
+            os << " " << std::setw(2) << i;
+        }
+        os << '\n';
+        for (int i = 0; i < 3*n+3; ++i) {
+            os << '-';
+        }
+        os << '\n';
+
+        for (int i = 0; i < m; ++i) {
+            os << std::setw(2) << i << '|';
+            for (int j = 0; j < n; ++j) {
+                os << ' ' << std::setw(2) << tt[ix(i, j)];
+            }
+            os << '\n';
+        }
+
+        os << "\nTable dump:";
+        for (auto i = 0u; i < tt.size(); ++i) {
+            os << ' ' << tt[i];
+        }
+        os << '\n';
+    }
+
+    /*static*/ bool is_suffix(Iter first, Iter last, const std::string& p) const noexcept
+    {
+        assert((int)std::distance(first, last) <= (int)p.size());
+        auto it = p.cend();
+        while (last > first) {
+            --last;
+            --it;
+            if (*last != *it) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*static*/ constexpr size_t ix(size_t s, size_t a) const noexcept
+    {
+        // s := current state
+        // a := next input character
+        // r := next state
+        assert(0 <= s && s < m);
+        assert(0 <= a && a < n);
+        auto r = s*n + a;
+        assert(0 <= r && r <= tt.size());
+        return r;
+    }
+
+    std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
+    {
+        int s = 0;
+        int a;
+        for (; first != last; ++first) {
+            a = to_value(*first);
+            s = tt[ix(s, a)];
+            if (s == m) {
+                return std::make_pair(first - m, first);
+            }
+        }
+        return std::make_pair(last, last);
+    }
+
+    Iter s_first, s_last;
+    int m; // max state
+    std::vector<int> tt;
 };
 
 } // namespace pl

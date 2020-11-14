@@ -1,7 +1,9 @@
 #include <catch2/catch.hpp>
 #include "plsearch.h"
+#include <iostream>
 
-TEST_CASE("Naive -- Empty text")
+
+TEST_CASE("Empty text or patterns")
 {
     const std::string text = "";
     const std::vector<std::string> pats = {
@@ -51,7 +53,7 @@ TEST_CASE("Naive -- Empty text")
     SECTION("NaiveSearch")
     {
         for (auto&& pat : pats) {
-            pl::NaiveSearch searcher{pat.begin(), pat.end()};
+            pl::NaiveSearch searcher(pat.begin(), pat.end());
             auto actual = pl::search(text.begin(), text.end(),
                     searcher) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -64,7 +66,20 @@ TEST_CASE("Naive -- Empty text")
     SECTION("RabinKarp")
     {
         for (auto&& pat : pats) {
-            pl::RabinKarp searcher{pat.begin(), pat.end()};
+            pl::RabinKarp searcher(pat.begin(), pat.end());
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\" in empty text");
+            CHECK(actual == expect);
+        }
+    }
+
+    SECTION("FMA")
+    {
+        for (auto&& pat : pats) {
+            pl::FiniteAutomata searcher{pat.begin(), pat.end()};
             auto actual = pl::search(text.begin(), text.end(),
                     searcher) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -75,7 +90,7 @@ TEST_CASE("Naive -- Empty text")
     }
 }
 
-TEST_CASE("Naive -- Not empty text")
+TEST_CASE("Not empty text")
 {
     const std::string text =
         "why waste time learning, when ignorance is instantaneous?";
@@ -148,10 +163,23 @@ TEST_CASE("Naive -- Not empty text")
         }
     }
 
-    SECTION("Naive Searcher")
+    SECTION("Rabin Karp")
     {
         for (auto&& pat : pats) {
             pl::RabinKarp searcher(pat.begin(), pat.end());
+            auto actual = pl::search(text.begin(), text.end(),
+                    searcher) != text.end();
+            auto expect = std::search(text.begin(), text.end(),
+                    pat.begin(), pat.end()) != text.end();
+            INFO("Searching for pattern: \"" << pat << "\"");
+            CHECK(actual == expect);
+        }
+    }
+
+    SECTION("Finite Automata")
+    {
+        for (auto&& pat : pats) {
+            pl::FiniteAutomata searcher(pat.begin(), pat.end());
             auto actual = pl::search(text.begin(), text.end(),
                     searcher) != text.end();
             auto expect = std::search(text.begin(), text.end(),
@@ -247,57 +275,76 @@ TEST_CASE("Different Texts")
             }
         }
     }
+
+    SECTION("FiniteAutomata")
+    {
+        for (auto&& pat : needles) {
+            for (auto&& text : haystacks) {
+                pl::FiniteAutomata searcher(pat.begin(), pat.end());
+                auto actual = pl::search(text.begin(), text.end(),
+                        searcher) != text.end();
+                auto expect = std::search(text.begin(), text.end(),
+                        pat.begin(), pat.end()) != text.end();
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
+    }
 }
 
 TEST_CASE("All cases")
 {
     const std::string text = "why aabaa waste ttttime learning, when ignorance is instanceous?";
     auto len = text.size();
-    for (auto i = 0u; i != len; ++i) {
-        for (auto j = i+1; j != len; ++j) {
-            auto cnt = j - i;
-            auto pat = text.substr(i, cnt);
-            pl::NaiveSearch searcher(pat.cbegin(), pat.cend());
-            auto actual = pl::search(text.cbegin(), text.cend(), searcher);
-            auto expect = std::search(text.cbegin(), text.cend(),
-                    pat.cbegin(), pat.cend());
-            INFO("Searching for pattern: \"" << pat << "\"");
-            CHECK(actual == expect);
+
+    SECTION("Naive Searcher")
+    {
+        for (auto i = 0u; i != len; ++i) {
+            for (auto j = i+1; j != len; ++j) {
+                auto cnt = j - i;
+                auto pat = text.substr(i, cnt);
+                pl::NaiveSearch searcher(pat.cbegin(), pat.cend());
+                auto actual = pl::search(text.cbegin(), text.cend(), searcher);
+                auto expect = std::search(text.cbegin(), text.cend(),
+                        pat.cbegin(), pat.cend());
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
         }
     }
 
-}
-
-TEST_CASE("RabinKarp -- Not empty text")
-{
-    const std::string text =
-        "why waste time learning, when ignorance is instantaneous?";
-
-    const std::vector<std::string> pats = {
-        "learning",
-        "lemming",
-        "learning, when",
-        "why waste",
-        "time",
-        "instantaneous?",
-        "instantaneous?ly",
-        "asdf?",
-        "asdf?asdf;lkajsdfl;kjasdf",
-        "why waste time learning, when ignorance is instantaneous?",
-        "why waste time learning, when ignorance is instantaneous? With extra at end",
-        "why why",
-        "why a",
-        "",
-    };
-
-    for (auto&& pat : pats) {
-        pl::RabinKarp searcher{pat.begin(), pat.end()};
-        auto actual = pl::search(text.begin(), text.end(),
-                searcher) != text.end();
-        auto expect = std::search(text.begin(), text.end(),
-                pat.begin(), pat.end()) != text.end();
-        INFO("Searching for pattern: \"" << pat << "\"");
-        CHECK(actual == expect);
+    SECTION("RabinKarp")
+    {
+        for (auto i = 0u; i != len; ++i) {
+            for (auto j = i+1; j != len; ++j) {
+                auto cnt = j - i;
+                auto pat = text.substr(i, cnt);
+                pl::RabinKarp searcher(pat.cbegin(), pat.cend());
+                auto actual = pl::search(text.cbegin(), text.cend(), searcher);
+                auto expect = std::search(text.cbegin(), text.cend(),
+                        pat.cbegin(), pat.cend());
+                INFO("Searching for pattern: \"" << pat << "\"");
+                CHECK(actual == expect);
+            }
+        }
     }
 
+#if 0
+    SECTION("FiniteAutomata")
+    {
+        for (auto i = 0u; i != len; ++i) {
+            for (auto j = i+1; j != len; ++j) {
+                auto cnt = j - i;
+                auto pat = text.substr(i, cnt);
+                pl::FiniteAutomata searcher(pat.cbegin(), pat.cend());
+                auto actual = pl::search(text.cbegin(), text.cend(), searcher);
+                auto expect = std::search(text.cbegin(), text.cend(),
+                        pat.cbegin(), pat.cend());
+                INFO("Searching for pattern: \"" << pat << "\" in text \""
+                                                 << text << "\"");
+                REQUIRE(actual == expect);
+            }
+        }
+    }
+#endif
 }
