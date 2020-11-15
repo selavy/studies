@@ -404,6 +404,8 @@ struct KMPMatcher
             return;
         }
 
+        // Straightforward implementation from description of pi array:
+#if 0
         auto m(std::distance(s_first, s_last));
         pi.insert(pi.cend(), m, 0);
         assert(static_cast<int>(pi.size()) == m);
@@ -420,6 +422,24 @@ struct KMPMatcher
                 pk.pop_back();
             }
             pi[q] = static_cast<int>(pk.size());
+        }
+#endif
+
+        auto P = [&](int q) { return *(s_first + q); };
+        auto m = std::distance(s_first, s_last);
+        pi.insert(pi.cend(), m, 0);
+        pi[0] = 0;
+        int k = 0;
+        for (int q = 1; q < m; ++q) {
+            // q := position in pattern
+            // k := number of characters matched
+            while (k > 0 && P(k) != P(q)) {
+                k = pi[k-1];
+            }
+            if (P(k) == P(q)) {
+                ++k;
+            }
+            pi[q] = k;
         }
     }
 
