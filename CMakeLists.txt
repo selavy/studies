@@ -33,4 +33,6 @@ add_subdirectory(flatbuffers)
 add_subdirectory(mafsa)
 add_subdirectory(diffs)
 # add_subdirectory(gentable)
-add_subdirectory(string_matching)
+
+# Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
+add_subdirectory(ch32_string_matching)

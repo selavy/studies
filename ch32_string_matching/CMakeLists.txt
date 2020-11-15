@@ -1,0 +1,2 @@
+add_executable(ch32_string_matching match_test.cpp)
+target_link_libraries(ch32_string_matching PUBLIC Catch cxx_project_options)

@@ -3,9 +3,11 @@
 #include <iterator>
 #include <functional>
 
-// TEMP TEMP
+#define TESTING
+#ifdef TESTING
 #include <iostream>
 #include <iomanip>
+#endif
 
 namespace pl {
 
@@ -228,42 +230,28 @@ struct FiniteAutomata
     FiniteAutomata(Iter first, Iter last) noexcept
         : s_first{first}, s_last{last}, m(std::distance(s_first, s_last))
     {
+        assert(m >= 0);
         if (s_first == s_last) { // empty pattern matches with everything
             return;
         }
-
-        std::string P_qA;
-        P_qA.reserve(m);
-
+        std::string pq; pq.reserve(m);
         tt.insert(tt.cend(), m*n, 0);
-        assert(tt.size() == m*n);
-
-        for (int q = 0; q < m; ++q) {
-            // q := length of pattern
-
-            assert((s_first + q) <= s_last);
-            // P_qA += *(s_first + q);
-            P_qA = { s_first, s_first + q };
-
-            for (int a = 0; a < n; ++a) {
-                // a := next (potential) input character in the text
-                P_qA += to_letter(a);
-
-                // find longest `k` s.t. P_k is suffix of P_qA
+        for (auto pit = s_first; pit != s_last; ++pit) {
+            const int q = std::distance(s_first, pit);
+            for (int a = 0; a != n; ++a) {
+                pq += to_letter(a);
                 int k = std::min(m, q + 1);
-                while (!is_suffix(s_first, s_first + k, P_qA)) {
-                    assert(0 <= k && k <= m);
+                while (!is_suffix(s_first, s_first + k, pq)) {
                     --k;
                 }
-
-                // std::cout << "q=" << q << ", a=" << a << ", PqA=" << P_qA << ", k=" << k << '\n';
                 tt[ix(q, a)] = k;
-
-                P_qA.pop_back();
+                pq.pop_back();
             }
+            pq += *pit;
         }
     }
 
+#ifdef TESTING
     void dump(std::ostream& os) const
     {
         constexpr int W = 3;
@@ -324,6 +312,7 @@ struct FiniteAutomata
         }
         os << '\n';
     }
+#endif
 
     /*static*/ bool is_suffix(Iter first, Iter last, const std::string& p) const noexcept
     {
@@ -353,17 +342,16 @@ struct FiniteAutomata
 
     std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
     {
-        if (tt.empty()) {
+        if (tt.empty()) { // pattern was empty
             return std::make_pair(first, first);
         }
 
-        int s = 0;
-        int n;
-        int a;
+        int s = 0; // s := current state
+        int n;     // n := next state
+        int a;     // a := next character in input
         for (; first != last; ++first) {
             a = to_value(*first);
             n = tt[ix(s, a)];
-            // std::cout << "s=" << s << " a=" << a << " (" << *first << ")" << " n=" << n << "\n"; 
             if (n == m) {
                 ++first;
                 return std::make_pair(first - m, first);
@@ -376,6 +364,115 @@ struct FiniteAutomata
     Iter s_first, s_last;
     int m; // max state
     std::vector<int> tt;
+};
+
+// 32.4 The Knuth-Morris-Pratt Algorithm
+template <class Iter>
+struct KMPMatcher
+{
+    static constexpr bool match(Iter it1, Iter last1, Iter it2, Iter last2)
+    {
+        // TODO: guaranteed that dist(it1, last1) == dist(it2, last2) so
+        // don't need extra check + iterator
+        while (it1 != last1 && it2 != last2) {
+            if (*it1++ != *it2++) {
+                return false;
+            }
+        }
+        return it1 == last1 && it2 == last2;
+    }
+
+    static constexpr bool is_suffix(const std::string& a, const std::string& b)
+    {
+        assert(a.size() < b.size());
+        auto first1 = a.cbegin();
+        auto last1  = a.cend();
+        auto last2  = b.cend();
+        auto first2 = last2 - a.size();
+        while (first1 != last1) {
+            if (*first1++ != *first2++) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    KMPMatcher(Iter first, Iter last) noexcept
+        : s_first{first}, s_last{last}
+    {
+        if (s_first == s_last) {
+            return;
+        }
+
+        auto m(std::distance(s_first, s_last));
+        pi.insert(pi.cend(), m, 0);
+        assert(static_cast<int>(pi.size()) == m);
+        std::string pq;
+        std::string pk;
+        for (int q = 0; q < m; ++q) {
+            pq += *(s_first + q);
+            pk = pq;
+            pk.pop_back();
+            while (!pk.empty()) {
+                if (is_suffix(pk, pq)) {
+                    break;
+                }
+                pk.pop_back();
+            }
+            pi[q] = static_cast<int>(pk.size());
+        }
+    }
+
+    std::pair<Iter, Iter> operator()(Iter first, Iter last) const noexcept
+    {
+        if (s_first == s_last) {
+            return std::make_pair(first, first);
+        }
+        auto P = [&](int q) { return *(s_first + q); };
+        auto m = std::distance(s_first, s_last);  // length of pattern
+        auto q = 0;                               // number of characters matched
+        for (; first != last; ++first) {          // scan text left -> right
+            while (q > 0 && P(q) != *first) {     // next doesn't match
+                q = pi[q-1];                      // advance to next potential shift
+            }
+            assert(q >= 0);
+            if (P(q) == *first) {                 // next matches?
+                ++q;                              // advance state
+            }
+            if (q == m) {                         // reached accept state?
+                ++first;
+                return std::make_pair(first - m, first);
+            }
+        }
+        return std::make_pair(last, last);
+    }
+
+#ifdef TESTING
+    void dump(std::ostream& os) const
+    {
+        auto m = (int)pi.size();
+        os << "i    :";
+        for (int i = 0; i < m; ++i) {
+            os << ' ' << i;
+        }
+        os << '\n';
+
+        os << "P[i] :";
+        for (int i = 0; i < m; ++i) {
+            os << ' ' << *(s_first + i);
+        }
+        os << '\n';
+
+        os << "pi[i]:";
+        for (int i = 0; i < m; ++i) {
+            os << ' ' << pi[i];
+        }
+        os << '\n';
+    }
+#endif
+
+    Iter s_first, s_last;
+    std::vector<int> pi;
 };
 
 } // namespace pl

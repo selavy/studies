@@ -84,6 +84,13 @@ TEST_CASE("Empty text")
             return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
         });
     }
+
+    SECTION("KMP")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::KMPMatcher{pat.cbegin(), pat.cend()};
+        });
+    }
 }
 
 TEST_CASE("Not empty text")
@@ -180,6 +187,13 @@ TEST_CASE("Not empty text")
             return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
         });
     }
+
+    SECTION("KMP")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::KMPMatcher{pat.cbegin(), pat.cend()};
+        });
+    }
 }
 
 TEST_CASE("Different Texts")
@@ -272,6 +286,13 @@ TEST_CASE("Different Texts")
             return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
         });
     }
+
+    SECTION("KMP")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::KMPMatcher{pat.cbegin(), pat.cend()};
+        });
+    }
 }
 
 TEST_CASE("All cases")
@@ -310,10 +331,42 @@ TEST_CASE("All cases")
         });
     }
 
+#if 0
     SECTION("FMA")
     {
         test_searcher([](const std::string& pat) {
             return pl::FiniteAutomata{pat.cbegin(), pat.cend()};
         });
     }
+#endif
+
+    SECTION("KMP")
+    {
+        test_searcher([](const std::string& pat) {
+            return pl::KMPMatcher{pat.cbegin(), pat.cend()};
+        });
+    }
 }
+
+#if 0
+TEST_CASE("KMP")
+{
+    // const std::string text = "ababaabcbab";
+    const std::string text = "abababacab";
+    const std::string pat =    "ababaca";
+    pl::KMPMatcher s1{pat.cbegin(), pat.cend()};
+    std::default_searcher s2{pat.cbegin(), pat.cend()};
+    s1.dump(std::cout);
+    auto actual = s1(text.cbegin(), text.cend());
+    auto expect = s2(text.cbegin(), text.cend());
+
+    if (actual.first != text.cend()) {
+        std::cout << "First = " << std::distance(text.cbegin(), actual.first) << " (" << *actual.first  << ")\n";
+    } else {
+        std::cout << "Matcher didn't find the pattern\n";
+    }
+
+    CHECK(actual.first  == expect.first);
+    CHECK(actual.second == expect.second);
+}
+#endif
