@@ -32,6 +32,7 @@ add_subdirectory(dawg)
 add_subdirectory(flatbuffers)
 add_subdirectory(mafsa)
 add_subdirectory(diffs)
+add_subdirectory(ld_preload)
 # add_subdirectory(gentable)
 
 # Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
