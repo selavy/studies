@@ -99,6 +99,15 @@ TEST_CASE("binary16 float roundtrip")
         float result = binary16_tofloat(b);
         CHECK(result == expect);
     }
+
+    SECTION("NaN")
+    {
+        // Since NaNs don't compare equal, have to do it separately
+        float expect = NAN;
+        binary16 b = binary16_fromfloat(expect);
+        float result = binary16_tofloat(b);
+        CHECK(std::isnan(expect) == std::isnan(result));
+    }
 }
 
 TEST_CASE("binary16_isinf")
