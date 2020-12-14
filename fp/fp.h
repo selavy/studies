@@ -5,8 +5,6 @@
 
 // http://half.sourceforge.net/index.html#usage
 
-constexpr size_t Binary16_ExpBias = 15;
-
 struct binary16
 {
     union
@@ -37,6 +35,7 @@ bool     binary16_issubnormal(binary16 x);
 bool     binary16_isnormal(binary16 x);
 bool     binary16_signbit(binary16 x);
 float    binary16_tofloat(binary16 x);
+binary16 binary16_fromfloat(float f);
 
 binary16 binary16_add(binary16 a, binary16 b);
 

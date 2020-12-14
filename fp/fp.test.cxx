@@ -72,6 +72,35 @@ TEST_CASE("binary16_tofloat")
     }
 }
 
+TEST_CASE("binary16 float roundtrip")
+{
+    std::vector<float> cases = {
+        5.5,
+        -5.5,
+        1.0,
+        -1.0,
+        2.0,
+        -2.0,
+        0.00006103515625,
+        -0.00006103515625,
+        65504,
+        -65504,
+        1.00097656,
+        -1.00097656,
+        0.33325195,
+        0.0,
+        -0.0,
+        INFINITY,
+        -INFINITY,
+    };
+
+    for (auto expect : cases) {
+        binary16 b = binary16_fromfloat(expect);
+        float result = binary16_tofloat(b);
+        CHECK(result == expect);
+    }
+}
+
 TEST_CASE("binary16_isinf")
 {
     std::vector<std::pair<uint16_t, bool>> cases = {
