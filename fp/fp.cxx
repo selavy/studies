@@ -32,7 +32,8 @@ int32_t clampi32(int32_t val, int32_t lo, int32_t hi)
 
 binary16 binary16_fromfloat(float f)
 {
-    // 5-bits => 0..32 +/- 15 => [-15, 16]
+    // 5-bits => [1, 30] - 15 => [-14, 15]
+    // N.B. 0 and 31 are reserved for 0/subnormal and inf/nan
     constexpr uint32_t MaxExponent = Binary32_ExpBias + 15;
     constexpr uint32_t MinExponent = Binary32_ExpBias - 14;
 
