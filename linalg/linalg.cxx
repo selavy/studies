@@ -10,7 +10,7 @@ void saxpy(int n, f32 a, const f32* x, const int incx, f32* y, const int incy)
     }
 }
 
-void sdot(int n, const f32* x, int xinc, const f32* y, int incy)
+f32 sdot(int n, const f32* x, int xinc, const f32* y, int incy)
 {
     f32 r = 0;
     int ix = 0, iy = 0;

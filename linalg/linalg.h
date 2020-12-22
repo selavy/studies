@@ -17,4 +17,4 @@ LINALG_EXTERN
 void saxpy(int n, f32 a, const f32* x, int incx, f32* y, int incy);
 
 LINALG_EXTERN
-void sdot(int n, const f32* x, int xinc, const f32* y, int incy);
+f32  sdot(int n, const f32* x, int xinc, const f32* y, int incy);

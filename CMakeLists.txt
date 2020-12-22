@@ -33,7 +33,7 @@ add_subdirectory(flatbuffers)
 add_subdirectory(mafsa)
 add_subdirectory(diffs)
 add_subdirectory(ld_preload)
-add_subdirectory(tcpip)
+# add_subdirectory(tcpip)
 add_subdirectory(fp)
 # add_subdirectory(gentable)
 

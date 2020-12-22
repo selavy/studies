@@ -13,3 +13,6 @@
 [submodule "third_party/fmt"]
 	path = third_party/fmt
 	url = git@github.com:fmtlib/fmt.git
+[submodule "third_party/flatbuffers"]
+	path = third_party/flatbuffers
+	url = git@github.com:google/flatbuffers.git

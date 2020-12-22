@@ -65,22 +65,30 @@ int main(int argc, const char** argv)
         result = _mm_xor_si128(result, ones);
         _mm_store_si128((__m128i*)&outs[0], result);
         mvmask = _mm_movemask_ps((__m128)result);
+        // TODO: I changed some of these to fix compile errors, did
+        // not check correctness at all because I don't remembe what
+        // I was doing. Your welcome future self. :-)
 #elif BITS_PER_OP == 256
         __m256i needle;
         __m256i haystk;
 #ifdef __AVX2__
         __m256i result;
+        __m256i ones;
 #else
         __m256  result1;
         __m256  result2;
         __m256  result;
-#endif
-        __m256i ones;
+        __m256  ones;
         __m256  zeros;
+#endif
         uint32_t mvmask;
 
+#ifdef __AVX2__
         ones   = _mm256_set1_epi32(0xFFFFFFFFu);
+#else
+        ones   = _mm256_set1_ps(1.);
         zeros  = _mm256_set1_ps(0.);
+#endif
         needle = _mm256_set1_epi32(vals[j]);
         haystk = _mm256_load_si256((__m256i const*)&keys[0]);
 #ifdef __AVX2__
@@ -90,7 +98,8 @@ int main(int argc, const char** argv)
 #else
         result1 = _mm256_sub_ps((__m256)needle, (__m256)haystk);
         result2 = _mm256_cmp_ps(result1, zeros, _CMP_EQ_OQ);
-        result  = _mm256_xor_si256(result, ones);
+        // result  = _mm256_xor_si256(result, ones);
+        result  = _mm256_xor_ps(result, ones);
         _mm256_store_ps((float*)&outs[0], result);
 #endif
         mvmask = _mm256_movemask_ps((__m256)result);

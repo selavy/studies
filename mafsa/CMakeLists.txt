@@ -26,13 +26,15 @@ add_library(Arrays
     tarray_generated.h
     mafsa_generated.h
 )
-target_link_libraries(Arrays PUBLIC cxx_project_options ZLIB::ZLIB)
+target_link_libraries(Arrays PUBLIC cxx_project_options ZLIB::ZLIB flatbuffers)
 
 add_executable(mkarrays mkarrays.cpp)
 target_link_libraries(mkarrays
     PUBLIC
         cxx_project_options
         Arrays
+    PRIVATE
+        flatbuffers
 )
 
 add_executable(test_arrays test_arrays.cpp)

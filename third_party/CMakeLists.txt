@@ -36,3 +36,8 @@ add_library(Google::Benchmark ALIAS benchmark)
 # LibFMT
 #
 add_subdirectory(fmt)
+
+#
+# FlatBuffers
+#
+add_subdirectory(flatbuffers)
