@@ -27,16 +27,6 @@ struct FP
         uint32_t exp : 8;
         uint32_t sgn : 1;
     } __attribute__((packed)) r;
-
-    // union {
-    //     struct {
-    //         uint32_t sgn : 1;
-    //         uint32_t exp : 8;
-    //         uint32_t sig : 23;
-    //     } r;
-    //     float    flt;
-    //     uint32_t uint;
-    // } u;
 };
 
 
@@ -149,7 +139,6 @@ TEST_CASE("dump")
     CHECK(result == expect);
 }
 
-#if 0
 TEST_CASE("binary16_isnan")
 {
     std::vector<std::pair<uint16_t, bool>> cases = {
@@ -197,7 +186,6 @@ TEST_CASE("binary16_isnan")
         CHECK(binary16_isnan(x) == expect);
     }
 }
-#endif
 
 TEST_CASE("binary16_iszero")
 {

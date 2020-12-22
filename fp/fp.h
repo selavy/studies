@@ -7,17 +7,7 @@
 
 struct binary16
 {
-    union
-    {
-        // TODO: remove
-        struct {
-            uint16_t sign : 1;
-            uint16_t exp  : 5;
-            uint16_t frac : 10;
-        } b;
-
-        uint16_t rep;
-    };
+    uint16_t rep;
 };
 static_assert(sizeof(binary16) == sizeof(uint16_t));
 
