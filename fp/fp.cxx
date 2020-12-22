@@ -19,6 +19,18 @@ binary16 binary16_make(uint16_t sign, int16_t exponent, uint16_t mantissa)
     return res;
 }
 
+uint16_t binary16_torep(binary16 val)
+{
+    return val.rep;
+}
+
+binary16 binary16_fromrep(uint16_t val)
+{
+    binary16 rv;
+    rv.rep = val;
+    return rv;
+}
+
 int32_t clampi32(int32_t val, int32_t lo, int32_t hi)
 {
     if (val < lo) {

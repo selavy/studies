@@ -62,6 +62,24 @@ TEST_CASE("binary16_tofloat")
     }
 }
 
+TEST_CASE("binary16 rountrip #2")
+{
+    std::vector<uint16_t> cases = {
+        0b0100011010100000, // 6.625
+        0b1100011010100000, // 6.625
+        0b0101011001001010, // 100.625
+        0b1101011001001010, // -100.625
+    };
+
+    for (auto d : cases) {
+        auto b = binary16_fromrep(d);
+        auto f = binary16_tofloat(b);
+        auto o = binary16_fromfloat(f);
+        auto e = binary16_torep(o);
+        CHECK(d == e);
+    }
+}
+
 TEST_CASE("binary16 float roundtrip")
 {
     std::vector<float> cases = {
@@ -234,3 +252,8 @@ TEST_CASE("binary16_iszero")
         CHECK(binary16_iszero(x) == expect);
     }
 }
+
+// TEST_CASE("binary16 add")
+// {
+// 
+// }
