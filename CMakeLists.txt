@@ -39,3 +39,5 @@ add_subdirectory(fp)
 
 # Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
 add_subdirectory(ch32_string_matching)
+add_subdirectory(gentable)
+add_subdirectory(linalg)
