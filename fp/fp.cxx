@@ -15,12 +15,31 @@ constexpr uint16_t Binary16_NINF  = 0b1111110000000000u;
 constexpr uint16_t Binary16_ZERO  = 0b0000000000000000u;
 constexpr uint16_t Binary16_NZERO = 0b1000000000000000u;
 
+constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u;
+constexpr uint16_t Binary16_ExponentMask = 0b0111'1100'0000'0000u;
+constexpr uint16_t Binary16_MantissaMask = 0b0000'0011'1111'1111u;
+
 #define NYI() do {                                                            \
     assert(0 && "not yet implemented");                                       \
     puts("This feature has not been implemented");                            \
     exit(0);                                                                  \
 } while (0)
 
+
+static bool all(uint16_t a, uint16_t mask)
+{
+    return (a & mask) == mask;
+}
+
+static bool any(uint16_t a, uint16_t mask)
+{
+    return (a & mask) != 0;
+}
+
+static bool none(uint16_t a, uint16_t mask)
+{
+    return !any(a, mask);
+}
 
 binary16 _make_biased(uint16_t sign, uint16_t exponent, uint16_t mantissa)
 {
@@ -130,47 +149,39 @@ uint16_t binary16_mantissa(binary16 x_)
 
 bool binary16_isinf(const binary16 x_)
 {
-    //| Sign | Exp         | Frac                    |
+    //| Sign | Exponent  | Mantissa                |
     //+---------------------------------------------+
-    //|   X  | 1 1 1 , 1 1 | 0 0 , 0 0 0 0 , 0 0 0 0 |
+    //|   X  | 1 1 1 1 1 | 0 0 , 0 0 0 0 , 0 0 0 0 |
 
-    // constexpr uint16_t mask = 0x7C00u;
-    constexpr uint16_t sgnmask = 0b1000'0000'0000'0000u;
-    constexpr uint16_t expmask = 0b0111'1100'0000'0000u;
     uint16_t x = x_.rep;
-    return (x & ~sgnmask) == expmask;
+    return (x & ~Binary16_SignMask) == Binary16_ExponentMask;
 }
 
 bool binary16_isnan(const binary16 x_)
 {
-    // Sign == X
-    // Exp  == 0b11111
-    // Frac != 0
-    constexpr uint16_t expmask = 0b0111'1100'0000'0000u;
-    constexpr uint16_t frcmask = 0b0000'0011'1111'1111u;
+    // Sign      = X
+    // Exponent  = 0b11111
+    // Mantissa != 0
     uint16_t x = x_.rep;
-    return ((x & expmask) == expmask) && ((x & frcmask) != 0);
+    return all(x, Binary16_ExponentMask) && any(x, Binary16_MantissaMask);
 }
 
 bool binary16_iszero(const binary16 x_)
 {
-    // Sign == X
-    // Exp  == 0b00000
-    // Frac == 0
-    constexpr uint16_t sgnmask = 0b1000'0000'0000'0000u;
+    // Sign     = X
+    // Exponent = 0b00000
+    // Mantissa = 0
     uint16_t x = x_.rep;
-    return (x & ~sgnmask) == 0;
+    return (x & ~Binary16_SignMask) == 0;
 }
 
 bool binary16_issubnormal(binary16 x_)
 {
-    // Sign == X
-    // Exp  == 0b00000
-    // Frac != 0
-    constexpr uint16_t expmask = 0b0111'1100'0000'0000u;
-    constexpr uint16_t frcmask = 0b0000'0011'1111'1111u;
+    // Sign      = X
+    // Exponent  = 0b00000
+    // Mantissa != 0
     uint16_t x = x_.rep;
-    return ((x & expmask) == 0) && ((x & frcmask) != 0);
+    return none(x, Binary16_ExponentMask) && any(x, Binary16_MantissaMask);
 }
 
 bool binary16_isnormal(binary16 x_)
@@ -195,9 +206,8 @@ bool binary16_isnormal(binary16 x_)
 
 bool binary16_signbit(const binary16 x_)
 {
-    constexpr uint16_t mask = 0b1000'0000'0000'0000u;
     uint16_t x = x_.rep;
-    return (x & mask) != 0;
+    return any(x, Binary16_SignMask);
 }
 
 float binary16_tofloat(const binary16 x_)
@@ -207,7 +217,6 @@ float binary16_tofloat(const binary16 x_)
     const uint16_t x = x_.rep;
     const uint32_t sgn = x >> 15;
     const uint32_t bexp = (x >> 10) & expmask;
-    // const uint32_t exp = ((x >> 10) & expmask) + (Binary32_ExpBias - Binary16_ExpBias);
     const uint32_t sig = (x & sigmask);
 
     uint32_t exp;
