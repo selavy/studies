@@ -212,37 +212,37 @@ bool binary16_signbit(const binary16 x_)
 
 float binary16_tofloat(const binary16 x_)
 {
-    constexpr uint16_t expmask = 0b0000'0000'0001'1111u;
-    constexpr uint16_t sigmask = 0b0000'0011'1111'1111u;
-    const uint16_t x = x_.rep;
-    const uint32_t sgn = x >> 15;
-    const uint32_t bexp = (x >> 10) & expmask;
-    const uint32_t sig = (x & sigmask);
+    const uint16_t x         = x_.rep;
+    const uint32_t sign      = x >> 15;
+    const uint32_t bexponent = (x & Binary16_ExponentMask) >> 10;
+    const uint32_t mantissa  = (x & Binary16_MantissaMask);
 
-    uint32_t exp;
-    if (bexp == 0b00000u) {
-        exp = 0x00u;
-    } else if (bexp == 0b11111u) {
-        exp = 0xFF;
+    uint32_t exponent;
+    if (bexponent == 0b00000u) {
+        exponent = 0x00u;
+    } else if (bexponent == 0b11111u) {
+        exponent = 0xFF;
     } else {
-        exp = bexp - Binary16_ExpBias + Binary32_ExpBias;
+        exponent = bexponent - Binary16_ExpBias + Binary32_ExpBias;
     }
 
     // TODO: do subnormals need to be handled differently
     // TODO: handle inf and nan
-    uint32_t rep = ((sgn & 0x01) << 31) | ((exp & 0xFFu) << 23) | ((sig & 0x3FFu) << (23 - 10));
+    uint32_t rep = ((sign     & 0x001u) << 31)
+                 | ((exponent & 0x0FFu) << 23)
+                 | ((mantissa & 0x3FFu) << (23 - 10));
     float res;
     static_assert(sizeof(rep) == sizeof(res));
     memcpy(&res, &rep, sizeof(res));
     return res;
 }
 
-uint16_t _sign_2scomp(uint16_t sign, uint16_t val)
+static uint16_t _sign_2scomp(uint16_t sign, uint16_t val)
 {
     return sign ? (val ^ 0xFFFFu) + 1 : val;
 }
 
-uint16_t _abs_2scomp(uint16_t val)
+static uint16_t _abs_2scomp(uint16_t val)
 {
     if ((val >> 15) & 0x1) {
         return (val ^ 0xFFFFu) + 1;
@@ -257,16 +257,13 @@ uint16_t _abs_2scomp(uint16_t val)
 
 binary16 binary16_neg(const binary16 a_)
 {
-    constexpr uint16_t SignMask = 0b1000'0000'0000'0000u;
     uint16_t a = a_.rep;
-    return binary16_fromrep(a ^ SignMask);
+    return binary16_fromrep(a ^ Binary16_SignMask);
 }
 
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
-    constexpr uint16_t ExponentMask = 0b0111110000000000u;
-    constexpr uint16_t FractionMask = 0b0000001111111111u;
     constexpr uint16_t ImpliedOne   = 0b0000010000000000u;
 
     uint16_t a = a_.rep;
@@ -275,18 +272,24 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     if (binary16_isnan(a_) || binary16_isnan(b_)) {
         return binary16_fromrep(Binary16_NAN);
     }
+    if (binary16_iszero(a_)) {
+        return b_;
+    }
+    if (binary16_iszero(b_)) {
+        return a_;
+    }
     if (binary16_issubnormal(a_) || binary16_issubnormal(b_)) {
         NYI();
     }
 
     // case #1: exponent(A) == exponent(B)
-    uint16_t exponent_A = (a & ExponentMask) >> 10;
-    uint16_t exponent_B = (b & ExponentMask) >> 10;
+    uint16_t exponent_A = (a & Binary16_ExponentMask) >> 10;
+    uint16_t exponent_B = (b & Binary16_ExponentMask) >> 10;
     uint16_t exptcomm   = exponent_A; // TODO: only works for case #1
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
-    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & FractionMask) | ImpliedOne);
-    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & FractionMask) | ImpliedOne);
+    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & Binary16_MantissaMask) | ImpliedOne);
+    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & Binary16_MantissaMask) | ImpliedOne);
     uint16_t result     = mantissa_A + mantissa_B;
     uint16_t sign_C     = (result >> 15) & 0x1u;
     uint16_t mantissa   = _abs_2scomp(result);
@@ -296,6 +299,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     uint16_t clz        = __builtin_clz(mantissa) - (32 - 16);
     uint16_t mantissa_C;
     uint16_t exponent_C;
+    // TODO: detect overflow / underflow
     if (clz > 5) {
         mantissa_C = mantissa << (clz - 5);
         exponent_C = exptcomm - (clz - 5);
