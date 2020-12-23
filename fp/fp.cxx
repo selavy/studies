@@ -236,7 +236,7 @@ uint16_t _sign_2scomp(uint16_t sign, uint16_t val)
 uint16_t _abs_2scomp(uint16_t val)
 {
     if ((val >> 15) & 0x1) {
-        return (val & 0xFFFFu) + 1;
+        return (val ^ 0xFFFFu) + 1;
     } else {
         return val;
     }

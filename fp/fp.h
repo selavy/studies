@@ -30,4 +30,3 @@ float    binary16_tofloat(binary16 x);
 binary16 binary16_fromfloat(float f);
 
 binary16 binary16_add(binary16 a, binary16 b);
-

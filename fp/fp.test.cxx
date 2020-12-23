@@ -261,7 +261,7 @@ TEST_CASE("binary16_iszero")
 
 TEST_CASE("binary16 add")
 {
-    SECTION("same exponent")
+    SECTION("same exponent: 5.5 + 5.625 = 11.125")
     {
         // 5.500  = 0100010110000000
         // 5.625  = 0100010110100000
@@ -279,13 +279,26 @@ TEST_CASE("binary16 add")
         INFO("c = " << dump_u16(c.rep));
         INFO("r = " << dump_u16(r.rep));
         CHECK(binary16_torep(r) == binary16_torep(c));
+    }
 
-        // binary16 a = binary16_fromfloat(5.5);
-        // binary16 b = binary16_fromfloat(5.625);
-        // CHECK(binary16_torep(a) == U16(0b0'10001'0110000000));
-        // CHECK(binary16_torep(b) == U16(0b0'10001'0110100000));
-        // binary16 c = binary16_add(a, b);
-        // INFO(dump_u16(c.rep));
-        // CHECK(binary16_torep(c) == U16(0b0'10010'0110010000));
+    SECTION("same exponent: 5.5 - 5.625 = -0.125")
+    {
+        //   5.500 = 0100010110000000
+        // - 5.625 = 1100010110100000
+        //   -------------------------
+        //  -0.125 = 1011000000000000
+        binary16 a = binary16_fromrep(U16(0b0100'0101'1000'0000));
+        binary16 b = binary16_fromrep(U16(0b1100'0101'1010'0000));
+        binary16 c = binary16_fromrep(U16(0b1011'0000'0000'0000));
+        CHECK(binary16_tofloat(a) ==  5.500);
+        CHECK(binary16_tofloat(b) == -5.625);
+        CHECK(binary16_tofloat(c) == -0.125);
+
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
     }
 }
