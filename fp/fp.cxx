@@ -1,22 +1,44 @@
 #include "fp.h"
 #include <cstring>
+#include <cassert>
+
+// TEMP
+#include <cstdio>
+#include <cstdlib>
 
 constexpr int Binary16_ExpBias = 15;
 constexpr int Binary32_ExpBias = 127;
+constexpr uint16_t Binary16_SignBit = 0b1000'0000'0000'0000u;
+constexpr uint16_t Binary16_NAN   = 0b0111111111111111u;
+constexpr uint16_t Binary16_INF   = 0b0111110000000000u;
+constexpr uint16_t Binary16_NINF  = 0b1111110000000000u;
+constexpr uint16_t Binary16_ZERO  = 0b0000000000000000u;
+constexpr uint16_t Binary16_NZERO = 0b1000000000000000u;
 
-binary16 binary16_make(uint16_t sign, int16_t exponent, uint16_t mantissa)
+#define NYI() do {                                                            \
+    assert(0 && "not yet implemented");                                       \
+    puts("This feature has not been implemented");                            \
+    exit(0);                                                                  \
+} while (0)
+
+
+binary16 _make_biased(uint16_t sign, uint16_t exponent, uint16_t mantissa)
+{
+    binary16 rv;
+    rv.rep = ((sign     & 0x1u  ) << 15)
+           | ((exponent & 0x1Fu ) << 10)
+           | ((mantissa & 0x3FFu) <<  0);
+    return rv;
+}
+
+binary16 binary16_make(const uint16_t sign, const int16_t exponent, const uint16_t mantissa)
 {
     constexpr uint16_t expbits = 0b1'1111u;
     constexpr uint16_t sigbits = 0b11'1111'1111u;
-
-    binary16 res;
     const uint16_t sgn = sign ? 0x1 : 0x0;
     const uint16_t exp = (static_cast<uint16_t>(exponent) & expbits) + Binary16_ExpBias;
     const uint16_t sig = mantissa & sigbits;
-    res.rep = ((sgn & 0x1u  ) << 15)
-            | ((exp & 0x1Fu ) << 10)
-            | ((sig & 0x3FFu) <<  0);
-    return res;
+    return _make_biased(sgn, exp, sig);
 }
 
 uint16_t binary16_torep(binary16 val)
@@ -206,14 +228,68 @@ float binary16_tofloat(const binary16 x_)
     return res;
 }
 
+uint16_t _sign_2scomp(uint16_t sign, uint16_t val)
+{
+    return sign ? (val ^ 0xFFFFu) + 1 : val;
+}
+
+uint16_t _abs_2scomp(uint16_t val)
+{
+    if ((val >> 15) & 0x1) {
+        return (val & 0xFFFFu) + 1;
+    } else {
+        return val;
+    }
+
+    // TODO: branchless?
+    // uint16_t mask = val >> 15;
+    // return (val + mask) ^ mask;
+}
+
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
-    binary16 r;
+    constexpr uint16_t ExponentMask = 0b0111110000000000u;
+    constexpr uint16_t FractionMask = 0b0000001111111111u;
+    constexpr uint16_t ImpliedOne   = 0b0000010000000000u;
+
     uint16_t a = a_.rep;
     uint16_t b = b_.rep;
-    uint16_t c = a + b;
-    r.rep = c;
-    return r;
-}
 
+    if (binary16_isnan(a_) || binary16_isnan(b_)) {
+        return binary16_fromrep(Binary16_NAN);
+    }
+    if (binary16_issubnormal(a_) || binary16_issubnormal(b_)) {
+        NYI();
+    }
+
+    // case #1: exponent(A) == exponent(B)
+    uint16_t exponent_A = (a & ExponentMask) >> 10;
+    uint16_t exponent_B = (b & ExponentMask) >> 10;
+    uint16_t exptcomm   = exponent_A; // TODO: only works for case #1
+    uint16_t sign_A     = binary16_sign(a_);
+    uint16_t sign_B     = binary16_sign(b_);
+    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & FractionMask) | ImpliedOne);
+    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & FractionMask) | ImpliedOne);
+    uint16_t result     = mantissa_A + mantissa_B;
+    uint16_t sign_C     = (result >> 15) & 0x1u;
+    uint16_t mantissa   = _abs_2scomp(result);
+    // re-normalize mantissa
+    assert(((mantissa >> 15) & 0x1u) == 0u && "top-bit shouldn't be set on mantissa!");
+    // NOTE: __bulitin_clz promotes mantissa to 32-bits, for now converting back to 16-bits
+    uint16_t clz        = __builtin_clz(mantissa) - (32 - 16);
+    uint16_t mantissa_C;
+    uint16_t exponent_C;
+    if (clz > 5) {
+        mantissa_C = mantissa << (clz - 5);
+        exponent_C = exptcomm - (clz - 5);
+    } else {
+        mantissa_C = mantissa >> (5 - clz);
+        exponent_C = exptcomm + (5 - clz);
+    }
+
+    if (exponent_A != exponent_B) {
+        NYI();
+    }
+    return _make_biased(sign_C, exponent_C, mantissa_C);
+}
