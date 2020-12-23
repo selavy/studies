@@ -246,6 +246,13 @@ uint16_t _abs_2scomp(uint16_t val)
     // return (val + mask) ^ mask;
 }
 
+binary16 binary16_neg(const binary16 a_)
+{
+    constexpr uint16_t SignMask = 0b1000'0000'0000'0000u;
+    uint16_t a = a_.rep;
+    return binary16_fromrep(a ^ SignMask);
+}
+
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
@@ -292,4 +299,9 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
         NYI();
     }
     return _make_biased(sign_C, exponent_C, mantissa_C);
+}
+
+binary16 binary16_sub(const binary16 a_, const binary16 b_)
+{
+    return binary16_add(a_, binary16_neg(b_));
 }
