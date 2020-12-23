@@ -318,6 +318,22 @@ TEST_CASE("binary16 add")
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
 
+    SECTION("right-hand identity (negative): -0.125 + 0.0 = -0.125")
+    {
+        binary16 a = binary16_fromrep(U16(0b1011'0000'0000'0000));
+        binary16 b = binary16_fromrep(U16(0b0000'0000'0000'0000));
+        binary16 c = a;
+        CHECK(binary16_tofloat(a) == -0.125);
+        CHECK(binary16_tofloat(b) ==  0.000);
+        CHECK(binary16_tofloat(c) == -0.125);
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+
     SECTION("left-hand identity: 0.0 + 5.5 = 5.5")
     {
         binary16 a = binary16_fromrep(U16(0b0000'0000'0000'0000));
@@ -326,6 +342,22 @@ TEST_CASE("binary16 add")
         CHECK(binary16_tofloat(a) ==  0.0);
         CHECK(binary16_tofloat(b) ==  5.5);
         CHECK(binary16_tofloat(c) ==  5.5);
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+
+    SECTION("left-hand identity (negative): 0.0 + -0.125 = -0.125")
+    {
+        binary16 a = binary16_fromrep(U16(0b0000'0000'0000'0000));
+        binary16 b = binary16_fromrep(U16(0b1011'0000'0000'0000));
+        binary16 c = b;
+        CHECK(binary16_tofloat(a) ==  0.000);
+        CHECK(binary16_tofloat(b) == -0.125);
+        CHECK(binary16_tofloat(c) == -0.125);
         binary16 r = binary16_add(a, b);
         INFO("a = " << dump_u16(a.rep));
         INFO("b = " << dump_u16(b.rep));
