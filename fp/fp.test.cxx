@@ -387,15 +387,15 @@ TEST_CASE("binary16 add")
     }
 }
 
-TEST_CASE("binary16 add 2")
+TEST_CASE("binary16 add cleanly representable")
 {
     std::vector<std::tuple<double, double>> vs = {
-        {   0.125      ,   0.125       },
-        {   0.125      ,   0.501953125 },
-        // { 100.125, 0.501953125 },
-        { 101.5        , 234.5         },
-        // {   1.501953125,   4.501953125 },
-        {  10.9375     ,   0.28125  },
+        {   0.125       ,   0.125        },
+        {   0.125       ,   0.501953125  },
+        { 101.5         , 234.5          },
+        {  10.9375      ,   0.28125      },
+        {   1.0009765625,   1.0009765625 },
+        // { 32768        , 1.0009765625 },
     };
 
     for (auto [x, y] : vs) {
@@ -411,6 +411,23 @@ TEST_CASE("binary16 add 2")
         INFO("b = " << binary16_tofloat(b) << " => " << dump_u16(b.rep));
         INFO("c = " << binary16_tofloat(c) << " => " << dump_u16(c.rep));
         INFO("r = " << binary16_tofloat(r) << " => " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+}
+
+TEST_CASE("binary16 non-clean rep")
+{
+    SECTION("0.5 + 0.6 = 1.1")
+    {
+        binary16 a = binary16_fromrep(U16(0b0011'1000'0000'0000)); //  0.5
+        binary16 b = binary16_fromrep(U16(0b0011'1000'1100'1100)); // ~0.6
+        binary16 c = binary16_fromrep(U16(0b0011'1100'0110'0110)); // ~1.1
+
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
 }
