@@ -237,18 +237,20 @@ float binary16_tofloat(const binary16 x_)
     return res;
 }
 
-static uint16_t _sign_2scomp(uint16_t sign, uint16_t val)
+static uint64_t _sign_2scomp(uint16_t sign, uint64_t val)
 {
-    return sign ? (val ^ 0xFFFFu) + 1 : val;
+    // return sign ? (val ^ 0xFFFF'FFFF'FFFF'FFFFull) + 1ull : val;
+    return sign ? (val ^ -1ull) + 1ull : val;
 }
 
-static uint16_t _abs_2scomp(uint16_t val)
+static uint64_t _abs_2scomp(uint16_t sign, uint64_t val)
 {
-    if ((val >> 15) & 0x1) {
-        return (val ^ 0xFFFFu) + 1;
-    } else {
-        return val;
-    }
+    return _sign_2scomp(sign, val);
+    // if ((val >> 15) & 0x1) {
+    //     return (val ^ 0xFFFFu) + 1;
+    // } else {
+    //     return val;
+    // }
 
     // TODO: branchless?
     // uint16_t mask = val >> 15;
@@ -261,12 +263,12 @@ binary16 binary16_neg(const binary16 a_)
     return binary16_fromrep(a ^ Binary16_SignMask);
 }
 
-uint16_t _min(uint16_t x, uint16_t y)
+uint64_t _min(uint64_t x, uint64_t y)
 {
     return x < y ? x : y;
 }
 
-uint16_t _max(uint16_t x, uint16_t y)
+uint64_t _max(uint64_t x, uint64_t y)
 {
     return x > y ? x : y;
 }
@@ -274,7 +276,7 @@ uint16_t _max(uint16_t x, uint16_t y)
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
-    constexpr uint16_t ImpliedOne   = 0b0000010000000000u;
+    constexpr uint64_t ImpliedOne   = 0b0000010000000000u;
 
     uint16_t a = a_.rep;
     uint16_t b = b_.rep;
@@ -294,25 +296,30 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
 
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
-    uint16_t exponent_A = (a & Binary16_ExponentMask) >> 10;
-    uint16_t exponent_B = (b & Binary16_ExponentMask) >> 10;
-    uint16_t exponent   = _min(exponent_A, exponent_B);
+    uint64_t exponent_A = (a & Binary16_ExponentMask) >> 10;
+    uint64_t exponent_B = (b & Binary16_ExponentMask) >> 10;
+    uint64_t exponent   = _min(exponent_A, exponent_B);
     assert(exponent_A >= exponent);
     assert(exponent_B >= exponent);
-    // TODO: (biased) exponent range is [1, 31) so max shift value could be (30 - 1) = 29,
-    //       which could drop digits, should I do mantissa calc in 64-bits then drop when
-    //       normalizing?
-    uint16_t shift_A    = exponent_A - exponent;
-    uint16_t shift_B    = exponent_B - exponent;
-    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & Binary16_MantissaMask) | ImpliedOne) << shift_A;
-    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & Binary16_MantissaMask) | ImpliedOne) << shift_B;
-    uint16_t result     = mantissa_A + mantissa_B;
-    uint16_t sign_C     = (result >> 15) & 0x1u;
-    uint16_t mantissa   = _abs_2scomp(result);
+    uint64_t shift_A    = exponent_A - exponent;
+    uint64_t shift_B    = exponent_B - exponent;
+    uint64_t implied_A  = (a & Binary16_MantissaMask) | ImpliedOne;
+    uint64_t implied_B  = (b & Binary16_MantissaMask) | ImpliedOne;
+    uint64_t mantissa_A = _sign_2scomp(sign_A, implied_A) << shift_A;
+    uint64_t mantissa_B = _sign_2scomp(sign_B, implied_B) << shift_B;
+    uint64_t result     = mantissa_A + mantissa_B;
+    uint16_t sign_C     = (result >> 63) & 0x1u;
+    uint64_t mantissa   = _abs_2scomp(sign_C, result);
     // re-normalize mantissa
-    assert(((mantissa >> 15) & 0x1u) == 0u && "top-bit shouldn't be set on mantissa!");
-    // NOTE: __bulitin_clz promotes mantissa to 32-bits, for now converting back to 16-bits
-    uint16_t clz        = __builtin_clz(mantissa) - (32 - 16);
+    assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
+
+    while ((mantissa & ~0xFFFFu) != 0) {
+        mantissa >>= 1;
+        exponent--;
+    }
+
+    int clz = __builtin_clzll(mantissa) - (64 - 16);
+    assert(clz >= 0);
     uint16_t mantissa_C;
     uint16_t exponent_C;
     // TODO: detect overflow / underflow

@@ -387,6 +387,34 @@ TEST_CASE("binary16 add")
     }
 }
 
+TEST_CASE("binary16 add 2")
+{
+    std::vector<std::tuple<double, double>> vs = {
+        {   0.125      ,   0.125       },
+        {   0.125      ,   0.501953125 },
+        // { 100.125, 0.501953125 },
+        { 101.5        , 234.5         },
+        // {   1.501953125,   4.501953125 },
+        {  10.9375     ,   0.28125  },
+    };
+
+    for (auto [x, y] : vs) {
+        auto z = x + y;
+        binary16 a = binary16_fromfloat(x);
+        binary16 b = binary16_fromfloat(y);
+        binary16 c = binary16_fromfloat(z);
+        CHECK(binary16_tofloat(a) == x);
+        CHECK(binary16_tofloat(b) == y);
+        CHECK(binary16_tofloat(c) == z);
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " => " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " => " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " => " << dump_u16(c.rep));
+        INFO("r = " << binary16_tofloat(r) << " => " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+}
+
 TEST_CASE("binary16 sub")
 {
     SECTION("same exponent: 5.5 - 5.625 = -0.125")
