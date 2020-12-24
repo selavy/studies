@@ -2,6 +2,15 @@
 #include <cstring>
 #include <cassert>
 
+//-----------------------------------------------------------------------------
+// TODOs:
+// + make branchless
+// + implement addition with subnormals
+// + check for exponent overflow
+// + check for exponent underflow
+// + implement multiplication
+//-----------------------------------------------------------------------------
+
 // TEMP
 #include <cstdio>
 #include <cstdlib>

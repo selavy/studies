@@ -415,7 +415,7 @@ TEST_CASE("binary16 add cleanly representable")
     }
 }
 
-TEST_CASE("binary16 non-clean rep")
+TEST_CASE("binary16 not cleanly representable")
 {
     SECTION("0.5 + 0.6 = 1.1")
     {
