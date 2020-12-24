@@ -302,6 +302,26 @@ TEST_CASE("binary16 add")
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
 
+    SECTION("diff exponent: 1.5 + 0.125")
+    {
+        // 1.500 = 0011111000000000
+        // 0.125 = 0011000000000000
+        // 1.625 = 0011111010000000
+        binary16 a = binary16_fromrep(U16(0b0011'1110'0000'0000));
+        binary16 b = binary16_fromrep(U16(0b0011'0000'0000'0000));
+        binary16 c = binary16_fromrep(U16(0b0011'1110'1000'0000));
+        CHECK(binary16_tofloat(a) == 1.500);
+        CHECK(binary16_tofloat(b) == 0.125);
+        CHECK(binary16_tofloat(c) == 1.625);
+
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+
     SECTION("right-hand identity: 5.5 + 0.0 = 5.5")
     {
         binary16 a = binary16_fromrep(U16(0b0100'0101'1000'0000));

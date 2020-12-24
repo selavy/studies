@@ -261,6 +261,16 @@ binary16 binary16_neg(const binary16 a_)
     return binary16_fromrep(a ^ Binary16_SignMask);
 }
 
+uint16_t _min(uint16_t x, uint16_t y)
+{
+    return x < y ? x : y;
+}
+
+uint16_t _max(uint16_t x, uint16_t y)
+{
+    return x > y ? x : y;
+}
+
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
@@ -282,14 +292,20 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
         NYI();
     }
 
-    // case #1: exponent(A) == exponent(B)
-    uint16_t exponent_A = (a & Binary16_ExponentMask) >> 10;
-    uint16_t exponent_B = (b & Binary16_ExponentMask) >> 10;
-    uint16_t exptcomm   = exponent_A; // TODO: only works for case #1
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
-    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & Binary16_MantissaMask) | ImpliedOne);
-    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & Binary16_MantissaMask) | ImpliedOne);
+    uint16_t exponent_A = (a & Binary16_ExponentMask) >> 10;
+    uint16_t exponent_B = (b & Binary16_ExponentMask) >> 10;
+    uint16_t exponent   = _min(exponent_A, exponent_B);
+    assert(exponent_A >= exponent);
+    assert(exponent_B >= exponent);
+    // TODO: (biased) exponent range is [1, 31) so max shift value could be (30 - 1) = 29,
+    //       which could drop digits, should I do mantissa calc in 64-bits then drop when
+    //       normalizing?
+    uint16_t shift_A    = exponent_A - exponent;
+    uint16_t shift_B    = exponent_B - exponent;
+    uint16_t mantissa_A = _sign_2scomp(sign_A, (a & Binary16_MantissaMask) | ImpliedOne) << shift_A;
+    uint16_t mantissa_B = _sign_2scomp(sign_B, (b & Binary16_MantissaMask) | ImpliedOne) << shift_B;
     uint16_t result     = mantissa_A + mantissa_B;
     uint16_t sign_C     = (result >> 15) & 0x1u;
     uint16_t mantissa   = _abs_2scomp(result);
@@ -302,14 +318,10 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     // TODO: detect overflow / underflow
     if (clz > 5) {
         mantissa_C = mantissa << (clz - 5);
-        exponent_C = exptcomm - (clz - 5);
+        exponent_C = exponent - (clz - 5);
     } else {
         mantissa_C = mantissa >> (5 - clz);
-        exponent_C = exptcomm + (5 - clz);
-    }
-
-    if (exponent_A != exponent_B) {
-        NYI();
+        exponent_C = exponent + (5 - clz);
     }
     return _make_biased(sign_C, exponent_C, mantissa_C);
 }
