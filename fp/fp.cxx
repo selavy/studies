@@ -282,6 +282,30 @@ uint64_t _max(uint64_t x, uint64_t y)
     return x > y ? x : y;
 }
 
+binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
+{
+    assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
+
+    while ((mantissa & ~0xFFFFu) != 0) {
+        mantissa >>= 1;
+        exponent--;
+    }
+
+    int clz = __builtin_clzll(mantissa) - (64 - 16);
+    assert(clz >= 0);
+    uint16_t mantissa_C;
+    uint16_t exponent_C;
+    // TODO: detect overflow / underflow
+    if (clz > 5) {
+        mantissa_C = mantissa << (clz - 5);
+        exponent_C = exponent - (clz - 5);
+    } else {
+        mantissa_C = mantissa >> (5 - clz);
+        exponent_C = exponent + (5 - clz);
+    }
+    return _make_biased(sign, exponent_C, mantissa_C);
+}
+
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
@@ -305,41 +329,23 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
 
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
-    uint64_t exponent_A = (a & Binary16_ExponentMask) >> 10;
-    uint64_t exponent_B = (b & Binary16_ExponentMask) >> 10;
+    uint64_t exponent_A = _max((a & Binary16_ExponentMask) >> 10, 1); // NOTE: subnormal exponent = -14 => +1 (biased)
+    uint64_t exponent_B = _max((b & Binary16_ExponentMask) >> 10, 1);
     uint64_t exponent   = _min(exponent_A, exponent_B);
     assert(exponent_A >= exponent);
     assert(exponent_B >= exponent);
     uint64_t shift_A    = exponent_A - exponent;
     uint64_t shift_B    = exponent_B - exponent;
-    uint64_t implied_A  = (a & Binary16_MantissaMask) | ImpliedOne;
-    uint64_t implied_B  = (b & Binary16_MantissaMask) | ImpliedOne;
+    uint64_t mantbits_A = a & Binary16_MantissaMask;
+    uint64_t mantbits_B = b & Binary16_MantissaMask;
+    uint64_t implied_A  = mantbits_A | ImpliedOne;
+    uint64_t implied_B  = mantbits_B | ImpliedOne;
     uint64_t mantissa_A = _sign_2scomp(sign_A, implied_A) << shift_A;
     uint64_t mantissa_B = _sign_2scomp(sign_B, implied_B) << shift_B;
     uint64_t result     = mantissa_A + mantissa_B;
-    uint16_t sign_C     = (result >> 63) & 0x1u;
-    uint64_t mantissa   = _abs_2scomp(sign_C, result);
-    // re-normalize mantissa
-    assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
-
-    while ((mantissa & ~0xFFFFu) != 0) {
-        mantissa >>= 1;
-        exponent--;
-    }
-
-    int clz = __builtin_clzll(mantissa) - (64 - 16);
-    assert(clz >= 0);
-    uint16_t mantissa_C;
-    uint16_t exponent_C;
-    // TODO: detect overflow / underflow
-    if (clz > 5) {
-        mantissa_C = mantissa << (clz - 5);
-        exponent_C = exponent - (clz - 5);
-    } else {
-        mantissa_C = mantissa >> (5 - clz);
-        exponent_C = exponent + (5 - clz);
-    }
-    return _make_biased(sign_C, exponent_C, mantissa_C);
+    uint16_t sign       = (result >> 63) & 0x1u;
+    uint64_t mantissa   = _abs_2scomp(sign, result);
+    return _normalize(sign, exponent, mantissa);
 }
 
 binary16 binary16_sub(const binary16 a_, const binary16 b_)
