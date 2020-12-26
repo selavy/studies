@@ -114,21 +114,21 @@ TEST_CASE("binary16 rountrip #2")
 TEST_CASE("binary16 float roundtrip")
 {
     std::vector<float> cases = {
-        5.5,
-        -5.5,
-        1.0,
-        -1.0,
-        2.0,
-        -2.0,
-        0.00006103515625,
-        -0.00006103515625,
-        65504,
-        -65504,
-        1.00097656,
-        -1.00097656,
-        0.33325195,
-        0.0,
-        -0.0,
+        5.5f,
+        -5.5f,
+        1.0f,
+        -1.0f,
+        2.0f,
+        -2.0f,
+        0.00006103515625f,
+        -0.00006103515625f,
+        65504.0f,
+        -65504.0f,
+        1.00097656f,
+        -1.00097656f,
+        0.33325195f,
+        0.0f,
+        -0.0f,
         INFINITY,
         -INFINITY,
     };
@@ -505,17 +505,95 @@ TEST_CASE("binary16 not cleanly representable")
     }
 }
 
-// TEST_CASE("add to inf")
-// {
-//     SECTION("65504 + 65504 = inf")
-//     {
-//         binary16 a = binary16_fromfloat(65504f);
-//         binary16 b = binary16_fromfloat(65504f);
-//         INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
-//         INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
-//         INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
-//     }
-// }
+TEST_CASE("add with nan")
+{
+    SECTION("1.0 + nan = nan")
+    {
+        binary16 a = binary16_fromfloat(1.0f);
+        binary16 b = binary16_fromfloat(NAN);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isnan(a) == false);
+        CHECK(binary16_isnan(b) == true);
+        CHECK(binary16_isnan(c) == true);
+    }
+
+    SECTION("nan + 1.0 = nan")
+    {
+        binary16 a = binary16_fromfloat(NAN);
+        binary16 b = binary16_fromfloat(1.0f);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isnan(a) == true);
+        CHECK(binary16_isnan(b) == false);
+        CHECK(binary16_isnan(c) == true);
+    }
+}
+
+TEST_CASE("add to inf")
+{
+    SECTION("65504 + 65504 = inf")
+    {
+        binary16 a = binary16_fromfloat(65504.0f);
+        binary16 b = binary16_fromfloat(65504.0f);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isinf(c));
+    }
+
+    SECTION("65504 + 32753 = inf")
+    {
+        binary16 a = binary16_fromfloat(65504.0f);
+        binary16 b = binary16_fromfloat(32753.0f);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isinf(c));
+    }
+
+    SECTION("65504 + 1 = inf")
+    {
+        binary16 a = binary16_fromfloat(65504.0f);
+        binary16 b = binary16_fromfloat(    1.0f);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        // CHECK(binary16_isinf(c));
+        CHECK(binary16_eq(a, c));
+    }
+
+    SECTION("-65503 + -32754 = inf")
+    {
+        binary16 a = binary16_fromfloat(-65503.0f);
+        binary16 b = binary16_fromfloat(-32754.0f);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isinf(c));
+        CHECK(binary16_signbit(c));
+    }
+
+#if 0
+    SECTION("float + float")
+    {
+        float a = std::numeric_limits<float>::max();
+        float b = 1.0f;
+        float c = a + b;
+        CHECK(std::isinf(c));
+        CHECK(!std::signbit(c));
+        CHECK(c == a);
+    }
+#endif
+}
 
 TEST_CASE("binary16 sub")
 {

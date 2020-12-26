@@ -294,8 +294,25 @@ uint64_t _max(uint64_t x, uint64_t y)
     return x > y ? x : y;
 }
 
+uint64_t _saturate_add(uint64_t a, uint64_t b, uint64_t max_value)
+{
+    uint64_t min_elem   = _min(a, b);
+    uint16_t max_elem   = _max(a, b);
+    uint64_t max_amount = max_value - max_elem;
+    uint64_t add_value  = _min(max_amount, min_elem);
+    uint64_t result = max_elem + add_value;
+    assert(0 <= result && result <= max_value);
+    return result;
+}
+
 binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
 {
+    // preconditions:
+    //     + input is not NaN
+
+    constexpr uint16_t MaxExponent = 0b11111;
+    constexpr uint16_t MinExponent = 0b00001;
+
     assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
 
     while ((mantissa & ~0xFFFFu) != 0) {
@@ -307,15 +324,19 @@ binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
     assert(clz >= 0);
     uint16_t mantissa_C;
     uint16_t exponent_C;
-    // TODO: detect overflow / underflow
     if (clz > 5) {
         mantissa_C = mantissa << (clz - 5);
         exponent_C = exponent - (clz - 5);
     } else {
         mantissa_C = mantissa >> (5 - clz);
-        exponent_C = exponent + (5 - clz);
+        exponent_C = _saturate_add(exponent, 5 - clz, MaxExponent);
     }
-    return _make_biased(sign, exponent_C, mantissa_C);
+
+    if (exponent_C == MaxExponent) {
+        mantissa_C = 0;
+    }
+
+    return _make_biased(sign, (uint16_t)exponent_C, (uint16_t)mantissa_C);
 }
 
 // TODO: implement
