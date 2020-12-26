@@ -221,10 +221,10 @@ bool binary16_signbit(const binary16 x_)
 
 float binary16_tofloat(const binary16 x_)
 {
-    const uint16_t x         = x_.rep;
-    const uint32_t sign      = x >> 15;
-    const uint32_t bexponent = (x & Binary16_ExponentMask) >> 10;
-    const uint32_t mantissa  = (x & Binary16_MantissaMask);
+    uint16_t x         = x_.rep;
+    uint32_t sign      = x >> 15;
+    uint32_t bexponent = (x & Binary16_ExponentMask) >> 10;
+    uint32_t mantissa  = (x & Binary16_MantissaMask);
 
     uint32_t exponent;
     if (bexponent == 0b00000u) {
@@ -235,7 +235,19 @@ float binary16_tofloat(const binary16 x_)
         exponent = bexponent - Binary16_ExpBias + Binary32_ExpBias;
     }
 
-    // TODO: do subnormals need to be handled differently
+    // re-normalize subnormals
+    if (exponent == 0x00u && mantissa != 0) {
+        // subnormals have implied exponent = -14
+        exponent = -14 + 127;
+        constexpr uint32_t ImpliedOne = 1u << 10;
+        while ((mantissa & ImpliedOne) == 0) {
+            mantissa <<= 1;
+            exponent -=  1;
+        }
+        mantissa &= ~ImpliedOne;
+    }
+
+    // TODO: subnormals need to be re-normalized; they won't be subnormals in binary32
     // TODO: handle inf and nan
     uint32_t rep = ((sign     & 0x001u) << 31)
                  | ((exponent & 0x0FFu) << 23)
@@ -246,7 +258,7 @@ float binary16_tofloat(const binary16 x_)
     return res;
 }
 
-static uint64_t _sign_2scomp(uint16_t sign, uint64_t val)
+static uint64_t _make_2scomp(uint16_t sign, uint64_t val)
 {
     // return sign ? (val ^ 0xFFFF'FFFF'FFFF'FFFFull) + 1ull : val;
     return sign ? (val ^ -1ull) + 1ull : val;
@@ -254,7 +266,7 @@ static uint64_t _sign_2scomp(uint16_t sign, uint64_t val)
 
 static uint64_t _abs_2scomp(uint16_t sign, uint64_t val)
 {
-    return _sign_2scomp(sign, val);
+    return _make_2scomp(sign, val);
     // if ((val >> 15) & 0x1) {
     //     return (val ^ 0xFFFFu) + 1;
     // } else {
@@ -288,7 +300,7 @@ binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
 
     while ((mantissa & ~0xFFFFu) != 0) {
         mantissa >>= 1;
-        exponent--;
+        exponent++;
     }
 
     int clz = __builtin_clzll(mantissa) - (64 - 16);
@@ -309,11 +321,12 @@ binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
 // TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
-    constexpr uint64_t ImpliedOne   = 0b0000010000000000u;
+    constexpr uint64_t ImpliedOne = 0b0000010000000000u;
 
     uint16_t a = a_.rep;
     uint16_t b = b_.rep;
 
+    // TODO: I think I shouldn't need these explicit checks
     if (binary16_isnan(a_) || binary16_isnan(b_)) {
         return binary16_fromrep(Binary16_NAN);
     }
@@ -323,28 +336,35 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     if (binary16_iszero(b_)) {
         return a_;
     }
-    if (binary16_issubnormal(a_) || binary16_issubnormal(b_)) {
-        NYI();
-    }
+    // if (binary16_issubnormal(a_) || binary16_issubnormal(b_)) {
+    //     NYI();
+    // }
 
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
     uint64_t exponent_A = _max((a & Binary16_ExponentMask) >> 10, 1); // NOTE: subnormal exponent = -14 => +1 (biased)
     uint64_t exponent_B = _max((b & Binary16_ExponentMask) >> 10, 1);
     uint64_t exponent   = _min(exponent_A, exponent_B);
-    assert(exponent_A >= exponent);
-    assert(exponent_B >= exponent);
     uint64_t shift_A    = exponent_A - exponent;
     uint64_t shift_B    = exponent_B - exponent;
     uint64_t mantbits_A = a & Binary16_MantissaMask;
     uint64_t mantbits_B = b & Binary16_MantissaMask;
-    uint64_t implied_A  = mantbits_A | ImpliedOne;
-    uint64_t implied_B  = mantbits_B | ImpliedOne;
-    uint64_t mantissa_A = _sign_2scomp(sign_A, implied_A) << shift_A;
-    uint64_t mantissa_B = _sign_2scomp(sign_B, implied_B) << shift_B;
+    uint64_t implied_A  = binary16_issubnormal(a_) ? 0 : ImpliedOne;
+    uint64_t implied_B  = binary16_issubnormal(b_) ? 0 : ImpliedOne;
+    // uint64_t implied_A  = mantbits_A | ImpliedOne;
+    // uint64_t implied_B  = mantbits_B | ImpliedOne;
+    uint64_t mantissa_A = _make_2scomp(sign_A, mantbits_A | implied_A) << shift_A;
+    uint64_t mantissa_B = _make_2scomp(sign_B, mantbits_B | implied_B) << shift_B;
     uint64_t result     = mantissa_A + mantissa_B;
     uint16_t sign       = (result >> 63) & 0x1u;
     uint64_t mantissa   = _abs_2scomp(sign, result);
+    assert(exponent_A >= exponent);
+    assert(exponent_B >= exponent);
+    assert(1 <= exponent_A && exponent_A < 32);
+    assert(1 <= exponent_B && exponent_B < 32);
+    assert(0 <= shift_A && shift_A < 32); // NOTE: exponent := [1, 32) so max shift = 31
+    assert(0 <= shift_B && shift_B < 32);
+    assert((mantissa >> 63) == 0 && "sign bit should not be set post abs()");
     return _normalize(sign, exponent, mantissa);
 }
 

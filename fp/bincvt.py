@@ -3,6 +3,36 @@
 import math
 
 
+def interp16(s: str) -> str:
+    s = s.strip()
+    s = s.replace(' ', '')
+    if s.startswith('0b'):
+        s = s[2:]
+    if len(s) != 16:
+        raise ValueError('Invalid length for binary16')
+    sign = int(s[0])
+    exponent = s[1:6]
+    mantissa = s[6:16]
+    print(f"Sign:     {sign}")
+    print(f"Exponent: {exponent}")
+    print(f"Mantissa: {mantissa}")
+    eint = int(exponent, 2)
+    mint = int(mantissa, 2)
+    s = '+' if sign != 0 else '-'
+    if   eint == 0b00000 and mint == 0:
+        print(f"{s}zero")
+    elif eint == 0b11111 and mint == 0:
+        print(f"{s}infinity")
+    elif eint == 0b11111 and mint != 0:
+        print("NaN")
+    elif eint == 0b00000 and mint != 0:
+        m = mint / 2**10 * 2**-14
+        print(f"subnormal: (-1)^{sign} x 0.{mantissa} x 2^-14 = {m}")
+    else:
+        m = (1 + mint / 2**10) * 2**(eint - 15)
+        print(f"(-1)^{sign} x 1.{mantissa} x 2^{eint - 15} = {m}")
+
+
 def dec2bin(s: str) -> str:
     """
     Convert string form of a decimal number its binary form.

@@ -22,6 +22,31 @@ std::string dump_u16(uint16_t x)
     return result;
 }
 
+std::string dump_u32(uint32_t x)
+{
+    constexpr size_t M = 32;
+    constexpr size_t N = M / 4;
+    std::string result(2 + 5*(N-1) + 4, '0');
+    size_t i = 0;
+    size_t index = M-1;
+    result[i++] = '0';
+    for (size_t z = 0; z < N; ++z) {
+        result[i++] = ' ';
+        for(size_t j = 0; j < 4; ++j) {
+            result[i++] = (x & (1u << index--)) != 0 ? '1' : '0';
+        }
+    }
+    result[1] = 'b';
+    return result;
+}
+
+std::string dump_f32(float x)
+{
+    uint32_t v;
+    memcpy(&v, &x, sizeof(v));
+    return dump_u32(v);
+}
+
 struct FP
 {
     struct {
@@ -428,6 +453,23 @@ TEST_CASE("binary16 not cleanly representable")
         INFO("b = " << dump_u16(b.rep));
         INFO("c = " << dump_u16(c.rep));
         INFO("r = " << dump_u16(r.rep));
+        CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+
+    SECTION("1.5 + 0.000060975552")
+    {
+        binary16 a = binary16_fromrep(U16(0b0000'0011'1111'1111)); // 0.000060975552
+        binary16 b = binary16_fromrep(U16(0b0011'1110'0000'0000)); // 1.5
+        binary16 c = binary16_fromrep(U16(0b0011'1110'0000'0000)); // 1.5
+        binary16 r = binary16_add(a, b);
+        INFO("a = " << dump_u16(a.rep));
+        INFO("b = " << dump_u16(b.rep));
+        INFO("c = " << dump_u16(c.rep));
+        INFO("r = " << dump_u16(r.rep));
+        INFO("a(float) = " << dump_f32(binary16_tofloat(a)));
+        INFO("b(float) = " << dump_f32(binary16_tofloat(b)));
+        CHECK(binary16_tofloat(a) == 0.000060975552f);
+        CHECK(binary16_tofloat(b) == 1.5);
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
 }
