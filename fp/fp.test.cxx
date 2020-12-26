@@ -489,6 +489,20 @@ TEST_CASE("binary16 not cleanly representable")
         CHECK(binary16_tofloat(b) == 1.5f);
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
+
+    SECTION("1.7 + 1.1")
+    {
+        float f1 = 1.7f;
+        float f2 = 1.1f;
+        float f3 = f1 + f2;
+        binary16 a = binary16_fromfloat(f1);
+        binary16 b = binary16_fromfloat(f2);
+        binary16 c = binary16_add(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(c.rep == binary16_fromfloat(f3).rep);
+    }
 }
 
 TEST_CASE("binary16 sub")
