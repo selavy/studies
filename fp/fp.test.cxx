@@ -505,6 +505,18 @@ TEST_CASE("binary16 not cleanly representable")
     }
 }
 
+// TEST_CASE("add to inf")
+// {
+//     SECTION("65504 + 65504 = inf")
+//     {
+//         binary16 a = binary16_fromfloat(65504f);
+//         binary16 b = binary16_fromfloat(65504f);
+//         INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+//         INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+//         INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+//     }
+// }
+
 TEST_CASE("binary16 sub")
 {
     SECTION("same exponent: 5.5 - 5.625 = -0.125")

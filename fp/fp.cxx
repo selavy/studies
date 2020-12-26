@@ -336,13 +336,11 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     if (binary16_iszero(b_)) {
         return a_;
     }
-    // if (binary16_issubnormal(a_) || binary16_issubnormal(b_)) {
-    //     NYI();
-    // }
 
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
-    uint64_t exponent_A = _max((a & Binary16_ExponentMask) >> 10, 1); // NOTE: subnormal exponent = -14 => +1 (biased)
+    // NOTE: subnormal exponent = -14 => +1 (biased)
+    uint64_t exponent_A = _max((a & Binary16_ExponentMask) >> 10, 1);
     uint64_t exponent_B = _max((b & Binary16_ExponentMask) >> 10, 1);
     uint64_t exponent   = _min(exponent_A, exponent_B);
     uint64_t shift_A    = exponent_A - exponent;
@@ -351,8 +349,6 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     uint64_t mantbits_B = b & Binary16_MantissaMask;
     uint64_t implied_A  = binary16_issubnormal(a_) ? 0 : ImpliedOne;
     uint64_t implied_B  = binary16_issubnormal(b_) ? 0 : ImpliedOne;
-    // uint64_t implied_A  = mantbits_A | ImpliedOne;
-    // uint64_t implied_B  = mantbits_B | ImpliedOne;
     uint64_t mantissa_A = _make_2scomp(sign_A, mantbits_A | implied_A) << shift_A;
     uint64_t mantissa_B = _make_2scomp(sign_B, mantbits_B | implied_B) << shift_B;
     uint64_t result     = mantissa_A + mantissa_B;
@@ -371,4 +367,17 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
 binary16 binary16_sub(const binary16 a_, const binary16 b_)
 {
     return binary16_add(a_, binary16_neg(b_));
+}
+
+bool binary16_eq(const binary16 a, const binary16 b)
+{
+    if (binary16_isnan(a) || binary16_isnan(b)) {
+        return false;
+    }
+    return a.rep == b.rep;
+}
+
+bool binary16_neq(const binary16 a, const binary16 b)
+{
+    return !binary16_eq(a, b);
 }

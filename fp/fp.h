@@ -32,3 +32,5 @@ binary16 binary16_fromfloat(float f);
 binary16 binary16_neg(binary16 a);
 binary16 binary16_add(binary16 a, binary16 b);
 binary16 binary16_sub(binary16 a, binary16 b);
+bool     binary16_eq (binary16 a, binary16 b);
+bool     binary16_neq(binary16 a, binary16 b);
