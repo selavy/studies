@@ -532,6 +532,33 @@ TEST_CASE("add with nan")
         CHECK(binary16_isnan(b) == false);
         CHECK(binary16_isnan(c) == true);
     }
+
+    SECTION("1.0 - nan = nan")
+    {
+        binary16 a = binary16_fromfloat(1.0f);
+        binary16 b = binary16_fromfloat(NAN);
+        binary16 c = binary16_sub(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isnan(a) == false);
+        CHECK(binary16_isnan(b) == true);
+        CHECK(binary16_isnan(c) == true);
+    }
+
+    SECTION("nan - 1.0 = nan")
+    {
+        binary16 a = binary16_fromfloat(NAN);
+        binary16 b = binary16_fromfloat(1.0f);
+        binary16 c = binary16_sub(a, b);
+        INFO("a = " << binary16_tofloat(a) << " = " << dump_u16(a.rep));
+        INFO("b = " << binary16_tofloat(b) << " = " << dump_u16(b.rep));
+        INFO("c = " << binary16_tofloat(c) << " = " << dump_u16(c.rep));
+        CHECK(binary16_isnan(a) == true);
+        CHECK(binary16_isnan(b) == false);
+        CHECK(binary16_isnan(c) == true);
+    }
+
 }
 
 TEST_CASE("add to inf")
