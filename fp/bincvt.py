@@ -15,7 +15,9 @@ def leftpad(s: str, n: int, val: str = '0'):
     return s
 
 
-_DEBUG = 1
+_DEBUG = 0
+
+
 def log(msg: str) -> None:
     if _DEBUG:
         print(msg)
@@ -56,7 +58,6 @@ def frombinary16(s: str) -> float:
 
 
 def check(result: str, exponent: int):
-    z = 0
     first, second = result.split('.')
     integral = float(int(first, 2))
     mantissa = 0.0
@@ -67,7 +68,7 @@ def check(result: str, exponent: int):
         i += 1
     final = integral + mantissa
     final = final * math.pow(2, exponent)
-    print(f"{result} x 2**{exponent} = {final}")
+    log(f"{result} x 2**{exponent} = {final}")
 
 
 def tobinary16(s: float) -> str:
@@ -111,19 +112,34 @@ def tobinary16(s: float) -> str:
     log(f"Result: {result} x 2**{exponent}")
     check(result, exponent)
     # TODO: generate sub-normals
-    # exponent := [1, 31) => [-15, 16)
+    # exponent := [1, 31) => [-14, 16)
     if exponent < -14:    # round to zero
+        assert result[1] == '.'
+        mantissa = result[0] + result[2:]
+        while exponent < -14:
+            mantissa = '0' + mantissa[0:9]
+            exponent += 1
+            if mantissa == '0000000000':
+                exponent = 0
+                break
         exp = '00000'
-        result = '0000000000'
+        # result = '0000000000'
+        # exp = bin(exponent)[2:]
+        result = mantissa
     elif exponent >= 16:  # round to infinity
         exp = '11111'
         result = '0000000000'
     else:
         exp = bin(exponent + 15)[2:]
-        exp = leftpad(exp, 5, '0')
+        result = result[2:12]
+
+    exp = leftpad(exp, 5, '0')
     if len(exp) != 5:
         raise ValueError(f"Invalid exponent: {exp}")
-    mant = result[2:12]
+    mant = padto(result, 10, '0')
+    log(f"Sign     = {sign}")
+    log(f"Exponent = {exp}")
+    log(f"Mantissa = {mant}")
     return f'{sign}{exp}{mant}'
 
 
@@ -146,16 +162,19 @@ for x, y in cs:
     binary16_x = tobinary16(x)
     binary16_y = tobinary16(y)
     binary16_z = tobinary16(z)
+    log(frombinary16(binary16_x))
+    log(frombinary16(binary16_y))
+    log(frombinary16(binary16_z))
     print(f'    SECTION("{x} + {y} = {z}")')
     print(f'    {{')
     print(f'         binary16 x = binary16_fromrep(0b{binary16_x}); // {x}')
     print(f'         binary16 y = binary16_fromrep(0b{binary16_y}); // {y}')
     print(f'         binary16 z = binary16_fromrep(0b{binary16_z}); // {z}')
     print(f'         binary16 a = binary16_add(x, y);')
-    print(f'         INFO("x = {x:.10f} = " << binary16_tofloat(x) << " = " << binary16_torep(x));')
-    print(f'         INFO("y = {y:.10f} = " << binary16_tofloat(y) << " = " << binary16_torep(y));')
-    print(f'         INFO("z = {z:.10f} = " << binary16_tofloat(z) << " = " << binary16_torep(z));')
-    print(f'         INFO("a                = " << binary16_tofloat(a) << " = " << binary16_torep(a));')
+    print(f'         INFO("x = {x:.10f} = " << binary16_tofloat(x) << " = " << binary16_torep(x));')  # noqa
+    print(f'         INFO("y = {y:.10f} = " << binary16_tofloat(y) << " = " << binary16_torep(y));')  # noqa
+    print(f'         INFO("z = {z:.10f} = " << binary16_tofloat(z) << " = " << binary16_torep(z));')  # noqa
+    print(f'         INFO("a                = " << binary16_tofloat(a) << " = " << binary16_torep(a));')  # noqa
     print(f'         CHECK(a.rep == z.rep);')
     print(f'    }}')
 print(f'}}')
