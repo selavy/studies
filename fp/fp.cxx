@@ -141,7 +141,7 @@ uint16_t binary16_sign(binary16 x_)
     return (x >> 15) & 0x01;
 }
 
-uint16_t binary16_exponent(binary16 x_)
+int binary16_exponent(binary16 x_)
 {
     constexpr uint16_t expmask = 0b11111u;
     uint16_t x = x_.rep;
@@ -154,6 +154,44 @@ uint16_t binary16_mantissa(binary16 x_)
     constexpr uint16_t sigmask = 0b11'1111'1111u;
     uint16_t x = x_.rep;
     return x & sigmask;
+}
+
+int binary16_desc(const binary16 x, char* buf, const int len)
+{
+    if (binary16_isnan(x)) {
+        const char* const desc = "nan";
+        const int N = strlen(desc) + 1;
+        if (!(len >= N)) {
+            return N;
+        }
+        memcpy(buf, desc, N*sizeof(char));
+        return N;
+    }
+    if (binary16_isinf(x)) {
+        const char* const desc = "+inf";
+        const int N = strlen(desc) + 1;
+        if (!(len >= N)) {
+            return N;
+        }
+        memcpy(buf, desc, N*sizeof(char));
+        if (binary16_signbit(x)) {
+            buf[0] = '-';
+        }
+        return N;
+    }
+    if (binary16_issubnormal(x)) {
+        int sign        = binary16_signbit(x);
+        double mantissa = binary16_mantissa(x) / 1024.0;
+        return snprintf(buf, len, "-1**%d x %0.10f x 2**-14", sign, mantissa);
+    }
+    if (binary16_isnormal(x)) {
+        int    sign     = binary16_signbit(x);
+        double mantissa = 1.0f + binary16_mantissa(x) / 1024.0f;
+        int    exponent = binary16_exponent(x);
+        return snprintf(buf, len, "-1**%d x %0.10f x 2**%d", sign, mantissa, exponent);
+    }
+    assert(0 && "unknown float pointing class");
+    return  -1;
 }
 
 bool binary16_isinf(const binary16 x_)

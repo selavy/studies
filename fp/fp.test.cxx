@@ -505,6 +505,27 @@ TEST_CASE("binary16 not cleanly representable")
     }
 }
 
+TEST_CASE("description")
+{
+    SECTION("subnormal")
+    {
+        char buf[1024];
+        binary16 x = binary16_fromrep(0b0000001111111111u);
+        binary16_desc(x, buf, sizeof(buf));
+        INFO("buf = " << buf);
+        CHECK(1 == 2);
+    }
+
+    SECTION("normal")
+    {
+        char buf[1024];
+        binary16 x = binary16_fromrep(0b0011111000000000u);
+        binary16_desc(x, buf, sizeof(buf));
+        INFO("buf = " << buf);
+        CHECK(1 == 2);
+    }
+}
+
 TEST_CASE("add with nan")
 {
     SECTION("1.0 + nan = nan")

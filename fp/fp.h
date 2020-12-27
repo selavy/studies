@@ -13,8 +13,9 @@ static_assert(sizeof(binary16) == sizeof(uint16_t));
 
 // DEBUG
 uint16_t binary16_sign(binary16 x);
-uint16_t binary16_exponent(binary16 x);
+int      binary16_exponent(binary16 x);
 uint16_t binary16_mantissa(binary16 x);
+int      binary16_desc(binary16 x, char* buf, int len);
 
 binary16 binary16_make(uint16_t sgn, int16_t exp, uint16_t sig);
 binary16 binary16_fromrep(uint16_t val);
