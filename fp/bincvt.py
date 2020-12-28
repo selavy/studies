@@ -116,6 +116,7 @@ def tobinary16(s: float) -> str:
     if exponent < -14:    # round to zero
         assert result[1] == '.'
         mantissa = result[0] + result[2:]
+        exponent += 1
         while exponent < -14:
             mantissa = '0' + mantissa[0:9]
             exponent += 1
@@ -140,6 +141,7 @@ def tobinary16(s: float) -> str:
     log(f"Sign     = {sign}")
     log(f"Exponent = {exp}")
     log(f"Mantissa = {mant}")
+    log("")
     return f'{sign}{exp}{mant}'
 
 
@@ -162,9 +164,9 @@ for x, y in cs:
     binary16_x = tobinary16(x)
     binary16_y = tobinary16(y)
     binary16_z = tobinary16(z)
-    log(frombinary16(binary16_x))
-    log(frombinary16(binary16_y))
-    log(frombinary16(binary16_z))
+    log(f"frombinary: {x:.10f} => {frombinary16(binary16_x)}")
+    log(f"frombinary: {y:.10f} => {frombinary16(binary16_y)}")
+    log(f"frombinary: {z:.10f} => {frombinary16(binary16_z)}")
     print(f'    SECTION("{x} + {y} = {z}")')
     print(f'    {{')
     print(f'         binary16 x = binary16_fromrep(0b{binary16_x}); // {x}')

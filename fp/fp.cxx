@@ -377,7 +377,6 @@ binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
     return _make_biased(sign, (uint16_t)exponent_C, (uint16_t)mantissa_C);
 }
 
-// TODO: implement
 binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
     constexpr uint64_t ImpliedOne = 0b0000010000000000u;
