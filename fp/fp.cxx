@@ -363,8 +363,16 @@ binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
     uint16_t mantissa_C;
     uint16_t exponent_C;
     if (clz > 5) {
-        mantissa_C = mantissa << (clz - 5);
-        exponent_C = exponent - (clz - 5);
+        uint16_t shift = clz - 5;
+        if (exponent > shift) {
+            mantissa_C = mantissa << shift;
+            exponent_C = exponent -  shift;
+        } else {
+            // subnormal
+            exponent_C = 0;
+            mantissa_C = mantissa;
+            // mantissa_C = mantissa << exponent;
+        }
     } else {
         mantissa_C = mantissa >> (5 - clz);
         exponent_C = _saturate_add(exponent, 5 - clz, MaxExponent);
