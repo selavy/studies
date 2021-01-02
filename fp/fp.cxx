@@ -2,6 +2,10 @@
 #include <cstring>
 #include <cassert>
 
+// TEMP TEMP TEMP
+#include <cstdio>
+#include <cinttypes>
+
 //-----------------------------------------------------------------------------
 // TODOs:
 // + make branchless
@@ -343,46 +347,115 @@ uint64_t _saturate_add(uint64_t a, uint64_t b, uint64_t max_value)
     return result;
 }
 
-binary16 _normalize(uint16_t sign, uint64_t exponent, uint64_t mantissa)
+uint64_t slr(uint64_t x, int shift)
+{
+    return shift >= 0 ? x >> shift : x << shift;
+}
+
+binary16 _normalize(const uint16_t sign, const uint64_t exponent, const uint64_t mantissa)
 {
     // preconditions:
     //     + input is not NaN
 
-    constexpr uint16_t MaxExponent = 0b11111;
-    constexpr uint16_t MinExponent = 0b00001;
+    constexpr uint16_t MaxExponent = 0b11111u;
+    constexpr uint16_t MinExponent = 0b00000u;
 
-    assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
+    // 1) Shift mantissa to 12 places with exponent adjusted accordingly
+    // 2) Add 1 to round based on the final place
+    // 3) Shift mantissa to 11 places with exponent adjusted accordingly
+    // // TODO: handle subnormals
+    // 4) If not subnormal, mask off top bit of mantissa
 
-    while ((mantissa & ~0xFFFFu) != 0) {
-        mantissa >>= 1;
-        exponent++;
-    }
 
-    int clz = __builtin_clzll(mantissa) - (64 - 16);
-    assert(clz >= 0);
-    uint16_t mantissa_C;
-    uint16_t exponent_C;
-    if (clz > 5) {
-        uint16_t shift = clz - 5;
-        if (exponent > shift) {
-            mantissa_C = mantissa << shift;
-            exponent_C = exponent -  shift;
-        } else {
-            // subnormal
-            exponent_C = 0;
-            mantissa_C = mantissa;
-            // mantissa_C = mantissa << exponent;
-        }
-    } else {
-        mantissa_C = mantissa >> (5 - clz);
-        exponent_C = _saturate_add(exponent, 5 - clz, MaxExponent);
-    }
+    // 64-16         = 48
+    // mantissa      = 48 x 0's + 0010 0100 1111 0010
+    // clz(mantissa) = 48 + 2 = 50
+    // want          = 48 x 0's + 0000 1001 0011 1100
+    // desired clz   = 48 + 4 = 52
+    // need shift    = 2 => 52 - clz(mantissa)
+    // (positive shift = shift right)
 
-    if (exponent_C == MaxExponent) {
-        mantissa_C = 0;
-    }
+    const int      clz       = __builtin_clzll(mantissa);
+    const int      shift     = 52 - clz;
+    const uint64_t mantissa1 = slr(mantissa, shift) + 1;
+    // TODO: handle underflow for negative shift -> round to subnormal
+    // TODO: handle overflow -> round to infinity
+    const uint64_t exponent1 = exponent + shift;
+    const uint64_t mantissa2 = mantissa1 >> 1;
+    const uint64_t exponent2 = exponent1 +  1;
+    const uint16_t mantissa3 = (uint16_t)mantissa2;
+    const uint16_t exponent3 = (uint16_t)exponent2;
 
-    return _make_biased(sign, (uint16_t)exponent_C, (uint16_t)mantissa_C);
+    // assert((mantissa2 & ~0x3FFu) == 0);
+    // assert((0b00000u      <= exponent2) && (exponent2 <= 0b11111u     ));
+    // assert((0b0000000000u <= mantissa2) && (mantissa2 <= 0b1111111111u));
+    // assert((sign == 0) || (sign == 1));
+
+    // printf("_normalize:");
+    // printf("\n\tsign      = %u", sign);
+    // printf("\n\texponent  = 0x%016" PRIx64, exponent);
+    // printf("\n\tmantissa  = 0x%016" PRIx64, mantissa);
+    // printf("\n\tclz       = %d", clz);
+    // printf("\n\tshift     = %d", shift);
+    // printf("\n\texponent1 = 0x%016" PRIx64, exponent1);
+    // printf("\n\tmantissa1 = 0x%016" PRIx64, mantissa1);
+    // printf("\n\texponent2 = 0x%016" PRIx64, exponent2);
+    // printf("\n\tmantissa2 = 0x%016" PRIx64, mantissa2);
+    // printf("\n\texponent3 = 0x%02"  PRIx16, exponent3);
+    // printf("\n\tmantissa3 = 0x%02"  PRIx16, mantissa3);
+    // printf("\n");
+
+    return _make_biased(sign, exponent3, mantissa3);
+
+    // constexpr uint16_t MaxExponent = 0b11111;
+    // constexpr uint16_t MinExponent = 0b00001;
+
+    // const auto mantissa_orig = mantissa;
+    // const auto exponent_orig = exponent;
+
+    // assert((mantissa >> 63) == 0u && "top-bit shouldn't be set on mantissa!");
+
+    // printf("Incoming mantissa: 0x%08" PRIx64 "\n", mantissa);
+    // while ((mantissa & ~0xFFFFu) != 0) {
+    //     mantissa >>= 1;
+    //     exponent++;
+    // }
+    // int clz = __builtin_clzll(mantissa) - (64 - 16);
+    // assert(clz >= 0);
+    // uint16_t mantissa_C;
+    // uint16_t exponent_C;
+
+    // // TEMP TEMP TEMP
+    // printf("_normalize:");
+    // printf("\n\tsign      = %u", sign);
+    // printf("\n\texponent0 = 0x%016" PRIx64, exponent_orig);
+    // printf("\n\tmantissa0 = 0x%016" PRIx64, mantissa_orig);
+    // printf("\n\texponent1 = 0x%016" PRIx64, exponent);
+    // printf("\n\tmantissa1 = 0x%016" PRIx64, mantissa);
+    // printf("\n\tclz       = %d"      , clz);
+    // printf("\n");
+
+    // if (clz > 5) {
+    //     uint16_t shift = clz - 5;
+    //     if (exponent > shift) {
+    //         mantissa_C = mantissa << shift;
+    //         exponent_C = exponent -  shift;
+    //     } else {
+    //         // subnormal
+    //         exponent_C = 0;
+    //         mantissa_C = mantissa;
+    //     }
+    // } else {
+    //     mantissa_C = mantissa >> (5 - clz);
+    //     exponent_C = _saturate_add(exponent, 5 - clz, MaxExponent);
+    // }
+
+    // if (exponent_C == MaxExponent) {
+    //     // TODO: probably should generate a standard form of INF
+    //     mantissa_C = 0;
+    // }
+
+    // return _make_biased(sign, (uint16_t)exponent_C, (uint16_t)mantissa_C);
 }
 
 binary16 binary16_add(const binary16 a_, const binary16 b_)

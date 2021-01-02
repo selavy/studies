@@ -4,6 +4,8 @@
 
 #include "fp.h"
 
+#include "half.hpp"
+
 #define U16(x) uint16_t(x)
 
 std::string dump_u16(uint16_t x)
@@ -2146,5 +2148,1030 @@ TEST_CASE("binary16 sub")
         INFO("c = " << dump_u16(c.rep));
         INFO("r = " << dump_u16(r.rep));
         CHECK(binary16_torep(r) == binary16_torep(c));
+    }
+}
+
+using namespace half_float::literal;
+
+TEST_CASE("test case")
+{
+	auto a = 4.4327446996_h;
+	auto b = 2.4424231659_h;
+	auto c = a + b;
+	auto d = binary16_fromfloat((float)a);
+	auto e = binary16_fromfloat((float)b);
+	auto f = binary16_add(d, e);
+
+    INFO("a = " << static_cast<float>(a) << " : " << dump_u16(a.data_));
+    INFO("b = " << static_cast<float>(b) << " : " << dump_u16(b.data_));
+    INFO("c = " << static_cast<float>(c) << " : " << dump_u16(c.data_));
+
+    INFO("d = " << binary16_tofloat(d) << " : " << dump_u16(d.rep));
+    INFO("e = " << binary16_tofloat(e) << " : " << dump_u16(e.rep));
+    INFO("f = " << binary16_tofloat(f) << " : " << dump_u16(f.rep));
+
+    // a = 4.43359 : 0b0100 0100 0110 1111
+    // b = 2.44336 : 0b0100 0000 1110 0011
+    // c = 6.875   : 0b0100 0110 1110 0000
+    // d = 4.43359 : 0b0100 0100 0110 1111
+    // e = 2.44336 : 0b0100 0000 1110 0011
+    // f = 6.87891 : 0b0100 0110 1110 0001
+
+	CHECK((float)c == binary16_tofloat(f));
+}
+
+
+TEST_CASE("Compare against half-float")
+{
+    SECTION("9.718670567508067 + 3.382734400826103 = 13.0917968750 (13.1014049683)")
+    {
+        auto a = 9.71094_h;
+        auto b = 3.38086_h;
+        auto c = a + b;
+
+        auto x = binary16_fromfloat(float(a));
+        auto y = binary16_fromfloat(float(b));
+        auto z = binary16_add(x, y);
+
+        CHECK((float)c == binary16_tofloat(z));
+    }
+
+    SECTION("example 2")
+    {
+        auto a = 1.10194_h;
+        auto b = 2.38086_h;
+        auto c = a + b;
+
+        auto x = binary16_fromfloat(float(a));
+        auto y = binary16_fromfloat(float(b));
+        auto z = binary16_add(x, y);
+
+        CHECK((float)c == binary16_tofloat(z));
+    }
+
+    SECTION("example 3")
+    {
+        auto a = 1.4386475053807080_h;
+        auto b = 3.0590948293520572_h;
+        auto c = a + b;
+
+        auto x = binary16_fromfloat(float(a));
+        auto y = binary16_fromfloat(float(b));
+        auto z = binary16_add(x, y);
+
+        CHECK((float)c == binary16_tofloat(z));
+    }
+
+    SECTION("5.8134710286 + 1.7948160365")
+    {
+        auto a = 5.8134710286_h;
+        auto b = 1.7948160365_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.5408605220 + 0.1328990765")
+    {
+        auto a = 2.5408605220_h;
+        auto b = 0.1328990765_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.6832681629 + 2.3896652459")
+    {
+        auto a = 5.6832681629_h;
+        auto b = 2.3896652459_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.1278556931 + 5.2208796690")
+    {
+        auto a = 1.1278556931_h;
+        auto b = 5.2208796690_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.8324842470 + 1.7878200819")
+    {
+        auto a = 3.8324842470_h;
+        auto b = 1.7878200819_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.9597278424 + 0.5274002307")
+    {
+        auto a = 0.9597278424_h;
+        auto b = 0.5274002307_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.6887608375 + 4.8552941894")
+    {
+        auto a = 3.6887608375_h;
+        auto b = 4.8552941894_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.2430969888 + 3.9567962577")
+    {
+        auto a = 1.2430969888_h;
+        auto b = 3.9567962577_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.7056261187 + 7.9106040059")
+    {
+        auto a = 3.7056261187_h;
+        auto b = 7.9106040059_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.4327446996 + 2.4424231659")
+    {
+        auto a = 4.4327446996_h;
+        auto b = 2.4424231659_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.1239105663 + 6.9510344143")
+    {
+        auto a = 7.1239105663_h;
+        auto b = 6.9510344143_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.9120035492 + 8.0805666466")
+    {
+        auto a = 1.9120035492_h;
+        auto b = 8.0805666466_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.6743276492 + 1.3179706881")
+    {
+        auto a = 2.6743276492_h;
+        auto b = 1.3179706881_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.8276096476 + 6.6069371051")
+    {
+        auto a = 9.8276096476_h;
+        auto b = 6.6069371051_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.9652812383 + 9.0607159644")
+    {
+        auto a = 7.9652812383_h;
+        auto b = 9.0607159644_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.1405445841 + 9.0028700148")
+    {
+        auto a = 4.1405445841_h;
+        auto b = 9.0028700148_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.4449129677 + 8.1710458404")
+    {
+        auto a = 2.4449129677_h;
+        auto b = 8.1710458404_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.2240583115 + 1.5441648961")
+    {
+        auto a = 4.2240583115_h;
+        auto b = 1.5441648961_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.2304278091 + 9.4591660922")
+    {
+        auto a = 1.2304278091_h;
+        auto b = 9.4591660922_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("6.6993048333 + 2.8673394801")
+    {
+        auto a = 6.6993048333_h;
+        auto b = 2.8673394801_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.9487714625 + 6.6722516627")
+    {
+        auto a = 0.9487714625_h;
+        auto b = 6.6722516627_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.2074176238 + 8.0756003670")
+    {
+        auto a = 7.2074176238_h;
+        auto b = 8.0756003670_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.4213433519 + 4.3640426062")
+    {
+        auto a = 5.4213433519_h;
+        auto b = 4.3640426062_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.9462181197 + 1.3285243950")
+    {
+        auto a = 3.9462181197_h;
+        auto b = 1.3285243950_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.9430354363 + 9.3421875403")
+    {
+        auto a = 0.9430354363_h;
+        auto b = 9.3421875403_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.2311156130 + 8.0590248394")
+    {
+        auto a = 7.2311156130_h;
+        auto b = 8.0590248394_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.3392124002 + 9.2707786046")
+    {
+        auto a = 5.3392124002_h;
+        auto b = 9.2707786046_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.6423946377 + 3.0317753207")
+    {
+        auto a = 8.6423946377_h;
+        auto b = 3.0317753207_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.8299161866 + 9.2251531291")
+    {
+        auto a = 3.8299161866_h;
+        auto b = 9.2251531291_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.4234614742 + 3.9178032557")
+    {
+        auto a = 8.4234614742_h;
+        auto b = 3.9178032557_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.9457509009 + 5.5225990147")
+    {
+        auto a = 0.9457509009_h;
+        auto b = 5.5225990147_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.9185868755 + 4.8840341426")
+    {
+        auto a = 1.9185868755_h;
+        auto b = 4.8840341426_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.8916359268 + 4.1967192643")
+    {
+        auto a = 2.8916359268_h;
+        auto b = 4.1967192643_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.1214630530 + 6.3011232090")
+    {
+        auto a = 9.1214630530_h;
+        auto b = 6.3011232090_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.3239131062 + 8.9149776059")
+    {
+        auto a = 4.3239131062_h;
+        auto b = 8.9149776059_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.1635120377 + 3.0006762274")
+    {
+        auto a = 9.1635120377_h;
+        auto b = 3.0006762274_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.9759879768 + 8.1310242132")
+    {
+        auto a = 4.9759879768_h;
+        auto b = 8.1310242132_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.2051356830 + 9.8151317340")
+    {
+        auto a = 2.2051356830_h;
+        auto b = 9.8151317340_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.8299513325 + 9.5295497035")
+    {
+        auto a = 9.8299513325_h;
+        auto b = 9.5295497035_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("6.8139188076 + 9.9886140305")
+    {
+        auto a = 6.8139188076_h;
+        auto b = 9.9886140305_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.8861995059 + 8.7459542019")
+    {
+        auto a = 4.8861995059_h;
+        auto b = 8.7459542019_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.4856936152 + 4.1413895104")
+    {
+        auto a = 9.4856936152_h;
+        auto b = 4.1413895104_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.5238829588 + 2.6266515781")
+    {
+        auto a = 8.5238829588_h;
+        auto b = 2.6266515781_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.7485256573 + 1.1082424771")
+    {
+        auto a = 9.7485256573_h;
+        auto b = 1.1082424771_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.0401925412 + 8.2718052707")
+    {
+        auto a = 4.0401925412_h;
+        auto b = 8.2718052707_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.4280415043 + 1.2631470689")
+    {
+        auto a = 4.4280415043_h;
+        auto b = 1.2631470689_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.4076227862 + 8.2779509825")
+    {
+        auto a = 0.4076227862_h;
+        auto b = 8.2779509825_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.2040211103 + 3.6747608113")
+    {
+        auto a = 5.2040211103_h;
+        auto b = 3.6747608113_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.3509459376 + 6.8028412672")
+    {
+        auto a = 0.3509459376_h;
+        auto b = 6.8028412672_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.7271280854 + 5.7884325859")
+    {
+        auto a = 4.7271280854_h;
+        auto b = 5.7884325859_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.8762706704 + 2.5422290319")
+    {
+        auto a = 7.8762706704_h;
+        auto b = 2.5422290319_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.6999785828 + 8.3743016730")
+    {
+        auto a = 2.6999785828_h;
+        auto b = 8.3743016730_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.8423459747 + 5.7925514804")
+    {
+        auto a = 7.8423459747_h;
+        auto b = 5.7925514804_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("6.4302091871 + 3.6568055641")
+    {
+        auto a = 6.4302091871_h;
+        auto b = 3.6568055641_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("6.6231004990 + 1.6996416389")
+    {
+        auto a = 6.6231004990_h;
+        auto b = 1.6996416389_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.0465442003 + 9.1992721374")
+    {
+        auto a = 1.0465442003_h;
+        auto b = 9.1992721374_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.7424408434 + 4.3548856517")
+    {
+        auto a = 7.7424408434_h;
+        auto b = 4.3548856517_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("4.5610362328 + 9.9796491190")
+    {
+        auto a = 4.5610362328_h;
+        auto b = 9.9796491190_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.5778224710 + 0.5489388362")
+    {
+        auto a = 2.5778224710_h;
+        auto b = 0.5489388362_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.2799267934 + 2.2220592140")
+    {
+        auto a = 1.2799267934_h;
+        auto b = 2.2220592140_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.5212268856 + 8.1352723130")
+    {
+        auto a = 1.5212268856_h;
+        auto b = 8.1352723130_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.9670201251 + 8.1635013317")
+    {
+        auto a = 7.9670201251_h;
+        auto b = 8.1635013317_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.8011337005 + 2.9825027295")
+    {
+        auto a = 9.8011337005_h;
+        auto b = 2.9825027295_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.2383632775 + 3.3173459267")
+    {
+        auto a = 5.2383632775_h;
+        auto b = 3.3173459267_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.9223006761 + 8.6842768600")
+    {
+        auto a = 2.9223006761_h;
+        auto b = 8.6842768600_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.4992709573 + 6.8242384819")
+    {
+        auto a = 7.4992709573_h;
+        auto b = 6.8242384819_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.2394976937 + 6.5435823495")
+    {
+        auto a = 8.2394976937_h;
+        auto b = 6.5435823495_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.7987647280 + 2.3067628652")
+    {
+        auto a = 0.7987647280_h;
+        auto b = 2.3067628652_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.2843166498 + 8.6193666676")
+    {
+        auto a = 7.2843166498_h;
+        auto b = 8.6193666676_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("5.9356678089 + 0.9168618840")
+    {
+        auto a = 5.9356678089_h;
+        auto b = 0.9168618840_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.4079184520 + 5.8676162577")
+    {
+        auto a = 8.4079184520_h;
+        auto b = 5.8676162577_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.9519085847 + 2.2936051841")
+    {
+        auto a = 7.9519085847_h;
+        auto b = 2.2936051841_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.6485362278 + 9.7647721276")
+    {
+        auto a = 0.6485362278_h;
+        auto b = 9.7647721276_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.1834452442 + 6.8984122255")
+    {
+        auto a = 2.1834452442_h;
+        auto b = 6.8984122255_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.8553981507 + 1.2545040913")
+    {
+        auto a = 0.8553981507_h;
+        auto b = 1.2545040913_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.1617599349 + 7.1593566736")
+    {
+        auto a = 8.1617599349_h;
+        auto b = 7.1593566736_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("2.9881942686 + 0.6763172458")
+    {
+        auto a = 2.9881942686_h;
+        auto b = 0.6763172458_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("0.6835877845 + 6.4425788138")
+    {
+        auto a = 0.6835877845_h;
+        auto b = 6.4425788138_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.2784216933 + 6.2013932791")
+    {
+        auto a = 3.2784216933_h;
+        auto b = 6.2013932791_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("8.7572339281 + 6.1320262632")
+    {
+        auto a = 8.7572339281_h;
+        auto b = 6.1320262632_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.4386475054 + 3.0590948294")
+    {
+        auto a = 1.4386475054_h;
+        auto b = 3.0590948294_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.0990732317 + 6.9284238668")
+    {
+        auto a = 9.0990732317_h;
+        auto b = 6.9284238668_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("3.9017292446 + 7.9193426887")
+    {
+        auto a = 3.9017292446_h;
+        auto b = 7.9193426887_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("9.7186705675 + 3.3827344008")
+    {
+        auto a = 9.7186705675_h;
+        auto b = 3.3827344008_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("7.0215120172 + 0.0627529313")
+    {
+        auto a = 7.0215120172_h;
+        auto b = 0.0627529313_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+        CHECK((float)c == binary16_tofloat(f));
+    }
+
+    SECTION("1.3419085418 + 1.0888469460")
+    {
+        auto a = 1.3419085418_h;
+        auto b = 1.0888469460_h;
+        auto c = a + b;
+        auto d = binary16_fromfloat((float)a);
+        auto e = binary16_fromfloat((float)b);
+        auto f = binary16_add(d, e);
+
+		auto g = f; g.rep += 1;
+		auto h = f; h.rep -= 1;
+		INFO("f = " << binary16_tofloat(f) << ": " << dump_u16(f.rep));
+		INFO("g = " << binary16_tofloat(g) << ": " << dump_u16(g.rep));
+		INFO("h = " << binary16_tofloat(h) << ": " << dump_u16(h.rep));
+
+        CHECK((float)c == binary16_tofloat(f));
     }
 }

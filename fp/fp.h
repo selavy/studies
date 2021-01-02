@@ -11,6 +11,12 @@ struct binary16
 };
 static_assert(sizeof(binary16) == sizeof(uint16_t));
 
+// struct binary32
+// {
+//     uint32_t rep;
+// };
+// static_assert(sizeof(binary32) == sizeof(uint32_t));
+
 // DEBUG
 uint16_t binary16_sign(binary16 x);
 int      binary16_exponent(binary16 x);
