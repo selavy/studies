@@ -349,7 +349,7 @@ uint64_t _saturate_add(uint64_t a, uint64_t b, uint64_t max_value)
 
 uint64_t slr(uint64_t x, int shift)
 {
-    return shift >= 0 ? x >> shift : x << shift;
+    return shift >= 0 ? x >> shift : x << -shift;
 }
 
 binary16 _normalize(const uint16_t sign, const uint64_t exponent, const uint64_t mantissa)
@@ -366,23 +366,27 @@ binary16 _normalize(const uint16_t sign, const uint64_t exponent, const uint64_t
     // // TODO: handle subnormals
     // 4) If not subnormal, mask off top bit of mantissa
 
-
     // 64-16         = 48
     // mantissa      = 48 x 0's + 0010 0100 1111 0010
     // clz(mantissa) = 48 + 2 = 50
     // want          = 48 x 0's + 0000 1001 0011 1100
     // desired clz   = 48 + 4 = 52
     // need shift    = 2 => 52 - clz(mantissa)
-    // (positive shift = shift right)
+    // (positive shift = shift right = increase exponent)
 
-    const int      clz       = __builtin_clzll(mantissa);
-    const int      shift     = 52 - clz;
-    const uint64_t mantissa1 = slr(mantissa, shift) + 1;
+    constexpr int Digits0 = 64;
+    // constexpr int Digits1 = 12;
+    constexpr int Digits1 = 13;
+    constexpr int Digits2 = 11; // N.B. 1 implied digit + 10 digits precision
+
     // TODO: handle underflow for negative shift -> round to subnormal
     // TODO: handle overflow -> round to infinity
+    const int      clz       = __builtin_clzll(mantissa);
+    const int      shift     = (Digits0 - Digits1) - clz;
+    const uint64_t mantissa1 = slr(mantissa, shift) + 1;
     const uint64_t exponent1 = exponent + shift;
-    const uint64_t mantissa2 = mantissa1 >> 1;
-    const uint64_t exponent2 = exponent1 +  1;
+    const uint64_t mantissa2 = mantissa1 >> (Digits1 - Digits2);
+    const uint64_t exponent2 = exponent1 +  (Digits1 - Digits2);
     const uint16_t mantissa3 = (uint16_t)mantissa2;
     const uint16_t exponent3 = (uint16_t)exponent2;
 
@@ -391,19 +395,24 @@ binary16 _normalize(const uint16_t sign, const uint64_t exponent, const uint64_t
     // assert((0b0000000000u <= mantissa2) && (mantissa2 <= 0b1111111111u));
     // assert((sign == 0) || (sign == 1));
 
-    // printf("_normalize:");
-    // printf("\n\tsign      = %u", sign);
-    // printf("\n\texponent  = 0x%016" PRIx64, exponent);
-    // printf("\n\tmantissa  = 0x%016" PRIx64, mantissa);
-    // printf("\n\tclz       = %d", clz);
-    // printf("\n\tshift     = %d", shift);
-    // printf("\n\texponent1 = 0x%016" PRIx64, exponent1);
-    // printf("\n\tmantissa1 = 0x%016" PRIx64, mantissa1);
-    // printf("\n\texponent2 = 0x%016" PRIx64, exponent2);
-    // printf("\n\tmantissa2 = 0x%016" PRIx64, mantissa2);
-    // printf("\n\texponent3 = 0x%02"  PRIx16, exponent3);
-    // printf("\n\tmantissa3 = 0x%02"  PRIx16, mantissa3);
-    // printf("\n");
+#if 0
+    printf("_normalize:");
+    printf("\n\tDigits0   = %d", Digits0);
+    printf("\n\tDigits1   = %d", Digits1);
+    printf("\n\tDigits2   = %d", Digits2);
+    printf("\n\tsign      = %u", sign);
+    printf("\n\texponent  = 0x%016" PRIx64, exponent);
+    printf("\n\tmantissa  = 0x%016" PRIx64, mantissa);
+    printf("\n\tclz       = %d", clz);
+    printf("\n\tshift     = %d", shift);
+    printf("\n\texponent1 = 0x%016" PRIx64, exponent1);
+    printf("\n\tmantissa1 = 0x%016" PRIx64, mantissa1);
+    printf("\n\texponent2 = 0x%016" PRIx64, exponent2);
+    printf("\n\tmantissa2 = 0x%016" PRIx64, mantissa2);
+    printf("\n\texponent3 = 0x%02"  PRIx16, exponent3);
+    printf("\n\tmantissa3 = 0x%02"  PRIx16, mantissa3);
+    printf("\n");
+#endif
 
     return _make_biased(sign, exponent3, mantissa3);
 
@@ -481,6 +490,8 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     // NOTE: subnormal exponent = -14 => +1 (biased)
     uint64_t exponent_A = _max((a & Binary16_ExponentMask) >> 10, 1);
     uint64_t exponent_B = _max((b & Binary16_ExponentMask) >> 10, 1);
+    // TODO: should use the larger of the 2 exponents because it has more
+    //       significant figures
     uint64_t exponent   = _min(exponent_A, exponent_B);
     uint64_t shift_A    = exponent_A - exponent;
     uint64_t shift_B    = exponent_B - exponent;
