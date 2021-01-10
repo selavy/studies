@@ -2155,8 +2155,11 @@ using namespace half_float::literal;
 
 TEST_CASE("test case")
 {
-	auto a = 4.4327446996_h;
-	auto b = 2.4424231659_h;
+	// auto a = 4.4327446996_h;
+	// auto b = 2.4424231659_h;
+
+    auto a = 1.3419085418_h;
+    auto b = 1.0888469460_h;
 	auto c = a + b;
 	auto d = binary16_fromfloat((float)a);
 	auto e = binary16_fromfloat((float)b);
@@ -2178,6 +2181,7 @@ TEST_CASE("test case")
     // f = 6.87891 : 0b0100 0110 1110 0001
 
 	CHECK((float)c == binary16_tofloat(f));
+    CHECK(1 == 0);
 }
 
 
