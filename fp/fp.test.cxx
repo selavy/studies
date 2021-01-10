@@ -2158,8 +2158,18 @@ TEST_CASE("test case")
 	// auto a = 4.4327446996_h;
 	// auto b = 2.4424231659_h;
 
-    auto a = 1.3419085418_h;
-    auto b = 1.0888469460_h;
+    // auto a = 1.3419085418_h;
+    // auto b = 1.0888469460_h;
+
+    // auto a = 9.75_h;
+    // auto b = 0.5625_h;
+
+    auto a = 9.75_h;
+    auto b = 9.75_h;
+
+    INFO("exponent(a) = " << half_float::ilogb(a));
+    INFO("exponent(b) = " << half_float::ilogb(b));
+
 	auto c = a + b;
 	auto d = binary16_fromfloat((float)a);
 	auto e = binary16_fromfloat((float)b);

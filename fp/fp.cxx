@@ -300,6 +300,16 @@ float binary16_tofloat(const binary16 x_)
     return res;
 }
 
+static uint16_t _make_2scomp_u16(uint16_t sign, uint16_t val)
+{
+    return sign ? (val ^ ~uint16_t(0)) + uint16_t(1) : val;
+}
+
+static uint16_t _abs_2scomp_u16(uint16_t sign, uint16_t val)
+{
+    return _make_2scomp_u16(sign, val);
+}
+
 static uint64_t _make_2scomp(uint16_t sign, uint64_t val)
 {
     // return sign ? (val ^ 0xFFFF'FFFF'FFFF'FFFFull) + 1ull : val;
@@ -326,22 +336,38 @@ binary16 binary16_neg(const binary16 a_)
     return binary16_fromrep(a ^ Binary16_SignMask);
 }
 
-uint64_t _min(uint64_t x, uint64_t y)
+binary16 binary16_abs(const binary16 a_)
+{
+    uint16_t a = a_.rep;
+    return binary16_fromrep(a & ~Binary16_SignMask);
+}
+
+uint64_t _min_u64(uint64_t x, uint64_t y)
 {
     return x < y ? x : y;
 }
 
-uint64_t _max(uint64_t x, uint64_t y)
+uint64_t _max_u64(uint64_t x, uint64_t y)
+{
+    return x > y ? x : y;
+}
+
+uint16_t _max_u16(uint16_t x, uint16_t y)
+{
+    return x > y ? x : y;
+}
+
+uint64_t _max_int(uint64_t x, uint64_t y)
 {
     return x > y ? x : y;
 }
 
 uint64_t _saturate_add(uint64_t a, uint64_t b, uint64_t max_value)
 {
-    uint64_t min_elem   = _min(a, b);
-    uint16_t max_elem   = _max(a, b);
+    uint64_t min_elem   = _min_u64(a, b);
+    uint64_t max_elem   = _max_u64(a, b);
     uint64_t max_amount = max_value - max_elem;
-    uint64_t add_value  = _min(max_amount, min_elem);
+    uint64_t add_value  = _min_u64(max_amount, min_elem);
     uint64_t result = max_elem + add_value;
     assert(0 <= result && result <= max_value);
     return result;
@@ -471,8 +497,8 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
     constexpr uint64_t ImpliedOne = 0b0000010000000000u;
 
-    uint16_t a = a_.rep;
-    uint16_t b = b_.rep;
+    // uint16_t a = a_.rep;
+    // uint16_t b = b_.rep;
 
     // TODO: I think I shouldn't need these explicit checks
     if (binary16_isnan(a_) || binary16_isnan(b_)) {
@@ -485,6 +511,73 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
         return a_;
     }
 
+    const binary16 a = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? a_ : b_;
+    const binary16 b = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? b_ : a_;
+    const uint16_t sign_A     = binary16_sign(a);
+    const uint16_t sign_B     = binary16_sign(b);
+    const uint16_t exponent_A = (a.rep & Binary16_ExponentMask) >> 10;
+    const uint16_t exponent_B = (b.rep & Binary16_ExponentMask) >> 10;
+    const uint16_t exponent   = _max_u16(exponent_A, exponent_B);
+    const int      shift_A    = exponent - exponent_A;
+    const int      shift_B    = exponent - exponent_B;
+    const uint16_t mantissa_A1 = binary16_mantissa(binary16_abs(a));
+    const uint16_t mantissa_B1 = binary16_mantissa(binary16_abs(b));
+    const uint16_t implied_A   = binary16_issubnormal(a) ? 0 : ImpliedOne;
+    const uint16_t implied_B   = binary16_issubnormal(b) ? 0 : ImpliedOne;
+    const uint16_t mantissa_A2 = _make_2scomp_u16(sign_A, mantissa_A1 | implied_A) >> shift_A;
+    const uint16_t mantissa_B2 = _make_2scomp_u16(sign_B, mantissa_B1 | implied_B) >> shift_B;
+    const uint16_t result      = mantissa_A2 + mantissa_B2;
+    const uint16_t sign_C      = (result >> 15) & 0x1u;
+    const uint16_t mantissa_C  = _abs_2scomp_u16(sign_C, result);
+    const uint16_t exponent_C  = exponent;
+
+    // TODO: normalize mantissa/exponent C
+    const int desired_digits = 10;
+    const int current_digits = 31 - __builtin_clz(mantissa_C);
+    const int shift          = current_digits - desired_digits;
+    // TODO: handle subnormals (exponent == -14 => exponent_biased = 0) and exponent overflowing
+    const uint16_t mantissa_D  = shift >= 0 ? mantissa_C >> shift : mantissa_C << shift;
+    const uint16_t exponent_D  = exponent_C + shift;
+    const uint16_t sign_D      = sign_C;
+
+    assert(mantissa_A1 >= mantissa_B1);
+    assert(exponent_A == exponent);
+    assert(shift_A == 0);
+    assert(shift_B >= 0);
+
+    printf("binary16_add()");
+    printf("\n\ta_ = %0.8f", binary16_tofloat(a_));
+    printf("\n\tb_ = %0.8f", binary16_tofloat(b_));
+    printf("\n\ta  = %0.8f", binary16_tofloat(a));
+    printf("\n\tb  = %0.8f", binary16_tofloat(b));
+    printf("\n\tsign_A      = %u = 0x%04X", sign_A, sign_A);
+    printf("\n\tsign_B      = %u = 0x%04X", sign_B, sign_B);
+    printf("\n\texponent_A  = %u = 0x%04X", exponent_A, exponent_A);
+    printf("\n\texponent_B  = %u = 0x%04X", exponent_B, exponent_B);
+    printf("\n\texponent    = %u = 0x%04X", exponent, exponent);
+    printf("\n\tshift_A     = %u = 0x%04X", shift_A, shift_A);
+    printf("\n\tshift_B     = %u = 0x%04X", shift_B, shift_B);
+    printf("\n\tmantissa_A1 = %u = 0x%04X", mantissa_A1, mantissa_A1);
+    printf("\n\tmantissa_B1 = %u = 0x%04X", mantissa_B1, mantissa_B1);
+    printf("\n\timplied_A   = %u = 0x%04X", implied_A, implied_A);
+    printf("\n\timplied_B   = %u = 0x%04X", implied_B, implied_B);
+    printf("\n\tmantissa_A2 = %u = 0x%04X", mantissa_A2, mantissa_A2);
+    printf("\n\tmantissa_B2 = %u = 0x%04X", mantissa_B2, mantissa_B2);
+    printf("\n\tresult      = %u = 0x%04X", result, result);
+    printf("\n\tsign_C      = %u = 0x%04X", sign_C, sign_C);
+    printf("\n\tmantissa_C  = %u = 0x%04X", mantissa_C, mantissa_C);
+    printf("\n\texponent_C  = %u = 0x%04X", exponent_C, exponent_C);
+    printf("\n\tdesired_digits = %d", desired_digits);
+    printf("\n\tcurrent_digits = %d", current_digits);
+    printf("\n\tshift          = %d", shift);
+    printf("\n\tmantissa       = %u = 0x%04X", mantissa_D, mantissa_D);
+    printf("\n\texponent       = %u = 0x%04X", exponent_D, exponent_D);
+    printf("\n\tsign           = %u", sign_D);
+
+    // return binary16_fromrep(0);
+    return _make_biased(sign_D, exponent_D, mantissa_D);
+
+#if 0
     uint16_t sign_A     = binary16_sign(a_);
     uint16_t sign_B     = binary16_sign(b_);
     // NOTE: subnormal exponent = -14 => +1 (biased)
@@ -492,7 +585,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     uint64_t exponent_B = _max((b & Binary16_ExponentMask) >> 10, 1);
     // TODO: should use the larger of the 2 exponents because it has more
     //       significant figures
-    uint64_t exponent   = _min(exponent_A, exponent_B);
+    uint64_t exponent   = _min_u64(exponent_A, exponent_B);
     uint64_t shift_A    = exponent_A - exponent;
     uint64_t shift_B    = exponent_B - exponent;
     uint64_t mantbits_A = a & Binary16_MantissaMask;
@@ -512,6 +605,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     assert(0 <= shift_B && shift_B < 32);
     assert((mantissa >> 63) == 0 && "sign bit should not be set post abs()");
     return _normalize(sign, exponent, mantissa);
+#endif
 }
 
 binary16 binary16_sub(const binary16 a_, const binary16 b_)
@@ -530,4 +624,15 @@ bool binary16_eq(const binary16 a, const binary16 b)
 bool binary16_neq(const binary16 a, const binary16 b)
 {
     return !binary16_eq(a, b);
+}
+
+bool binary16_gt (const binary16 a, binary16 b)
+{
+    if (binary16_isnan(a) || binary16_isnan(b)) {
+        return false;
+    }
+    // TODO: finish and handle negative numbers
+    assert(!binary16_sign(a));
+    assert(!binary16_sign(b));
+    return a.rep > b.rep;
 }
