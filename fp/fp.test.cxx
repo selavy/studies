@@ -2155,6 +2155,70 @@ using namespace half_float::literal;
 
 TEST_CASE("not subnormal")
 {
+    auto aa = GENERATE(range(0.0f, 1.0f, 0.1f));
+    auto bb = GENERATE(range(0.0f, 1.0f, 0.1f));
+    auto a = (float)aa;
+    auto b = (float)bb;
+
+    const auto c = a + b;
+    INFO("Float32:");
+    INFO("a         = " << a);
+    INFO("b         = " << b);
+    INFO("a + b = c = " << c);
+
+    // using half_float
+    const auto t = half_float::half{a};
+    const auto u = half_float::half{b};
+    const auto v = t + u;
+
+    INFO("HalfFloat:");
+    INFO("t         = " << (float)t);
+    INFO("u         = " << (float)u);
+    INFO("t + u = v = " << (float)v);
+
+    const auto x = binary16_fromfloat(a);
+    const auto y = binary16_fromfloat(b);
+    const auto z = binary16_add(x, y);
+
+    INFO("Binary16:");
+    INFO("x         = " << binary16_tofloat(x));
+    INFO("y         = " << binary16_tofloat(y));
+    INFO("x + y = z = " << binary16_tofloat(z));
+
+    // TODO: this won't work for the values that don't roundtrip
+    // CHECK((float)t == a);
+    // CHECK((float)u == b);
+    // CHECK(binary16_tofloat(x) == (float)a);
+    // CHECK(binary16_tofloat(y) == (float)b);
+    // CHECK(binary16_tofloat(z) == (float)v);
+
+    binary16 n = binary16_next(z);
+    binary16 p = binary16_prev(z);
+
+    float zf = binary16_tofloat(z);
+    float nf = binary16_tofloat(n);
+    float pf = binary16_tofloat(p);
+
+    float curr_diff = fabs(zf - c);
+    float next_diff = fabs(nf - c);
+    float prev_diff = fabs(pf - c);
+
+    INFO("z = " << zf);
+    INFO("n = " << nf);
+    INFO("p = " << pf);
+    INFO("c = " << c);
+    INFO("curr_diff = " << curr_diff);
+    INFO("next_diff = " << next_diff);
+    INFO("prev_diff = " << prev_diff);
+
+    CHECK((float)v == binary16_tofloat(z));
+    // CHECK(curr_diff <= 0.001);  // TODO: need to size this based on the magnitude of c
+    // CHECK(curr_diff <= next_diff);
+    // CHECK(curr_diff <= prev_diff);
+
+    // CHECK(0 == 1);
+
+#if 0
     const std::vector<std::tuple<float, float>> vs = {
         { 9.75f  , 0.5625f },
         { 0.5625f, 9.75f   },
@@ -2219,6 +2283,7 @@ TEST_CASE("not subnormal")
 
         CHECK(0 == 1);
     }
+#endif
 }
 
 TEST_CASE("test case")

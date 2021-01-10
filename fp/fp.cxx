@@ -271,20 +271,25 @@ int binary16_desc(const binary16 x, char* buf, const int len)
     return  -1;
 }
 
-uint16_t _binary16_signbits(const uint16_t x)
+static uint16_t _signbits(const uint16_t x)
 {
     return x >> (Binary16_ExponentBits + Binary16_MantissaBits);
 }
 
-uint16_t _binary16_exponentbits(const uint16_t x)
+static uint16_t _exponentbits(const uint16_t x)
 {
     return (x & Binary16_ExponentMask) >> Binary16_MantissaBits;
 }
 
-uint16_t _binary16_mantissabits(const uint16_t x)
+static uint16_t _mantissabits(const uint16_t x)
 {
     return x & Binary16_MantissaMask;
 }
+
+// TODO: remove
+uint16_t _binary16_signbits(uint16_t x)     { return _signbits(x); }
+uint16_t _binary16_exponentbits(uint16_t x) { return _exponentbits(x); }
+uint16_t _binary16_mantissabits(uint16_t x) { return _mantissabits(x); }
 
 bool binary16_isinf(const binary16 x_)
 {
@@ -565,9 +570,6 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
 {
     constexpr uint64_t ImpliedOne = 0b0000010000000000u;
 
-    // uint16_t a = a_.rep;
-    // uint16_t b = b_.rep;
-
     // TODO: I think I shouldn't need these explicit checks
     if (binary16_isnan(a_) || binary16_isnan(b_)) {
         return binary16_fromrep(Binary16_NAN);
@@ -608,11 +610,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     const uint16_t exponent_D  = exponent_C + shift;
     const uint16_t sign_D      = sign_C;
 
-    assert(mantissa_A1 >= mantissa_B1);
-    assert(exponent_A == exponent);
-    assert(shift_A == 0);
-    assert(shift_B >= 0);
-
+#if 0
     printf("binary16_add()");
     printf("\n\ta_ = %0.8f", binary16_tofloat(a_));
     printf("\n\tb_ = %0.8f", binary16_tofloat(b_));
@@ -642,6 +640,13 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     printf("\n\texponent       = %u = 0x%04X", exponent_D, exponent_D);
     printf("\n\tsign           = %u", sign_D);
     printf("\n");
+#endif
+
+    assert(!binary16_gt(binary16_abs(b), binary16_abs(a)));
+    assert(exponent_A >= exponent_B);
+    assert(exponent_A == exponent);
+    assert(shift_A == 0);
+    assert(shift_B >= 0);
 
     // return binary16_fromrep(0);
     return _make_biased(sign_D, exponent_D, mantissa_D);
