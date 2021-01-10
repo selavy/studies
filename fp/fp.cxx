@@ -165,20 +165,20 @@ binary16 binary16_fromfloat(float f)
         exp = 0b11111u;
         sig = mantissa == 0 ? 0x0u : 0x1u;
     } else {
-
+        // round 10th decimal place:
         // binary32 mantissa = ____ ____ ____ ____ ____ ___
-
-        // 23-bits, round 10th digit of mantissa by adding 1 to 12th place
-        //
-        // 000 0000 0000 0000 0000 0000
-        // 000 0000 0000 1000 0000 0000
-        mantissa += 1 << (23 - 12);
+        // binary16 mantissa = ____ ____ __xx xxxx xxxx xxx
+        mantissa += 0b1111'1111'1111;
         if (mantissa > 0b111'1111'1111'1111'1111'1111) {
             exponent++;
             mantissa = 0;
-            // TODO: handle exponent overflow from rounding
+            // TODO: undo instead of rounding to infinity?
+            // rounding overflowed to infinity
+            if (exponent >= Binary16_MaxBiasExponent) {
+                exponent = Binary16_MaxBiasExponent;
+                mantissa = 0;
+            }
         }
-
         exp = exponent - Binary32_ExpBias + Binary16_ExpBias;
         sig = mantissa >> (23 - 10);
     }
@@ -595,24 +595,31 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
         return a_;
     }
 
-    const binary16 a = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? a_ : b_;
-    const binary16 b = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? b_ : a_;
-    const uint16_t sign_A     = binary16_sign(a);
-    const uint16_t sign_B     = binary16_sign(b);
-    const uint16_t exponent_A = (a.rep & Binary16_ExponentMask) >> 10;
-    const uint16_t exponent_B = (b.rep & Binary16_ExponentMask) >> 10;
+    const binary16 aa = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? a_ : b_;
+    const binary16 bb = binary16_gt(binary16_abs(a_), binary16_abs(b_)) ? b_ : a_;
+    const uint16_t a = aa.rep;
+    const uint16_t b = bb.rep;
+
+    const uint16_t sign_A     = _signbits(a);
+    const uint16_t sign_B     = _signbits(b);
+    const uint16_t exponent_A = _exponentbits(a);
+    const uint16_t exponent_B = _exponentbits(b);
     const uint16_t exponent   = _max_u16(exponent_A, exponent_B);
     const int      shift_A    = exponent - exponent_A;
     const int      shift_B    = exponent - exponent_B;
-    const uint16_t mantissa_A1 = binary16_mantissa(binary16_abs(a));
-    const uint16_t mantissa_B1 = binary16_mantissa(binary16_abs(b));
-    const uint16_t implied_A   = binary16_issubnormal(a) ? 0 : ImpliedOne;
-    const uint16_t implied_B   = binary16_issubnormal(b) ? 0 : ImpliedOne;
-    const uint16_t mantissa_A2 = _make_2scomp_u16(sign_A, mantissa_A1 | implied_A) >> shift_A;
-    const uint16_t mantissa_B2 = _make_2scomp_u16(sign_B, mantissa_B1 | implied_B) >> shift_B;
-    const uint16_t result      = mantissa_A2 + mantissa_B2;
+    const uint16_t mantissa_A1 = _mantissabits(a);
+    const uint16_t mantissa_B1 = _mantissabits(b);
+    const uint16_t implied_A   = binary16_issubnormal(aa) ? 0 : ImpliedOne;
+    const uint16_t implied_B   = binary16_issubnormal(bb) ? 0 : ImpliedOne;
+    const uint16_t mantissa_A2 = (mantissa_A1 | implied_A) << 2;
+    const uint16_t mantissa_B2 = (mantissa_B1 | implied_B) << 2;
+    const uint16_t mantissa_A3 = _make_2scomp_u16(sign_A, mantissa_A2) >> shift_A;
+    const uint16_t mantissa_B3 = _make_2scomp_u16(sign_B, mantissa_B2) >> shift_B;
+    const uint16_t result      = mantissa_A3 + mantissa_B3;
     const uint16_t sign_C      = (result >> 15) & 0x1u;
-    const uint16_t mantissa_C  = _abs_2scomp_u16(sign_C, result);
+    const uint16_t mantissa_C1 = _abs_2scomp_u16(sign_C, result);
+    const uint16_t mantissa_C2 = mantissa_C1 + 1; // round
+    const uint16_t mantissa_C  = mantissa_C2 >> 2;
     const uint16_t exponent_C  = exponent;
 
     // TODO: normalize mantissa/exponent C
@@ -643,9 +650,13 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     printf("\n\timplied_B   = %u = 0x%04X", implied_B, implied_B);
     printf("\n\tmantissa_A2 = %u = 0x%04X", mantissa_A2, mantissa_A2);
     printf("\n\tmantissa_B2 = %u = 0x%04X", mantissa_B2, mantissa_B2);
+    printf("\n\tmantissa_A3 = %u = 0x%04X", mantissa_A3, mantissa_A3);
+    printf("\n\tmantissa_B3 = %u = 0x%04X", mantissa_B3, mantissa_B3);
     printf("\n\tresult      = %u = 0x%04X", result, result);
     printf("\n\tsign_C      = %u = 0x%04X", sign_C, sign_C);
-    printf("\n\tmantissa_C  = %u = 0x%04X", mantissa_C, mantissa_C);
+    printf("\n\tmantissa_C1 = %u = 0x%04X", mantissa_C1, mantissa_C1);
+    printf("\n\tmantissa_C2 = %u = 0x%04X", mantissa_C2, mantissa_C2);
+    printf("\n\tmantissa_C  = %u = 0x%04X", mantissa_C , mantissa_C );
     printf("\n\texponent_C  = %u = 0x%04X", exponent_C, exponent_C);
     printf("\n\tdesired_digits = %d", desired_digits);
     printf("\n\tcurrent_digits = %d", current_digits);
@@ -656,7 +667,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     printf("\n");
 #endif
 
-    assert(!binary16_gt(binary16_abs(b), binary16_abs(a)));
+    assert(!binary16_gt(binary16_abs(bb), binary16_abs(aa)));
     assert(exponent_A >= exponent_B);
     assert(exponent_A == exponent);
     assert(shift_A == 0);
