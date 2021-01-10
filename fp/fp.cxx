@@ -31,6 +31,20 @@ constexpr uint16_t Binary16_NZERO = 0b1000000000000000u;
 constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u;
 constexpr uint16_t Binary16_ExponentMask = 0b0111'1100'0000'0000u;
 constexpr uint16_t Binary16_MantissaMask = 0b0000'0011'1111'1111u;
+constexpr int      Binary16_SignBits     = 1;
+constexpr int      Binary16_ExponentBits = 5;
+constexpr int      Binary16_MantissaBits = 10;
+constexpr int      Binary16_MinBiasNormalExponent =  1;
+constexpr int      Binary16_MaxBiasNormalExponent = 30;
+constexpr int      Binary16_MinBiasExponent =  0;
+constexpr int      Binary16_MaxBiasExponent = 31;
+constexpr int      Binary16_ExponentBias = 15;
+constexpr int      Binary16_MinExponent  = Binary16_MinBiasExponent - Binary16_ExponentBias;
+constexpr int      Binary16_MaxExponent  = Binary16_MaxBiasExponent - Binary16_ExponentBias;
+constexpr int      Binary16_MinNormalExponent = Binary16_MinBiasNormalExponent - Binary16_ExponentBias;
+constexpr int      Binary16_MaxNormalExponent = Binary16_MaxBiasNormalExponent - Binary16_ExponentBias;
+constexpr uint16_t Binary16_MaxNormalMantissa = Binary16_MantissaMask - 1;
+constexpr uint16_t Binary16_MaxMantissa       = Binary16_MantissaMask;
 
 #define NYI() do {                                                            \
     assert(0 && "not yet implemented");                                       \
@@ -52,6 +66,31 @@ static bool any(uint16_t a, uint16_t mask)
 static bool none(uint16_t a, uint16_t mask)
 {
     return !any(a, mask);
+}
+
+static uint64_t _min_u64(uint64_t x, uint64_t y)
+{
+    return x < y ? x : y;
+}
+
+static uint64_t _max_u64(uint64_t x, uint64_t y)
+{
+    return x > y ? x : y;
+}
+
+static uint16_t _min_u16(uint16_t x, uint16_t y)
+{
+    return x < y ? x : y;
+}
+
+static uint16_t _max_u16(uint16_t x, uint16_t y)
+{
+    return x > y ? x : y;
+}
+
+static uint64_t _max_int(uint64_t x, uint64_t y)
+{
+    return x > y ? x : y;
 }
 
 binary16 _make_biased(uint16_t sign, uint16_t exponent, uint16_t mantissa)
@@ -139,7 +178,41 @@ binary16 binary16_fromfloat(float f)
     return rv;
 }
 
-uint16_t binary16_sign(binary16 x_)
+binary16 binary16_next(const binary16 x_)
+{
+    if (binary16_isnan(x_) || binary16_isinf(x_)) {
+        return x_;
+    }
+    uint16_t x        = x_.rep;
+    uint16_t sign     = _binary16_signbits(x);
+    uint16_t mbits    = _binary16_mantissabits(x);
+    uint16_t ebits    = _binary16_exponentbits(x);
+    uint16_t mantissa = mbits < Binary16_MaxMantissa ? mbits + 1 : 0;
+    uint16_t exponent = mbits < Binary16_MaxMantissa ? ebits : _min_u16(ebits + 1, Binary16_MaxBiasExponent);
+    assert(sign == 0x0u || sign == 0x1u);
+    assert(0 <= mantissa && mantissa <= Binary16_MaxMantissa);
+    assert(0 <= exponent && exponent <= Binary16_MaxBiasExponent);
+    return _make_biased(sign, exponent, mantissa);
+}
+
+binary16 binary16_prev(const binary16 x_)
+{
+    if (binary16_isnan(x_) || binary16_isinf(x_)) {
+        return x_;
+    }
+    uint16_t x        = x_.rep;
+    uint16_t sign     = _binary16_signbits(x);
+    uint16_t mbits    = _binary16_mantissabits(x);
+    uint16_t ebits    = _binary16_exponentbits(x);
+    uint16_t mantissa = mbits > 0 ? mbits - 1 : Binary16_MaxMantissa;
+    uint16_t exponent = mbits > 0 ? ebits : (ebits > 0 ? ebits - 1 : 0);
+    assert(sign == 0x0u || sign == 0x1u);
+    assert(0 <= mantissa && mantissa <= Binary16_MaxMantissa);
+    assert(0 <= exponent && exponent <= Binary16_MaxBiasExponent);
+    return _make_biased(sign, exponent, mantissa);
+}
+
+uint16_t binary16_sign(const binary16 x_)
 {
     uint16_t x = x_.rep;
     return (x >> 15) & 0x01;
@@ -196,6 +269,21 @@ int binary16_desc(const binary16 x, char* buf, const int len)
     }
     assert(0 && "unknown float pointing class");
     return  -1;
+}
+
+uint16_t _binary16_signbits(const uint16_t x)
+{
+    return x >> (Binary16_ExponentBits + Binary16_MantissaBits);
+}
+
+uint16_t _binary16_exponentbits(const uint16_t x)
+{
+    return (x & Binary16_ExponentMask) >> Binary16_MantissaBits;
+}
+
+uint16_t _binary16_mantissabits(const uint16_t x)
+{
+    return x & Binary16_MantissaMask;
 }
 
 bool binary16_isinf(const binary16 x_)
@@ -340,26 +428,6 @@ binary16 binary16_abs(const binary16 a_)
 {
     uint16_t a = a_.rep;
     return binary16_fromrep(a & ~Binary16_SignMask);
-}
-
-uint64_t _min_u64(uint64_t x, uint64_t y)
-{
-    return x < y ? x : y;
-}
-
-uint64_t _max_u64(uint64_t x, uint64_t y)
-{
-    return x > y ? x : y;
-}
-
-uint16_t _max_u16(uint16_t x, uint16_t y)
-{
-    return x > y ? x : y;
-}
-
-uint64_t _max_int(uint64_t x, uint64_t y)
-{
-    return x > y ? x : y;
 }
 
 uint64_t _saturate_add(uint64_t a, uint64_t b, uint64_t max_value)
@@ -573,6 +641,7 @@ binary16 binary16_add(const binary16 a_, const binary16 b_)
     printf("\n\tmantissa       = %u = 0x%04X", mantissa_D, mantissa_D);
     printf("\n\texponent       = %u = 0x%04X", exponent_D, exponent_D);
     printf("\n\tsign           = %u", sign_D);
+    printf("\n");
 
     // return binary16_fromrep(0);
     return _make_biased(sign_D, exponent_D, mantissa_D);
