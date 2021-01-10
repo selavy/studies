@@ -144,9 +144,9 @@ binary16 binary16_fromfloat(float f)
 
     uint32_t rep;
     memcpy(&rep, &f, sizeof(rep));
-    const uint32_t sign     = (rep >> 31) & 0x01u;
-    const uint32_t exponent = (rep >> 23) & 0xFFu;
-    const uint32_t mantissa = rep & 0x7FFFFFu;
+    uint32_t sign     = (rep >> 31) & 0x01u;
+    uint32_t exponent = (rep >> 23) & 0xFFu;
+    uint32_t mantissa = rep & 0x7FFFFFu;
 
     uint16_t exp;
     uint16_t sig;
@@ -165,6 +165,20 @@ binary16 binary16_fromfloat(float f)
         exp = 0b11111u;
         sig = mantissa == 0 ? 0x0u : 0x1u;
     } else {
+
+        // binary32 mantissa = ____ ____ ____ ____ ____ ___
+
+        // 23-bits, round 10th digit of mantissa by adding 1 to 12th place
+        //
+        // 000 0000 0000 0000 0000 0000
+        // 000 0000 0000 1000 0000 0000
+        mantissa += 1 << (23 - 12);
+        if (mantissa > 0b111'1111'1111'1111'1111'1111) {
+            exponent++;
+            mantissa = 0;
+            // TODO: handle exponent overflow from rounding
+        }
+
         exp = exponent - Binary32_ExpBias + Binary16_ExpBias;
         sig = mantissa >> (23 - 10);
     }

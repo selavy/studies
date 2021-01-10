@@ -2566,6 +2566,12 @@ namespace half_float
 		unsigned int sign = ((sub && absy>absx) ? y.data_ : x.data_) & 0x8000;
 		if(absy > absx)
 			std::swap(absx, absy);
+        // exp_x := absx >> 10 + (exponent == 0 ? 1 : 0)
+        // exp_y := absy >> 10 + (exponent == 0 ? 1 : 0)
+        // d = exp_x - exp_y
+        // mantissa_x = (abs & 0b1111111111) | ((exponent != 0 ? 1 : 0) << 10)
+        // mantissa_y = (abs & 0b1111111111) | ((exponent != 0 ? 1 : 0) << 10)
+        // 11 1111 1111
 		int exp = (absx>>10) + (absx<=0x3FF), d = exp - (absy>>10) - (absy<=0x3FF), mx = ((absx&0x3FF)|((absx>0x3FF)<<10)) << 3, my;
 		if(d < 13)
 		{

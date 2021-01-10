@@ -2157,6 +2157,9 @@ TEST_CASE("not subnormal")
 {
     auto aa = GENERATE(range(0.0f, 1.0f, 0.1f));
     auto bb = GENERATE(range(0.0f, 1.0f, 0.1f));
+
+    // auto aa = 0.9f;
+    // auto bb = 0.6f;
     auto a = (float)aa;
     auto b = (float)bb;
 
@@ -2211,6 +2214,14 @@ TEST_CASE("not subnormal")
     INFO("next_diff = " << next_diff);
     INFO("prev_diff = " << prev_diff);
 
+    // TOD: write test based on this property:
+    // a + b = toHalf (fromHalf a + fromHalf b)
+
+    CHECK(v     == half_float::half((float)t + (float)u));
+    CHECK(z.rep == binary16_fromfloat(binary16_tofloat(x) + binary16_tofloat(y)).rep);
+    CHECK(binary16_tofloat(z) == binary16_tofloat(binary16_fromfloat(binary16_tofloat(x) + binary16_tofloat(y))));
+
+    CHECK(binary16_fromfloat(v).rep == z.rep);
     CHECK((float)v == binary16_tofloat(z));
     // CHECK(curr_diff <= 0.001);  // TODO: need to size this based on the magnitude of c
     // CHECK(curr_diff <= next_diff);
