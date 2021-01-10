@@ -171,13 +171,14 @@ binary16 binary16_fromfloat(float f)
         mantissa += 0b1111'1111'1111;
         if (mantissa > 0b111'1111'1111'1111'1111'1111) {
             exponent++;
+            // exponent--;
             mantissa = 0;
-            // TODO: undo instead of rounding to infinity?
-            // rounding overflowed to infinity
-            if (exponent >= Binary16_MaxBiasExponent) {
-                exponent = Binary16_MaxBiasExponent;
-                mantissa = 0;
-            }
+            // // TODO: undo instead of rounding to infinity?
+            // // rounding overflowed to infinity
+            // if (exponent >= Binary16_MaxBiasExponent) {
+            //     exponent = Binary16_MaxBiasExponent;
+            //     mantissa = 0;
+            // }
         }
         exp = exponent - Binary32_ExpBias + Binary16_ExpBias;
         sig = mantissa >> (23 - 10);

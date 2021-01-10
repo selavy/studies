@@ -1,6 +1,8 @@
 #include <catch2/catch.hpp>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
+#include <iomanip>
 
 #include "fp.h"
 
@@ -547,6 +549,37 @@ TEST_CASE("binary16 sub")
         INFO("r = " << dump_u16(r.rep));
         CHECK(binary16_torep(r) == binary16_torep(c));
     }
+}
+
+TEST_CASE("binary16_fromfloat")
+{
+    const float    a = GENERATE(range(0.0f, 1.0f, 0.01f));
+
+    // const float a = 0.499999791f;
+    const binary16 b = binary16_fromfloat(a);
+    const float    c = binary16_tofloat(b);
+    const half_float::half d{a};
+    const binary16 n = binary16_next(b);
+    const binary16 p = binary16_prev(b);
+    const double cdiff = fabs(c - a);
+    const double ndiff = fabs(binary16_tofloat(n) - a);
+    const double pdiff = fabs(binary16_tofloat(p) - a);
+
+    INFO("a = " << dump_f32(a)       << " = " << std::setprecision(9) << a);
+    INFO("b = " << dump_u16(b.rep)   << " = " << std::setprecision(9) << c);
+    INFO("c = " << dump_f32(c)       << " = " << std::setprecision(9) << c);
+    INFO("d = " << dump_u16(d.data_) << " = " << (float)d);
+
+    INFO("mine = " << dump_u16(b.rep) << " = " << binary16_tofloat(b));
+    INFO("next = " << dump_u16(n.rep) << " = " << binary16_tofloat(n));
+    INFO("prev = " << dump_u16(p.rep) << " = " << binary16_tofloat(p));
+    INFO("orig = " << a);
+
+    CHECK(c == (float)d);
+
+    CHECK(cdiff <= 0.001*c); // TODO: should be able to pick this limit correctly for [0, 1] interval
+    CHECK(cdiff <= ndiff);
+    CHECK(pdiff <= pdiff);
 }
 
 #if 0
