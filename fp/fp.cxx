@@ -170,33 +170,47 @@ binary16 binary16_fromfloat(float f)
 
     uint16_t exp;
     uint16_t sig;
-    if (exponent == 0x00u) {
+    if (exponent == 0x00u) { // subnormal float
         exp = 0b00000u;
         sig = mantissa >> (23 - 10);
-    } else if (exponent == 0xFFu) {
+    } else if (exponent == 0xFFu) { // inf or nan float
         exp = 0b11111u;
         sig = mantissa >> (23 - 10);
-    } else if (exponent < MinExponent) {
+    }
+#if 0
+    else if (exponent < MinExponent) {
         // TODO: is it true that all subnormal floats are all closer to +/-0
         // than they are to +/- small 16-bit subnormal value?
 
         // round to zero if exponent too negative
         exp = 0b00000u;
         sig = 0b00000u;
-    } else if (exponent > MaxExponent) {
+    }
+#endif
+    else if (exponent > MaxExponent) {
         // round to +/- inf if exponent too positive
         exp = 0b11111u;
         sig = mantissa == 0 ? 0x0u : 0x1u;
-    } else if (exponent == MinExponent) {
+    } else if (exponent <= MinExponent) {
         // this is _not_ a subnormal float so it still has an implied 1 at the
         // front of the mantissa, but the binary16 will be subnormal
 
         // put the implied 1 back on
         mantissa = mantissa | 1u << Binary32_MantissaBits;
 
+        // adjust mantissa to have an (unbiased) exponent of -14
+        // N.B. we've added added the implied 1 back on, which means that
+        // the current exponent is 1 higher
+        constexpr int DesiredExponent = -15;
+        constexpr int DesiredBiasExponent = DesiredExponent + Binary32_ExponentBias;
+        int shift1 = DesiredBiasExponent - exponent;
+        assert(shift1 >= 0);
+        mantissa = mantissa >> shift1;
+
         // round the 10th decimal place
         mantissa += 0b1'1111'1111'1111;
-        // TODO: handle overflowing
+        // TODO: would need to un-normalize in this case? punting for now
+        assert((mantissa < (1u << 24)) && "TODO: handle rounding on subnormal overflowing");
 
         // shift right to remove the extraneous bits
         constexpr int shift = ((Binary32_MantissaBits + 1) - Binary16_MantissaBits);

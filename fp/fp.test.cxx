@@ -580,9 +580,6 @@ TEST_CASE("binary16_fromfloat")
         CHECK(pdiff <= pdiff);
     };
 
-    TestCase(0.000058000001f, 1.0);
-
-#if 1
     SECTION("range(0, 1, 0.01)")
     {
         const float a = GENERATE(range(0.0f, 1.0f, 0.01f));
@@ -616,9 +613,14 @@ TEST_CASE("binary16_fromfloat")
     SECTION("range(0.00005, 0.000058, 0.000001)")
     {
         const float a = GENERATE(range(0.00005, 0.000058, 0.000001));
-        TestCase(a, 1.0); // 0.0001);
+        TestCase(a, 0.0001);
     }
-#endif
+
+    SECTION("range(0.00002, 0.000029, 0.000001)")
+    {
+        const float a = GENERATE(range(0.00002, 0.000029, 0.000001));
+        TestCase(a, 0.0001);
+    }
 }
 
 #if 0
