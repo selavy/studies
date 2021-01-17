@@ -553,33 +553,62 @@ TEST_CASE("binary16 sub")
 
 TEST_CASE("binary16_fromfloat")
 {
-    const float    a = GENERATE(range(0.0f, 1.0f, 0.01f));
+    auto TestCase = [](const float a, const double max_error)
+    {
+        const binary16 b = binary16_fromfloat(a);
+        const float    c = binary16_tofloat(b);
+        const auto     d = half_float::half{a};
+        const binary16 n = binary16_next(b);
+        const binary16 p = binary16_prev(b);
+        const double cdiff = fabs(c - a);
+        const double ndiff = fabs(binary16_tofloat(n) - a);
+        const double pdiff = fabs(binary16_tofloat(p) - a);
 
-    // const float a = 0.499999791f;
-    const binary16 b = binary16_fromfloat(a);
-    const float    c = binary16_tofloat(b);
-    const half_float::half d{a};
-    const binary16 n = binary16_next(b);
-    const binary16 p = binary16_prev(b);
-    const double cdiff = fabs(c - a);
-    const double ndiff = fabs(binary16_tofloat(n) - a);
-    const double pdiff = fabs(binary16_tofloat(p) - a);
+        INFO("a = " << dump_f32(a)       << " = " << std::setprecision(9) << a);
+        INFO("b = " << dump_u16(b.rep)   << " = " << std::setprecision(9) << c);
+        INFO("c = " << dump_f32(c)       << " = " << std::setprecision(9) << c);
+        INFO("d = " << dump_u16(d.data_) << " = " << (float)d);
 
-    INFO("a = " << dump_f32(a)       << " = " << std::setprecision(9) << a);
-    INFO("b = " << dump_u16(b.rep)   << " = " << std::setprecision(9) << c);
-    INFO("c = " << dump_f32(c)       << " = " << std::setprecision(9) << c);
-    INFO("d = " << dump_u16(d.data_) << " = " << (float)d);
+        INFO("mine = " << dump_u16(b.rep) << " = " << binary16_tofloat(b));
+        INFO("next = " << dump_u16(n.rep) << " = " << binary16_tofloat(n));
+        INFO("prev = " << dump_u16(p.rep) << " = " << binary16_tofloat(p));
+        INFO("orig = " << a);
 
-    INFO("mine = " << dump_u16(b.rep) << " = " << binary16_tofloat(b));
-    INFO("next = " << dump_u16(n.rep) << " = " << binary16_tofloat(n));
-    INFO("prev = " << dump_u16(p.rep) << " = " << binary16_tofloat(p));
-    INFO("orig = " << a);
+        CHECK(c == (float)d);
+        CHECK(cdiff <= max_error);
+        CHECK(cdiff <= ndiff);
+        CHECK(pdiff <= pdiff);
+    };
 
-    CHECK(c == (float)d);
+    SECTION("range(0, 1, 0.01)")
+    {
+        const float a = GENERATE(range(0.0f, 1.0f, 0.01f));
+        TestCase(a, 0.0005);
+    }
 
-    CHECK(cdiff <= 0.001*c); // TODO: should be able to pick this limit correctly for [0, 1] interval
-    CHECK(cdiff <= ndiff);
-    CHECK(pdiff <= pdiff);
+    SECTION("range(1, 1.1, 0.001)")
+    {
+        const float a = GENERATE(range(1.0f, 1.1f, 0.001f));
+        TestCase(a, 0.0005);
+    }
+
+    SECTION("range(104, 104.1, 0.0001)")
+    {
+        const float a = GENERATE(range(104.0f, 104.1f, 0.0001f));
+        TestCase(a, 0.001*a);
+    }
+
+    SECTION("range(17.005, 17.0057, 0.00001)")
+    {
+        const float a = GENERATE(range(17.005f, 17.0057f, 0.00001f));
+        TestCase(a, 0.001*a);
+    }
+
+    SECTION("range(-17.005, -17.0057, 0.00001)")
+    {
+        const float a = GENERATE(range(-17.0057f, -17.0050f, 0.00001f));
+        TestCase(a, 0.001*-a);
+    }
 }
 
 #if 0
