@@ -564,10 +564,10 @@ TEST_CASE("binary16_fromfloat")
         const double ndiff = fabs(binary16_tofloat(n) - a);
         const double pdiff = fabs(binary16_tofloat(p) - a);
 
-        INFO("a = " << dump_f32(a)       << " = " << std::setprecision(9) << a);
-        INFO("b = " << dump_u16(b.rep)   << " = " << std::setprecision(9) << c);
-        INFO("c = " << dump_f32(c)       << " = " << std::setprecision(9) << c);
-        INFO("d = " << dump_u16(d.data_) << " = " << (float)d);
+        INFO("a = " << dump_f32(a)       << " = " << std::fixed << std::setprecision(12) << a);
+        INFO("b = " << dump_u16(b.rep)   << " = " << std::fixed << std::setprecision(12) << c);
+        INFO("c = " << dump_f32(c)       << " = " << std::fixed << std::setprecision(12) << c);
+        INFO("d = " << dump_u16(d.data_) << " = " << std::fixed << std::setprecision(12) << (float)d);
 
         INFO("mine = " << dump_u16(b.rep) << " = " << binary16_tofloat(b));
         INFO("next = " << dump_u16(n.rep) << " = " << binary16_tofloat(n));
@@ -580,6 +580,9 @@ TEST_CASE("binary16_fromfloat")
         CHECK(pdiff <= pdiff);
     };
 
+    TestCase(0.000058000001f, 1.0);
+
+#if 1
     SECTION("range(0, 1, 0.01)")
     {
         const float a = GENERATE(range(0.0f, 1.0f, 0.01f));
@@ -609,6 +612,13 @@ TEST_CASE("binary16_fromfloat")
         const float a = GENERATE(range(-17.0057f, -17.0050f, 0.00001f));
         TestCase(a, 0.001*-a);
     }
+
+    SECTION("range(0.00005, 0.000058, 0.000001)")
+    {
+        const float a = GENERATE(range(0.00005, 0.000058, 0.000001));
+        TestCase(a, 1.0); // 0.0001);
+    }
+#endif
 }
 
 #if 0

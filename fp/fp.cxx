@@ -19,32 +19,44 @@
 #include <cstdio>
 #include <cstdlib>
 
-constexpr int Binary16_ExpBias = 15;
-constexpr int Binary32_ExpBias = 127;
-constexpr uint16_t Binary16_SignBit = 0b1000'0000'0000'0000u;
+constexpr int Binary32_SignBits     = 1;
+constexpr int Binary32_ExponentBits = 8;
+constexpr int Binary32_MantissaBits = 23;
+constexpr int Binary32_ExponentBias = 127;
+
+constexpr int Binary16_SignBits     = 1;
+constexpr int Binary16_ExponentBits = 5;
+constexpr int Binary16_MantissaBits = 10;
+constexpr int Binary16_ExponentBias = 15;
+
 constexpr uint16_t Binary16_NAN   = 0b0111111111111111u;
 constexpr uint16_t Binary16_INF   = 0b0111110000000000u;
 constexpr uint16_t Binary16_NINF  = 0b1111110000000000u;
 constexpr uint16_t Binary16_ZERO  = 0b0000000000000000u;
 constexpr uint16_t Binary16_NZERO = 0b1000000000000000u;
 
-constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u;
+constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u; // TODO: derive these from above defns or at least assert
 constexpr uint16_t Binary16_ExponentMask = 0b0111'1100'0000'0000u;
 constexpr uint16_t Binary16_MantissaMask = 0b0000'0011'1111'1111u;
-constexpr int      Binary16_SignBits     = 1;
-constexpr int      Binary16_ExponentBits = 5;
-constexpr int      Binary16_MantissaBits = 10;
 constexpr int      Binary16_MinBiasNormalExponent =  1;
-constexpr int      Binary16_MaxBiasNormalExponent = 30;
+constexpr int      Binary16_MaxBiasNormalExponent = 30; // TODO: assert this == 2**Binary16_ExponentBits - 1
 constexpr int      Binary16_MinBiasExponent =  0;
 constexpr int      Binary16_MaxBiasExponent = 31;
-constexpr int      Binary16_ExponentBias = 15;
 constexpr int      Binary16_MinExponent  = Binary16_MinBiasExponent - Binary16_ExponentBias;
 constexpr int      Binary16_MaxExponent  = Binary16_MaxBiasExponent - Binary16_ExponentBias;
 constexpr int      Binary16_MinNormalExponent = Binary16_MinBiasNormalExponent - Binary16_ExponentBias;
 constexpr int      Binary16_MaxNormalExponent = Binary16_MaxBiasNormalExponent - Binary16_ExponentBias;
 constexpr uint16_t Binary16_MaxNormalMantissa = Binary16_MantissaMask - 1;
 constexpr uint16_t Binary16_MaxMantissa       = Binary16_MantissaMask;
+
+// TODO: remove these:
+constexpr int Binary16_ExpBias = Binary16_ExponentBias;  // TODO: remove
+constexpr int Binary32_ExpBias = Binary32_ExponentBias;  // TODO: remove
+
+static_assert(Binary16_MaxBiasExponent == ((1 << Binary16_ExponentBits) - 1));
+static_assert(__builtin_popcount(Binary16_SignMask)     == Binary16_SignBits);
+static_assert(__builtin_popcount(Binary16_ExponentMask) == Binary16_ExponentBits);
+static_assert(__builtin_popcount(Binary16_MantissaMask) == Binary16_MantissaBits);
 
 #define NYI() do {                                                            \
     assert(0 && "not yet implemented");                                       \
@@ -139,8 +151,8 @@ binary16 binary16_fromfloat(float f)
 {
     // 5-bits => [1, 30] - 15 => [-14, 15]
     // N.B. 0 and 31 are reserved for 0/subnormal and inf/nan
-    constexpr uint32_t MaxExponent = Binary32_ExpBias + 15;
-    constexpr uint32_t MinExponent = Binary32_ExpBias - 14;
+    constexpr uint32_t MaxExponent = Binary32_ExpBias + Binary16_ExponentBias;
+    constexpr uint32_t MinExponent = Binary32_ExpBias - Binary16_ExponentBias;
 
     uint32_t rep;
     memcpy(&rep, &f, sizeof(rep));
@@ -157,6 +169,9 @@ binary16 binary16_fromfloat(float f)
         exp = 0b11111u;
         sig = mantissa >> (23 - 10);
     } else if (exponent < MinExponent) {
+        // TODO: is it true that all subnormal floats are all closer to +/-0
+        // than they are to +/- small 16-bit subnormal value?
+
         // round to zero if exponent too negative
         exp = 0b00000u;
         sig = 0b00000u;
@@ -164,6 +179,23 @@ binary16 binary16_fromfloat(float f)
         // round to +/- inf if exponent too positive
         exp = 0b11111u;
         sig = mantissa == 0 ? 0x0u : 0x1u;
+    } else if (exponent == MinExponent) {
+        // this is _not_ a subnormal float so it still has an implied 1 at the
+        // front of the mantissa, but the binary16 will be subnormal
+
+        // put the implied 1 back on
+        mantissa = mantissa | 1u << Binary32_MantissaBits;
+
+        // round the 10th decimal place
+        mantissa += 0b1'1111'1111'1111;
+        // TODO: handle overflowing
+
+        // shift right to remove the extraneous bits
+        constexpr int shift = ((Binary32_MantissaBits + 1) - Binary16_MantissaBits);
+        mantissa = mantissa >> shift;
+
+        exp = 0b00000u;
+        sig = mantissa;
     } else {
         // round 10th decimal place:
         // binary32 mantissa = ____ ____ ____ ____ ____ ___
@@ -181,7 +213,7 @@ binary16 binary16_fromfloat(float f)
             // }
         }
         exp = exponent - Binary32_ExpBias + Binary16_ExpBias;
-        sig = mantissa >> (23 - 10);
+        sig = mantissa >> (Binary32_MantissaBits - Binary16_MantissaBits);
     }
 
     const uint16_t sgn = static_cast<uint16_t>(sign);
