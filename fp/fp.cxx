@@ -29,17 +29,21 @@ constexpr int Binary16_ExponentBits = 5;
 constexpr int Binary16_MantissaBits = 10;
 constexpr int Binary16_ExponentBias = 15;
 
-constexpr uint16_t Binary16_NAN   = 0b0111111111111111u;
-constexpr uint16_t Binary16_INF   = 0b0111110000000000u;
-constexpr uint16_t Binary16_NINF  = 0b1111110000000000u;
-constexpr uint16_t Binary16_ZERO  = 0b0000000000000000u;
-constexpr uint16_t Binary16_NZERO = 0b1000000000000000u;
+constexpr uint16_t Binary16_NAN   = 0b0111'1111'1111'1111u;
+constexpr uint16_t Binary16_INF   = 0b0111'1100'0000'0000u;
+constexpr uint16_t Binary16_NINF  = 0b1111'1100'0000'0000u;
+constexpr uint16_t Binary16_ZERO  = 0b0000'0000'0000'0000u;
+constexpr uint16_t Binary16_NZERO = 0b1000'0000'0000'0000u;
 
-constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u; // TODO: derive these from above defns or at least assert
+constexpr int Binary16_MantissaShift = 0;
+constexpr int Binary16_ExponentShift = Binary16_MantissaShift + Binary16_MantissaBits;
+constexpr int Binary16_SignShift     = Binary16_ExponentShift + Binary16_ExponentBits;
+
+constexpr uint16_t Binary16_SignMask     = 0b1000'0000'0000'0000u;
 constexpr uint16_t Binary16_ExponentMask = 0b0111'1100'0000'0000u;
 constexpr uint16_t Binary16_MantissaMask = 0b0000'0011'1111'1111u;
 constexpr int      Binary16_MinBiasNormalExponent =  1;
-constexpr int      Binary16_MaxBiasNormalExponent = 30; // TODO: assert this == 2**Binary16_ExponentBits - 1
+constexpr int      Binary16_MaxBiasNormalExponent = 30;
 constexpr int      Binary16_MinBiasExponent =  0;
 constexpr int      Binary16_MaxBiasExponent = 31;
 constexpr int      Binary16_MinExponent  = Binary16_MinBiasExponent - Binary16_ExponentBias;
@@ -57,6 +61,10 @@ static_assert(Binary16_MaxBiasExponent == ((1 << Binary16_ExponentBits) - 1));
 static_assert(__builtin_popcount(Binary16_SignMask)     == Binary16_SignBits);
 static_assert(__builtin_popcount(Binary16_ExponentMask) == Binary16_ExponentBits);
 static_assert(__builtin_popcount(Binary16_MantissaMask) == Binary16_MantissaBits);
+static_assert(Binary16_SignShift + Binary16_SignBits == 16);
+static_assert(Binary16_MantissaMask == (((uint16_t(1) << Binary16_ExponentShift) - 1) & ~0));
+static_assert(Binary16_ExponentMask == (((uint16_t(1) << Binary16_SignShift    ) - 1) & ~Binary16_MantissaMask));
+static_assert(Binary16_SignMask     == (((uint16_t(1) << 16                    ) - 1) & ~(Binary16_MantissaMask | Binary16_ExponentMask)));
 
 #define NYI() do {                                                            \
     assert(0 && "not yet implemented");                                       \
