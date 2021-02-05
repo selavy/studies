@@ -19,6 +19,9 @@ target_compile_features(cxx_project_options INTERFACE cxx_std_17)
 #     enable_sanitizers(cxx_project_options)
 # endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+add_library(c_project_options INTERFACE)
+target_compile_features(c_project_options INTERFACE c_std_99)
+
 find_package(ZLIB REQUIRED)
 
 # Test Infrastructure:
@@ -36,6 +39,7 @@ add_subdirectory(ld_preload)
 # add_subdirectory(tcpip)
 add_subdirectory(fp)
 # add_subdirectory(gentable)
+add_subdirectory(cstr)
 
 # Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
 add_subdirectory(ch32_string_matching)
