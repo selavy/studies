@@ -623,6 +623,100 @@ TEST_CASE("binary16_fromfloat")
     }
 }
 
+TEST_CASE("binary16_add")
+{
+    auto TestCase = [](const float a, const float b)
+    {
+        const float c = a + b;
+
+        const auto  x = binary16_fromfloat(a);
+        const auto  y = binary16_fromfloat(b);
+        const auto  z = binary16_add(x, y);
+
+        const auto  t = half_float::half{a};
+        const auto  u = half_float::half{b};
+        const auto  v = t + u;
+
+        const auto x_flt = binary16_tofloat(x);
+        const auto y_flt = binary16_tofloat(y);
+        const auto z_flt = binary16_tofloat(z);
+
+        const auto a_flt = binary16_tofloat(binary16_fromfloat(a));
+        const auto b_flt = binary16_tofloat(binary16_fromfloat(b));
+        const auto c_flt = a_flt + b_flt;
+
+        const auto zn     = binary16_next(z);
+        const auto zp     = binary16_prev(z);
+        const auto z_next = binary16_tofloat(zn);
+        const auto z_prev = binary16_tofloat(zp);
+        // NOTE: because of loss of precision going float -> binary16, we have
+        // to compare against the result of `a + b` after both have gone
+        // through the float -> binary16 -> float roundtrip.
+        const auto z_diff = fabs(z_flt  - c_flt);
+        const auto n_diff = fabs(z_next - c_flt);
+        const auto p_diff = fabs(z_prev - c_flt);
+        const auto z_lo   = z_prev < z_next ? z_prev : z_next;
+        const auto z_hi   = z_prev < z_next ? z_next : z_prev;
+
+        INFO("a = " << dump_f32(a)       << " = " << std::fixed << std::setprecision(12) << a);
+        INFO("b = " << dump_f32(b)       << " = " << std::fixed << std::setprecision(12) << b);
+        INFO("c = " << dump_f32(c)       << " = " << std::fixed << std::setprecision(12) << c);
+
+        INFO("x = " << dump_u16(x.rep)   << " = " << std::fixed << std::setprecision(12) << x_flt);
+        INFO("y = " << dump_u16(y.rep)   << " = " << std::fixed << std::setprecision(12) << y_flt);
+        INFO("z = " << dump_u16(z.rep)   << " = " << std::fixed << std::setprecision(12) << z_flt);
+
+        INFO("t = " << dump_u16(t.data_) << " = " << std::fixed << std::setprecision(12) << (float)t);
+        INFO("u = " << dump_u16(u.data_) << " = " << std::fixed << std::setprecision(12) << (float)u);
+        INFO("v = " << dump_u16(v.data_) << " = " << std::fixed << std::setprecision(12) << (float)v);
+
+        INFO("a (post roundtrip) = " << std::fixed << std::setprecision(12) << a_flt);
+        INFO("b (post roundtrip) = " << std::fixed << std::setprecision(12) << b_flt);
+        INFO("c (post roundtrip) = " << std::fixed << std::setprecision(12) << c_flt);
+
+        INFO("z_next = " << dump_u16(zn.rep)   << " = " << std::fixed << std::setprecision(12) << z_next << " -> " << n_diff);
+        INFO("z_mine = " << dump_u16( z.rep)   << " = " << std::fixed << std::setprecision(12) << z_flt  << " -> " << z_diff);
+        INFO("z_prev = " << dump_u16(zp.rep)   << " = " << std::fixed << std::setprecision(12) << z_prev << " -> " << p_diff);
+
+        // Check input conversion matches HalfFloat
+        CHECK(x_flt == (float)t);
+        CHECK(y_flt == (float)u);
+
+        // Check that z is not "very far" from c
+        CHECK(z_diff <= 0.001);  // TODO: pick based on inputs
+        CHECK(z_diff <= 0.001*c);  // TODO: pick based on inputs
+
+        // Check that never and prev are not closer to `c` than `z`
+        CHECK(z_diff <= n_diff);
+        CHECK(z_diff <= p_diff);
+
+        // Check that `z_prev` and `z_next` surround c
+        CHECK(z_lo < z_hi);
+        CHECK(z_lo < c);
+        CHECK(c < z_hi);
+
+        // Check that our answer matches HalfFloat
+        CHECK(z_flt == (float)v);
+    };
+
+
+    // TODO: still trying to get the rounding correct. I definitely don't
+    // understand the "round to even" rule correctly.
+    // http://pages.cs.wisc.edu/~david/courses/cs552/S12/handouts/guardbits.pdf
+
+    TestCase(0.900000095367f, 0.500000000000f);
+
+    // TestCase(1.0f, 2.0f);
+    // TestCase(0.900000095367f, 0.800000071526f);
+
+    // SECTION("range(0, 1, 0.1) + range(0, 1, 0.1)")
+    // {
+    //     auto a = GENERATE(range(0.0f, 1.0f, 0.1f));
+    //     auto b = GENERATE(range(0.0f, 1.0f, 0.1f));
+    //     TestCase(a, b);
+    // }
+}
+
 #if 0
 TEST_CASE("not subnormal")
 {
