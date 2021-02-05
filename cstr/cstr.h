@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define CSTR_INLINE_SIZE 20
+#define CSTR_INLINE_SIZE 19
 
 struct cstr_t
 {
@@ -20,6 +20,8 @@ struct cstr_t
         } o;
         char data[CSTR_INLINE_SIZE];
     };
+    // TODO: need to verify that there can't be padding here
+    char mark;
 };
 typedef struct cstr_t cstr;
 
@@ -87,7 +89,9 @@ int cstr_gte(const cstr* s1, const cstr* s2);
 cstr* cstr_copy(const cstr* s);
 
 // Private Functions:
-int cstr_isinline_(const cstr* s);
+int    cstr_isinline_(const cstr* s);
+size_t cstr_max_inline_size();
+void   cstr_reset_allocator_to_default_();
 
 #ifdef __cplusplus
 }  // extern "C"

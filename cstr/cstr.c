@@ -118,13 +118,22 @@ cstr* cstr_init(cstr* str, const char* const s, size_t len)
     if (!str) {
         return NULL;
     }
-    str->o.data = calloc_(len + 1, sizeof(*str->o.data));
-    if (!str->o.data) {
-        return NULL;
+    if (len <= CSTR_INLINE_SIZE) { // SSO
+        // TODO: revisit if this is better. thought is that it is 3 x 8B writes
+        //       but not sure what codegen I get
+        memset(&str->data[0], '\0', sizeof(str->data));
+        memcpy(&str->data[0], s, len);
+        str->mark = '\0';
+    } else {                          // out of line:
+        str->o.data = calloc_(len + 1, sizeof(*str->o.data));
+        if (!str->o.data) {
+            return NULL;
+        }
+        memcpy(str->o.data, s, sizeof(*s) * len);
+        str->o.data[len] = '\0';
+        str->o.capacity = len;
+        str->mark = 1;
     }
-    memcpy(str->o.data, s, sizeof(*s) * len);
-    str->o.data[len] = '\0';
-    str->o.capacity = len;
     str->size = len;
     return str;
 }
@@ -145,6 +154,11 @@ void cstr_set_allocator(struct cstr_alloc_t a)
     assert(cstr_allocator_.calloc  != NULL);
     assert(cstr_allocator_.realloc != NULL);
     assert(cstr_allocator_.free    != NULL);
+}
+
+void cstr_reset_allocator_to_default_()
+{
+    cstr_allocator_ = malloc_allocator_;
 }
 
 size_t cstr_size(const cstr* s)
@@ -187,7 +201,12 @@ cstrview cstr_view(const cstr* s)
 
 int cstr_isinline_(const cstr* s)
 {
-    return 0;
+    return s->mark == '\0';
+}
+
+size_t cstr_max_inline_size()
+{
+    return CSTR_INLINE_SIZE;
 }
 
 int cstr_cmp(const cstr* s1, const cstr* s2)

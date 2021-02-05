@@ -94,3 +94,43 @@ TEST_CASE("String comparisons")
         }
     }
 }
+
+TEST_CASE("SSO")
+{
+    auto* no_calloc = +[](size_t nmemb, size_t size) -> void*
+    {
+        INFO("Tried to call calloc with nmemb=" << nmemb << " size=" << size);
+        CHECK(false);
+        return nullptr;
+    };
+    auto* no_realloc = +[](void*, size_t size) -> void*
+    {
+        INFO("Tried to call realloc with size=" << size);
+        CHECK(false);
+        return nullptr;
+    };
+    auto* no_free = +[](void*, size_t size) -> void
+    {
+        INFO("Tried to call free with size=" << size);
+        CHECK(false);
+    };
+    cstr_set_allocator(cstr_alloc_t{ no_calloc, no_realloc, no_free });
+
+    std::vector<std::string> cases = {
+        "",
+        "1234567890123456789",
+        "asdf asdf FFF\00189",
+        "Hello, World",
+        "Bye Bye",
+    };
+
+    for (auto expect : cases) {
+        cstr s = cstr_make(expect.c_str(), expect.size());
+        CHECK(cstr_isinline_(&s) != 0);
+        CHECK(cstr_len(&s) == expect.size());
+        CHECK(std::string{cstr_str(&s)} == expect);
+        cstr_destroy(&s);
+    }
+
+    cstr_reset_allocator_to_default_();
+}
