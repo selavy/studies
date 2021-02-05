@@ -54,9 +54,12 @@ cstr        cstrview_tostr(cstrview v);
 
 // Initialization / Destruction
 cstr* cstr_new(const char* s, size_t len);
-cstr  cstr_make(const char* s, size_t len);
-cstr* cstr_init(cstr* str, const char* s, size_t len);
 void  cstr_del(cstr* s);
+
+cstr  cstr_make(const char* s, size_t len);
+void  cstr_destroy(cstr* s);
+
+cstr* cstr_init(cstr* str, const char* s, size_t len);
 void  cstr_set_allocator(struct cstr_alloc_t a);
 
 // Length / Capacity Accessors:

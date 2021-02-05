@@ -103,6 +103,16 @@ cstr cstr_make(const char* s, size_t len)
     return str;
 }
 
+void cstr_destroy(cstr* s)
+{
+    if (!cstr_isinline_(s)) {
+        free_(s->o.data, s->o.capacity);
+#ifndef NDEBUG
+        s->o.data = NULL;
+#endif
+    }
+}
+
 cstr* cstr_init(cstr* str, const char* const s, size_t len)
 {
     if (!str) {
@@ -121,16 +131,10 @@ cstr* cstr_init(cstr* str, const char* const s, size_t len)
 
 void cstr_del(cstr* s)
 {
-    if (!s) {
-        return;
+    if (s) {
+        cstr_destroy(s);
+        free_(s, sizeof(*s));
     }
-    if (!cstr_isinline_(s)) {
-        free_(s->o.data, s->o.capacity);
-#ifndef NDEBUG
-        s->o.data = NULL;
-#endif
-    }
-    free_(s, sizeof(*s));
 }
 
 void cstr_set_allocator(struct cstr_alloc_t a)
