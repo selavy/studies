@@ -253,6 +253,84 @@ TEST_CASE("Take")
         CHECK(to_string(a) == "");
 
         cstr_destroy(&a);
+    }
+}
 
+TEST_CASE("Drop")
+{
+    SECTION("SSO")
+    {
+        std::string val = "Hello, World";
+        cstr a = cstr_make(val.c_str(), val.size());
+        REQUIRE(cstr_isinline_(&a));
+        CHECK(cstr_size(&a) == val.size());
+        CHECK(to_string(a) == val);
+
+        // take less than there
+        cstr* r = cstr_drop(&a, 1);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "ello, World");
+        CHECK(cstr_size(&a) == 11);
+
+        // take less than there
+        r = cstr_drop(&a, 5);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == " World");
+        CHECK(cstr_size(&a) == 6);
+
+        // take more than there
+        r = cstr_drop(&a, 1000);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "");
+        CHECK(cstr_size(&a) == 0);
+
+        cstr_destroy(&a);
+    }
+
+    SECTION("Long String")
+    {
+        std::string val = "This is a very long string that won't fit in SSO";
+        cstr a = cstr_make(val.c_str(), val.size());
+        REQUIRE(!cstr_isinline_(&a));
+        CHECK(cstr_size(&a) == val.size());
+        CHECK(to_string(a) == val);
+
+        // take less than there
+        cstr* r = cstr_drop(&a, 1);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "his is a very long string that won't fit in SSO");
+        CHECK(cstr_size(&a) == 47);
+
+        // take less than there
+        r = cstr_drop(&a, 5);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "s a very long string that won't fit in SSO");
+        CHECK(cstr_size(&a) == 42);
+
+        // take less than there
+        r = cstr_drop(&a, 7);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "y long string that won't fit in SSO");
+        CHECK(cstr_size(&a) == 35);
+
+        // take less than there
+        r = cstr_drop(&a, 12);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "g that won't fit in SSO");
+        CHECK(cstr_size(&a) == 23);
+
+        // drop nothing
+        r = cstr_drop(&a, 0);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "g that won't fit in SSO");
+        CHECK(cstr_size(&a) == 23);
+
+        // take more than there
+        r = cstr_drop(&a, 1000);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "");
+        CHECK(cstr_size(&a) == 0);
+
+        cstr_destroy(&a);
     }
 }
