@@ -123,7 +123,6 @@ cstr* cstr_init(cstr* str, const char* const s, size_t len)
         //       but not sure what codegen I get
         memset(&str->data[0], '\0', sizeof(str->data));
         memcpy(&str->data[0], s, len);
-        str->mark = '\0';
     } else {                          // out of line:
         str->o.data = calloc_(len + 1, sizeof(*str->o.data));
         if (!str->o.data) {
@@ -132,7 +131,7 @@ cstr* cstr_init(cstr* str, const char* const s, size_t len)
         memcpy(str->o.data, s, sizeof(*s) * len);
         str->o.data[len] = '\0';
         str->o.capacity = len;
-        str->mark = 1;
+        str->data[CSTR_INLINE_SIZE] = 1;
     }
     str->size = len;
     return str;
@@ -201,7 +200,7 @@ cstrview cstr_view(const cstr* s)
 
 int cstr_isinline_(const cstr* s)
 {
-    return s->mark == '\0';
+    return s->data[CSTR_INLINE_SIZE] == '\0';
 }
 
 size_t cstr_max_inline_size()

@@ -10,20 +10,25 @@ extern "C" {
 
 #define CSTR_INLINE_SIZE 19
 
+#define CSTR_STATIC_ASSERT_(COND, MSG) \
+    typedef char static_assertion_##MSG[(!!(COND)) * 2 - 1]
+#define CSTR_COMPILE_TIME_ASSERT3_(X, L) CSTR_STATIC_ASSERT_(X, at_line_##L)
+#define CSTR_COMPILE_TIME_ASSERT2_(X, L) CSTR_COMPILE_TIME_ASSERT3_(X, L)
+#define CSTR_STATIC_ASSERT(X) CSTR_COMPILE_TIME_ASSERT2_(X, __LINE__)
+
 struct cstr_t
 {
     uint32_t size;
     union {
         struct {
-            uint32_t capacity;
-            char*    data;
+            char*  data;
+            size_t capacity;
         } o;
-        char data[CSTR_INLINE_SIZE];
-    };
-    // TODO: need to verify that there can't be padding here
-    char mark;
+        char data[CSTR_INLINE_SIZE + 1];
+    } __attribute__((packed));
 };
 typedef struct cstr_t cstr;
+CSTR_STATIC_ASSERT(sizeof(cstr) == (4 + CSTR_INLINE_SIZE + 1));
 
 struct cstrview_t
 {
@@ -31,6 +36,7 @@ struct cstrview_t
     const char* end;
 };
 typedef struct cstrview_t cstrview;
+CSTR_STATIC_ASSERT(sizeof(cstrview) == 2*sizeof(void*));
 
 struct cstr_alloc_t
 {

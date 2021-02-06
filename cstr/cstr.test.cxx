@@ -124,6 +124,8 @@ TEST_CASE("SSO")
         "Bye Bye",
     };
 
+    CHECK(sizeof(cstr) == 24);
+
     for (auto expect : cases) {
         cstr s = cstr_make(expect.c_str(), expect.size());
         CHECK(cstr_isinline_(&s) != 0);
