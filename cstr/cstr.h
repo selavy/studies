@@ -48,6 +48,7 @@ struct cstr_alloc_t
 //------------------------------------------------------------------------------
 // cstrview
 //------------------------------------------------------------------------------
+cstrview    cstrview_make(const char* s);
 cstrview    cstrview_init(const char* s, size_t len);
 cstrview    cstrview_fromrange(const char* begin, const char* end);
 const char* cstrview_str(cstrview v);
@@ -80,6 +81,7 @@ size_t cstr_capacity(const cstr* s);
 // String Accessors:
 const char* cstr_str(const cstr* s);
       char* cstr_mstr(cstr* s);
+      char* cstr_data(cstr* s);
 cstrview    cstr_view(const cstr* s);
 
 // Comparison Functions:
@@ -93,8 +95,12 @@ int cstr_gte(const cstr* s1, const cstr* s2);
 
 // Mutators:
 cstr* cstr_copy(const cstr* s);
+cstr* cstr_shrink_to_fit(cstr* s);
+cstr* cstr_appendv(cstr* s, cstrview v);
+cstr* cstr_append(cstr* s, const cstr* s2);
 
 // Private Functions:
+char*  cstr_inline_mark_(cstr* s);
 int    cstr_isinline_(const cstr* s);
 size_t cstr_max_inline_size();
 void   cstr_reset_allocator_to_default_();

@@ -39,6 +39,11 @@ static void free_(void* p, size_t size)
 //------------------------------------------------------------------------------
 // cstrview
 //------------------------------------------------------------------------------
+cstrview cstrview_make(const char* s)
+{
+    return cstrview_init(s, strlen(s));
+}
+
 cstrview cstrview_init(const char* s, size_t len)
 {
     cstrview v;
@@ -106,7 +111,7 @@ cstr cstr_make(const char* s, size_t len)
 void cstr_destroy(cstr* s)
 {
     if (!cstr_isinline_(s)) {
-        free_(s->o.data, s->o.capacity);
+        free_(s->o.data, s->o.capacity + 1);
 #ifndef NDEBUG
         s->o.data = NULL;
 #endif
@@ -193,6 +198,11 @@ char* cstr_mstr(cstr* s)
         s->data : s->o.data;
 }
 
+char* cstr_data(cstr* s)
+{
+    return cstr_mstr(s);
+}
+
 cstrview cstr_view(const cstr* s)
 {
     return cstrview_init(cstr_str(s), cstr_len(s));
@@ -201,6 +211,11 @@ cstrview cstr_view(const cstr* s)
 int cstr_isinline_(const cstr* s)
 {
     return s->data[CSTR_INLINE_SIZE] == '\0';
+}
+
+char* cstr_inline_mark_(cstr* s)
+{
+    return &s->data[CSTR_INLINE_SIZE];
 }
 
 size_t cstr_max_inline_size()
@@ -246,4 +261,72 @@ int cstr_gte(const cstr* s1, const cstr* s2)
 cstr* cstr_copy(const cstr* s)
 {
     return cstr_new(cstr_str(s), cstr_size(s));
+}
+
+cstr* cstr_shink_to_fit(cstr* s)
+{
+    if (cstr_isinline_(s)) {
+        return s;
+    }
+
+    const size_t size = cstr_size(s);
+    if (size <= CSTR_INLINE_SIZE) {
+        char*  str = s->o.data;
+        size_t cap = s->o.capacity;
+        memset(&s->data[0], '\0', CSTR_INLINE_SIZE + 1);
+        memcpy(&s->data[0], str, size);
+        free_(str, s->o.capacity);
+        return s;
+    }
+
+    const size_t capacity = cstr_capacity(s);
+    if (capacity > size) {
+        char* p = realloc_(s->o.data, size + 1);
+        if (p != NULL) {
+            s->o.data = p;
+            s->o.capacity = size;
+        }
+    }
+    return s;
+}
+
+cstr* cstr_appendv(cstr* s, const cstrview v)
+{
+    // NOTE: sizes and capacities don't include the NULL terminator
+    const size_t cursize  = cstr_len(s);
+    const size_t addsize  = cstrview_len(v);
+    const size_t newsize  = cursize + addsize;
+    const size_t capacity = cstr_capacity(s);
+    const int    isinline = cstr_isinline_(s);
+    if (newsize <= capacity) {
+        char* data = isinline ? s->data : s->o.data;
+        memcpy(&data[cursize], cstrview_str(v), addsize);
+        data[newsize] = '\0';
+    } else {
+        char* data;
+        if (isinline) {
+            data = calloc_(newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memcpy(&data[0], &s->data[0], cursize);
+        } else {
+            data = realloc_(s->o.data, (newsize + 1) * sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+        }
+        memcpy(&data[cursize], cstrview_str(v), addsize);
+        data[newsize] = '\0';
+        s->o.data     = data;
+        s->o.capacity = newsize;
+        *cstr_inline_mark_(s) = 1;
+    }
+    s->size = newsize;
+    return s;
+}
+
+cstr* cstr_append(cstr* s, const cstr* s2)
+{
+    return cstr_appendv(s, cstr_view(s2));
 }

@@ -4,6 +4,15 @@
 #include <cstring>
 #include <vector>
 
+std::string to_string(const cstr* s)
+{
+    return std::string{cstr_str(s), cstr_len(s)};
+}
+
+std::string to_string(const cstr s)
+{
+    return std::string{cstr_str(&s), cstr_len(&s)};
+}
 
 TEST_CASE("string length")
 {
@@ -135,4 +144,41 @@ TEST_CASE("SSO")
     }
 
     cstr_reset_allocator_to_default_();
+}
+
+TEST_CASE("Append")
+{
+    std::string expect  = "Hello";
+    const std::string b = ", World";
+
+    std::vector<std::string> cases = {
+        "Hello",
+        "World",
+        "a",
+        "1234",
+        "asdf;lkajsdf",
+        "\001FIX4.2\001",
+        "This is a VerY LoNG STRING With Some \001 Embeeded stuff \004!!!",
+    };
+
+    for (const auto a : cases) {
+        for (const auto b : cases) {
+            INFO("a = \"" << a << "\", b = \"" << b << '"');
+            cstr a2 = cstr_make(a.c_str(), a.size());
+            cstr b2 = cstr_make(b.c_str(), b.size());
+
+            auto expect = a;
+            expect += b;
+
+            cstr* actual = cstr_append(&a2, &b2);
+
+            REQUIRE(actual != NULL);
+            CHECK(cstr_len(actual)  == expect.size());
+            CHECK(to_string(actual) == expect);
+
+            cstr_destroy(&b2);
+            cstr_destroy(&a2);
+        }
+    }
+
 }
