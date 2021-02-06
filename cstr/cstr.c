@@ -101,11 +101,21 @@ cstr* cstr_new(const char* const s, const size_t len)
     return str;
 }
 
-cstr cstr_make(const char* s, size_t len)
+cstr* cstr_new2(const char* const s)
+{
+    return cstr_new(s, strlen(s));
+}
+
+cstr cstr_make(const char* const s, size_t len)
 {
     cstr str;
     cstr_init(&str, s, len);
     return str;
+}
+
+cstr cstr_make2(const char* const s)
+{
+    return cstr_make(s, strlen(s));
 }
 
 void cstr_destroy(cstr* s)
@@ -329,4 +339,26 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
 cstr* cstr_append(cstr* s, const cstr* s2)
 {
     return cstr_appendv(s, cstr_view(s2));
+}
+
+cstr* cstr_take(cstr* s, size_t n)
+{
+    const size_t oldsize = cstr_size(s);
+    const size_t newsize = n < oldsize ? n : oldsize;
+    char* data = cstr_data(s);
+    data[newsize] = '\0';
+    s->size = newsize;
+    return s;
+}
+
+cstr* cstr_drop(cstr* s, size_t n)
+{
+    const size_t oldsize = cstr_size(s);
+    n = n < oldsize ? n : oldsize;
+    const size_t newsize = oldsize - n;
+    char* data = cstr_data(s);
+    memmove(&data[0], &data[n], newsize);
+    data[newsize] = '\0';
+    s->size = newsize;
+    return s;
 }

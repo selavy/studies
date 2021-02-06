@@ -159,6 +159,9 @@ TEST_CASE("Append")
         "asdf;lkajsdf",
         "\001FIX4.2\001",
         "This is a VerY LoNG STRING With Some \001 Embeeded stuff \004!!!",
+        "Anothasdefl;k;lkj asd;fklja;slkdjf;lkasjdf;lkj asl;df lkjq23r-09127u35knvzsxlckn asdf'piojas'dfkljas[df9ohnknzxcvl'kjzxcdfzXCLfkjas'dlfjas'iodfjasdf]9823489-71280612349076123496812349-6123-498123-4987612-98347-8917234-9871234-9876y2134-98712395478612-93456-986123-4987612-394876123-9846y12038746890-7y",
+        "",
+        "1",
     };
 
     for (const auto a : cases) {
@@ -181,4 +184,75 @@ TEST_CASE("Append")
         }
     }
 
+}
+
+TEST_CASE("Take")
+{
+    SECTION("SSO")
+    {
+        std::string val = "Hello, World";
+        cstr a = cstr_make(val.c_str(), val.size());
+        REQUIRE(cstr_isinline_(&a));
+        CHECK(cstr_size(&a) == val.size());
+        CHECK(to_string(a) == val);
+
+        // take less than there
+        cstr* r = cstr_take(&a, 5);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "Hello");
+
+        // take more than there
+        r = cstr_take(&a, 7);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "Hello");
+
+        r = cstr_take(&a, 0);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "");
+
+        cstr_destroy(&a);
+    }
+
+    SECTION("Long string")
+    {
+        std::string val = "This is a very long string that won't fit in SSO";
+        cstr a = cstr_make(val.c_str(), val.size());
+        REQUIRE(!cstr_isinline_(&a));
+        CHECK(cstr_size(&a) == val.size());
+        CHECK(to_string(a) == val);
+
+        // take less than there
+        cstr* r = cstr_take(&a, 23);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "This is a very long str");
+
+        // take more than there
+        r = cstr_take(&a, 100);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "This is a very long str");
+
+        // take exactly what is there
+        r = cstr_take(&a, 23);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "This is a very long str");
+
+        r = cstr_take(&a, 10);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "This is a ");
+
+        r = cstr_take(&a, 5);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "This ");
+
+        r = cstr_take(&a, 1);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "T");
+
+        r = cstr_take(&a, 0);
+        REQUIRE(r != NULL);
+        CHECK(to_string(a) == "");
+
+        cstr_destroy(&a);
+
+    }
 }
