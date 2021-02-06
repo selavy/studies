@@ -85,6 +85,34 @@ cstr cstrview_tostr(cstrview v)
     return cstr_make(cstrview_str(v), cstrview_len(v));
 }
 
+char* cstrview_to_cstring(cstrview v)
+{
+    size_t size = cstrview_len(v);
+    char* s = calloc(size + 1, sizeof(char));
+    if (!s) {
+        return NULL;
+    }
+    memcpy(s, v.begin, size);
+    s[size] = '\0';
+    return s;
+}
+
+cstrview cstrview_take(cstrview v, size_t n)
+{
+    size_t size = cstrview_len(v);
+    n = n < size ? n : size;
+    v.end -= n;
+    return v;
+}
+
+cstrview cstrview_drop(cstrview v, size_t n)
+{
+    size_t size = cstrview_len(v);
+    n = n < size ? n : size;
+    v.begin += n;
+    return v;
+}
+
 //------------------------------------------------------------------------------
 // cstr
 //------------------------------------------------------------------------------

@@ -14,6 +14,11 @@ std::string to_string(const cstr s)
     return std::string{cstr_str(&s), cstr_len(&s)};
 }
 
+std::string to_string(cstrview v)
+{
+    return std::string{cstrview_str(v), cstrview_len(v)};
+}
+
 TEST_CASE("string length")
 {
     std::vector<std::string> cases = {
@@ -190,6 +195,25 @@ TEST_CASE("Take")
 {
     SECTION("SSO")
     {
+        auto* no_calloc = +[](size_t nmemb, size_t size) -> void*
+        {
+            INFO("Tried to call calloc with nmemb=" << nmemb << " size=" << size);
+            CHECK(false);
+            return nullptr;
+        };
+        auto* no_realloc = +[](void*, size_t size) -> void*
+        {
+            INFO("Tried to call realloc with size=" << size);
+            CHECK(false);
+            return nullptr;
+        };
+        auto* no_free = +[](void*, size_t size) -> void
+        {
+            INFO("Tried to call free with size=" << size);
+            CHECK(false);
+        };
+        cstr_set_allocator(cstr_alloc_t{ no_calloc, no_realloc, no_free });
+
         std::string val = "Hello, World";
         cstr a = cstr_make(val.c_str(), val.size());
         REQUIRE(cstr_isinline_(&a));
@@ -211,6 +235,8 @@ TEST_CASE("Take")
         CHECK(to_string(a) == "");
 
         cstr_destroy(&a);
+
+        cstr_reset_allocator_to_default_();
     }
 
     SECTION("Long string")
@@ -260,11 +286,34 @@ TEST_CASE("Drop")
 {
     SECTION("SSO")
     {
+        auto* no_calloc = +[](size_t nmemb, size_t size) -> void*
+        {
+            INFO("Tried to call calloc with nmemb=" << nmemb << " size=" << size);
+            CHECK(false);
+            return nullptr;
+        };
+        auto* no_realloc = +[](void*, size_t size) -> void*
+        {
+            INFO("Tried to call realloc with size=" << size);
+            CHECK(false);
+            return nullptr;
+        };
+        auto* no_free = +[](void*, size_t size) -> void
+        {
+            INFO("Tried to call free with size=" << size);
+            CHECK(false);
+        };
+
+        cstr_set_allocator(cstr_alloc_t{ no_calloc, no_realloc, no_free });
         std::string val = "Hello, World";
         cstr a = cstr_make(val.c_str(), val.size());
         REQUIRE(cstr_isinline_(&a));
         CHECK(cstr_size(&a) == val.size());
-        CHECK(to_string(a) == val);
+        CHECK(to_string(&a) == val);
+
+        cstrview v = cstrview_init(val.c_str(), val.size());
+        CHECK(cstrview_len(v) == val.size());
+        CHECK(to_string(v)    == val);
 
         // take less than there
         cstr* r = cstr_drop(&a, 1);
@@ -272,11 +321,19 @@ TEST_CASE("Drop")
         CHECK(to_string(a) == "ello, World");
         CHECK(cstr_size(&a) == 11);
 
+        v = cstrview_drop(v, 1);
+        CHECK(cstrview_len(v) == cstr_len(&a));
+        CHECK(to_string(v)    == to_string(a));
+
         // take less than there
         r = cstr_drop(&a, 5);
         REQUIRE(r != NULL);
         CHECK(to_string(a) == " World");
         CHECK(cstr_size(&a) == 6);
+
+        v = cstrview_drop(v, 5);
+        CHECK(cstrview_len(v) == cstr_len(&a));
+        CHECK(to_string(v)    == to_string(a));
 
         // take more than there
         r = cstr_drop(&a, 1000);
@@ -284,7 +341,13 @@ TEST_CASE("Drop")
         CHECK(to_string(a) == "");
         CHECK(cstr_size(&a) == 0);
 
+        v = cstrview_drop(v, 1000);
+        CHECK(cstrview_len(v) == cstr_len(&a));
+        CHECK(to_string(v)    == to_string(a));
+
         cstr_destroy(&a);
+
+        cstr_reset_allocator_to_default_();
     }
 
     SECTION("Long String")

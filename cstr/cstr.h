@@ -56,6 +56,11 @@ size_t      cstrview_len(cstrview v);
 size_t      cstrview_size(cstrview v);
 size_t      cstrview_length(cstrview v);
 cstr        cstrview_tostr(cstrview v);
+char*       cstrview_to_cstring(cstrview v); // caller takes ownership
+
+// Mutators
+cstrview    cstrview_take(cstrview v, size_t n);
+cstrview    cstrview_drop(cstrview v, size_t n);
 
 //------------------------------------------------------------------------------
 // cstr
