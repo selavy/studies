@@ -639,6 +639,17 @@ TEST_CASE("Startswith")
         CHECK(cstrview_len(p) == prefix.size());
         int actual = cstrview_startswith(v, p);
         CHECK(actual == expect);
+
+        cstr s = cstrview_tostr(v);
+        cstr p2 = cstrview_tostr(p);
+        CHECK(cstr_len(&s) == cstrview_len(v));
+        int actual2 = cstr_startswithv(&s, p);
+        CHECK(actual2 == expect);
+        int actual3 = cstr_startswith(&s, &p2);
+        CHECK(actual3 == expect);
+
+        cstr_destroy(&s);
+        cstr_destroy(&p2);
     }
 }
 
@@ -667,5 +678,16 @@ TEST_CASE("Endswith")
         CHECK(cstrview_len(p) == postfix.size());
         int actual = cstrview_endswith(v, p);
         CHECK(actual == expect);
+
+        cstr s = cstrview_tostr(v);
+        cstr p2 = cstrview_tostr(p);
+        CHECK(cstr_len(&s) == cstrview_len(v));
+        int actual2 = cstr_endswithv(&s, p);
+        CHECK(actual2 == expect);
+        int actual3 = cstr_endswith(&s, &p2);
+        CHECK(actual3 == expect);
+
+        cstr_destroy(&s);
+        cstr_destroy(&p2);
     }
 }

@@ -421,6 +421,26 @@ int cstr_gte(const cstr* s1, const cstr* s2)
     return cstr_cmp(s1, s2) >= 0;
 }
 
+int cstr_startswithv(const cstr* s1, const cstrview v)
+{
+    return cstrview_startswith(cstr_view(s1), v);
+}
+
+int cstr_startswith(const cstr* s1, const cstr* s2)
+{
+    return cstr_startswithv(s1, cstr_view(s2));
+}
+
+int cstr_endswithv(const cstr* s1, const cstrview v)
+{
+    return cstrview_endswith(cstr_view(s1), v);
+}
+
+int cstr_endswith(const cstr* s1, const cstr* s2)
+{
+    return cstr_endswithv(s1, cstr_view(s2));
+}
+
 cstr* cstr_copy(const cstr* s)
 {
     return cstr_new(cstr_str(s), cstr_size(s));

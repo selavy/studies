@@ -118,6 +118,10 @@ int cstr_lt(const cstr* s1, const cstr* s2);
 int cstr_lte(const cstr* s1, const cstr* s2);
 int cstr_gt(const cstr* s1, const cstr* s2);
 int cstr_gte(const cstr* s1, const cstr* s2);
+int cstr_startswithv(const cstr* s1, cstrview v);
+int cstr_startswith(const cstr* s1, const cstr* s2);
+int cstr_endswithv(const cstr* s1, cstrview v);
+int cstr_endswith(const cstr* s1, const cstr* s2);
 
 // Mutators:
 cstr* cstr_copy(const cstr* s);
