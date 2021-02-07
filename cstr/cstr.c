@@ -53,7 +53,6 @@ static void* calloc_(size_t nmemb, size_t size)
 
 static void* reallocarray_(void* p, size_t nmemb, size_t size)
 {
-    // TODO: fall back to calloc if no realloc provided
     return cstr_allocator_.reallocarray(p, nmemb, size);
 }
 
@@ -91,7 +90,6 @@ static void* reallocarray_using_calloc_(void* p, size_t nmemb, size_t size)
     if (!pnew) {
         return NULL;
     }
-    // TODO: can I get the size of the original malloc call?
     // have to copy entire malloc'd block because don't know how much data
     // was actually there before:
     memcpy(pnew, p, avail);
@@ -413,7 +411,7 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
     // NOTE: sizes and capacities don't include the NULL terminator
     const size_t cursize  = cstr_len(s);
     const size_t addsize  = cstrview_len(v);
-    const size_t newsize  = cursize + addsize;
+    const size_t newsize  = cursize + addsize; // TODO: potential overflow
     const size_t capacity = cstr_capacity(s);
     const int    isinline = cstr_isinline_(s);
     if (newsize <= capacity) {
