@@ -510,3 +510,73 @@ TEST_CASE("Insert")
         cstr_destroy(&b2);
     }
 }
+
+TEST_CASE("Allocator fallbacks")
+{
+    auto* my_free = +[](void* p, size_t) -> void
+    {
+        free(p);
+    };
+
+    SECTION("No calloc")
+    {
+        cstr_set_allocator(cstr_alloc_t{ NULL, &reallocarray, my_free });
+
+        const std::string a = "Hello, this is also a very long string !!!!!";
+        const std::string b = "This is a very long string that won't fit in SSO";
+        cstr b2 = cstr_make(b.c_str(), b.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            INFO("a = \"" << a << "\" pos=" << pos);
+            std::string expect = a;
+            cstr        actual = cstr_make(a.c_str(), a.size());
+
+            CHECK(!cstr_isinline_(&actual));
+            CHECK(!cstr_isinline_(&b2));
+
+            expect.insert(pos, b);
+            cstr* r = cstr_insert(&actual, pos, &b2);
+            REQUIRE(r != nullptr);
+
+            CHECK(!cstr_isinline_(&actual));
+
+            CHECK(cstr_len(&actual)  == expect.size());
+            CHECK(to_string(&actual) == expect);
+
+            cstr_destroy(&actual);
+        }
+        cstr_destroy(&b2);
+
+        cstr_reset_allocator_to_default_();
+    }
+
+    SECTION("No reallocarray")
+    {
+        cstr_set_allocator(cstr_alloc_t{ &calloc, NULL, my_free });
+
+        const std::string a = "Hello, this is also a very long string !!!!!";
+        const std::string b = "This is a very long string that won't fit in SSO";
+        cstr b2 = cstr_make(b.c_str(), b.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            INFO("a = \"" << a << "\" pos=" << pos);
+            std::string expect = a;
+            cstr        actual = cstr_make(a.c_str(), a.size());
+
+            CHECK(!cstr_isinline_(&actual));
+            CHECK(!cstr_isinline_(&b2));
+
+            expect.insert(pos, b);
+            cstr* r = cstr_insert(&actual, pos, &b2);
+            REQUIRE(r != nullptr);
+
+            CHECK(!cstr_isinline_(&actual));
+
+            CHECK(cstr_len(&actual)  == expect.size());
+            CHECK(to_string(&actual) == expect);
+
+            cstr_destroy(&actual);
+        }
+        cstr_destroy(&b2);
+
+        cstr_reset_allocator_to_default_();
+    }
+}
