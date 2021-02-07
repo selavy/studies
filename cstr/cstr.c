@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <malloc.h>
 
 // TODO: figure out how to use the feature test macros to see if this function
 //       is available
@@ -54,6 +55,48 @@ static void* reallocarray_(void* p, size_t nmemb, size_t size)
 {
     // TODO: fall back to calloc if no realloc provided
     return cstr_allocator_.reallocarray(p, nmemb, size);
+}
+
+static void* calloc_using_reallocarray_(size_t nmemb, size_t size)
+{
+    void* p = cstr_allocator_.reallocarray(NULL, nmemb, size);
+    if (p == NULL) {
+        return p;
+    }
+    // NOTE: because reallocarray succeeded (which does the overflow check),
+    //       we know this multiply doesn't overflow
+    memset(p, 0, nmemb * size);
+    return p;
+}
+
+static void* reallocarray_using_calloc_(void* p, size_t nmemb, size_t size)
+{
+#define MUL_NO_OVERFLOW (1UL << (sizeof(size_t) * 4))
+    // check for overflow:
+    if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+        nmemb > 0 && SIZE_MAX / nmemb < size) {
+            errno = ENOMEM;
+            return NULL;
+    }
+
+    // check if can elide allocation because already have space:
+    size_t avail = malloc_usable_size(p);
+    size_t need  = nmemb * size;
+    if (need < avail) {
+        return p;
+    }
+
+    // allocate and copy over data:
+    void* pnew = calloc_(nmemb, size);
+    if (!pnew) {
+        return NULL;
+    }
+    // TODO: can I get the size of the original malloc call?
+    // have to copy entire malloc'd block because don't know how much data
+    // was actually there before:
+    memcpy(pnew, p, avail);
+    return pnew;
+#undef MUL_NO_OVERFLOW
 }
 
 static void free_(void* p, size_t size)
@@ -220,9 +263,16 @@ void cstr_del(cstr* s)
 
 void cstr_set_allocator(struct cstr_alloc_t a)
 {
-    // TODO: provide fallback functions if only one of either calloc
-    //       or realloc is provided.
     cstr_allocator_ = a;
+
+    if (a.calloc == NULL && a.reallocarray != NULL) {
+        cstr_allocator_.calloc = &calloc_using_reallocarray_;
+    }
+
+    if (a.reallocarray == NULL && a.calloc != NULL) {
+        cstr_allocator_.reallocarray = &reallocarray_using_calloc_;
+    }
+
     assert(cstr_allocator_.calloc       != NULL);
     assert(cstr_allocator_.reallocarray != NULL);
     assert(cstr_allocator_.free         != NULL);
