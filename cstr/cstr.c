@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "cstr.h"
 #include <string.h>
 #include <stdlib.h>
@@ -214,6 +215,14 @@ cstrview cstrview_substr(cstrview v, size_t pos, size_t len)
 cstrview cstrview_split(const cstrview v, const char c)
 {
     const char* p = memchr(cstrview_data(v), c, cstrview_len(v));
+    return cstrview_fromrange(cstrview_data(v), p ? p : cstrview_end(v));
+}
+
+cstrview cstrview_split_on(cstrview v, cstrview v2)
+{
+    // TODO: Do I need to provide a backup implementation of memmem()?
+    const char* p = memmem(cstrview_data(v), cstrview_len(v),
+            cstrview_data(v2), cstrview_len(v2));
     return cstrview_fromrange(cstrview_data(v), p ? p : cstrview_end(v));
 }
 

@@ -855,3 +855,44 @@ TEST_CASE("Split")
     v = cstrview_drop(v, cstrview_len(v11) + 1);
     CHECK(cstrview_empty(v));
 }
+
+TEST_CASE("Split on")
+{
+    const std::string value = "a,b,c,d,e,ff,ggg,hhhh,iiii,,Last";
+
+    cstrview v = cstrview_init(value.c_str(), value.size());
+    CHECK(cstrview_len(v) == value.size());
+    CHECK(to_string(v) == value);
+
+    SECTION("Split in middle")
+    {
+        cstrview r2 = cstrview_split_on(v, cstrview_make("ff,ggg,"));
+        CHECK(to_string(r2) == "a,b,c,d,e,");
+    }
+
+
+    SECTION("Split at beginning")
+    {
+        cstrview r2 = cstrview_split_on(v, cstrview_make("a,b,c"));
+        CHECK(to_string(r2) == "");
+    }
+
+    SECTION("Split at end")
+    {
+        cstrview r2 = cstrview_split_on(v, cstrview_make("iiii,,Last"));
+        CHECK(to_string(r2) == "a,b,c,d,e,ff,ggg,hhhh,");
+    }
+
+    SECTION("Split on missing")
+    {
+        cstrview r2 = cstrview_split_on(v, cstrview_make("iiii,,,"));
+        CHECK(to_string(r2) == value);
+    }
+
+    SECTION("Split on empty")
+    {
+        cstrview r2 = cstrview_split_on(v, cstrview_make(""));
+        CHECK(cstrview_empty(r2));
+        CHECK(to_string(r2) == "");
+    }
+}

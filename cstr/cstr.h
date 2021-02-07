@@ -67,6 +67,7 @@ cstrview cstrview_take(cstrview v, size_t n); // take up to n from front
 cstrview cstrview_drop(cstrview v, size_t n); // drop up to n from front
 cstrview cstrview_substr(cstrview v, size_t pos, size_t len);
 cstrview cstrview_split(cstrview v, char c);
+cstrview cstrview_split_on(cstrview v, cstrview v2);
 
 // Comparisons:
 int cstrview_startswith(cstrview v, cstrview prefix);
