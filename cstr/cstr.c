@@ -56,6 +56,11 @@ static void* reallocarray_(void* p, size_t nmemb, size_t size)
     return cstr_allocator_.reallocarray(p, nmemb, size);
 }
 
+static void free_(void* p, size_t size)
+{
+    cstr_allocator_.free(p, size);
+}
+
 static void* calloc_using_reallocarray_(size_t nmemb, size_t size)
 {
     void* p = cstr_allocator_.reallocarray(NULL, nmemb, size);
@@ -68,6 +73,9 @@ static void* calloc_using_reallocarray_(size_t nmemb, size_t size)
     return p;
 }
 
+// I don't think I should offer this interface because I need functionality
+// like malloc_usable_size() for the user's calloc()
+#if 0
 static void* reallocarray_using_calloc_(void* p, size_t nmemb, size_t size)
 {
 #define MUL_NO_OVERFLOW (1UL << (sizeof(size_t) * 4))
@@ -93,14 +101,11 @@ static void* reallocarray_using_calloc_(void* p, size_t nmemb, size_t size)
     // have to copy entire malloc'd block because don't know how much data
     // was actually there before:
     memcpy(pnew, p, avail);
+    free_(p, avail);
     return pnew;
 #undef MUL_NO_OVERFLOW
 }
-
-static void free_(void* p, size_t size)
-{
-    cstr_allocator_.free(p, size);
-}
+#endif
 
 //------------------------------------------------------------------------------
 // cstrview
@@ -206,35 +211,45 @@ int cstrview_endswith(cstrview v, cstrview postfix)
         && memcmp(cstrview_data(v) + pos, cstrview_data(postfix), len2) == 0;
 }
 
-#if 0
 int cstrview_cmp(cstrview v1, cstrview v2)
 {
+    size_t len1 = cstrview_len(v1);
+    size_t len2 = cstrview_len(v2);
+    size_t min_ = len1 < len2 ? len1 : len2;
+    int r = memcmp(cstrview_data(v1), cstrview_data(v2), min_);
+    // TODO: need to protect against len1 or len2 being longer than int
+    return r != 0 ? r : (int)len1 - (int)len2;
 }
 
-int cstrview_eq(cstrview v1, cstrview v2)
+int cstrview_eq(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) == 0;
 }
 
-int cstrview_ne(cstrview v1, cstrview v2)
+int cstrview_neq(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) != 0;
 }
 
-int cstrview_gt(cstrview v1, cstrview v2)
+int cstrview_gt(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) > 0;
 }
 
-int cstrview_lt(cstrview v1, cstrview v2)
+int cstrview_lt(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) < 0;
 }
 
-int cstrview_gte(cstrview v1, cstrview v2)
+int cstrview_gte(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) >= 0;
 }
 
-int cstrview_lte(cstrview v1, cstrview v2)
+int cstrview_lte(const cstrview v1, const cstrview v2)
 {
+    return cstrview_cmp(v1, v2) <= 0;
 }
-#endif
 
 //------------------------------------------------------------------------------
 // cstr
@@ -319,9 +334,11 @@ void cstr_set_allocator(struct cstr_alloc_t a)
         cstr_allocator_.calloc = &calloc_using_reallocarray_;
     }
 
+#if 0
     if (a.reallocarray == NULL && a.calloc != NULL) {
         cstr_allocator_.reallocarray = &reallocarray_using_calloc_;
     }
+#endif
 
     assert(cstr_allocator_.calloc       != NULL);
     assert(cstr_allocator_.reallocarray != NULL);

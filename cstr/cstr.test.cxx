@@ -55,52 +55,103 @@ TEST_CASE("String comparisons")
         "12345",
         "023",
         "9999",
+        "9998",
+        "99998",
+        "0123456789",
     };
 
-    for (auto v1 : vals) {
-        for (auto v2 : vals) {
-            INFO("Comparing \"" << v1 << "\" vs \"" << v2 << '"');
-            cstr* s1 = cstr_new(v1.c_str(), v1.size());
-            cstr* s2 = cstr_new(v2.c_str(), v2.size());
+    auto normalize = [](int r) -> int
+    {
+        if (r < 0) {
+            return -1;
+        } else if (r == 0) {
+            return 0;
+        } else {
+            return 1;
+        }
+    };
 
-            CHECK(cstr_str(s1) == v1);
-            CHECK(cstr_str(s2) == v2);
+    for (auto val1 : vals) {
+        for (auto val2 : vals) {
+            INFO("Comparing \"" << val1 << "\" vs \"" << val2 << '"');
+            cstr* s1 = cstr_new(val1.c_str(), val1.size());
+            cstr* s2 = cstr_new(val2.c_str(), val2.size());
+
+            cstrview v1 = cstr_view(s1);
+            cstrview v2 = cstr_view(s2);
+
+            CHECK(cstr_len(s1) == val1.size());
+            CHECK(cstr_len(s2) == val2.size());
+            CHECK(cstrview_len(v1) == val1.size());
+            CHECK(cstrview_len(v2) == val2.size());
+            CHECK(to_string(s1) == val1);
+            CHECK(to_string(s2) == val2);
+            CHECK(to_string(v1) == val1);
+            CHECK(to_string(v2) == val2);
+
+            SECTION("compare")
+            {
+                int expect = normalize(val1.compare(val2));
+                int actual = normalize(cstr_cmp(s1, s2));
+                CHECK(actual == expect);
+
+                int actualv = normalize(cstrview_cmp(v1, v2));
+                CHECK(actualv == expect);
+            }
 
             SECTION("equals")
             {
-                bool expect = v1 == v2;
+                bool expect = val1 == val2;
                 bool result = !!cstr_eq(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_eq(v1, v2);
+                CHECK(actualv == expect);
             }
             SECTION("not equals")
             {
-                bool expect = v1 != v2;
+                bool expect = val1 != val2;
                 bool result = !!cstr_neq(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_neq(v1, v2);
+                CHECK(actualv == expect);
             }
             SECTION("less than")
             {
-                bool expect = v1 < v2;
+                bool expect = val1 < val2;
                 bool result = !!cstr_lt(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_lt(v1, v2);
+                CHECK(actualv == expect);
             }
             SECTION("less than or equals")
             {
-                bool expect = v1 <= v2;
+                bool expect = val1 <= val2;
                 bool result = !!cstr_lte(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_lte(v1, v2);
+                CHECK(actualv == expect);
             }
             SECTION("greater than")
             {
-                bool expect = v1 > v2;
+                bool expect = val1 > val2;
                 bool result = !!cstr_gt(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_gt(v1, v2);
+                CHECK(actualv == expect);
             }
             SECTION("greater than or equals")
             {
-                bool expect = v1 >= v2;
+                bool expect = val1 >= val2;
                 bool result = !!cstr_gte(s1, s2);
-                CHECK(expect == result);
+                CHECK(result == expect);
+
+                int actualv = !!cstrview_gte(v1, v2);
+                CHECK(actualv == expect);
             }
 
             cstr_del(s1);
@@ -549,6 +600,8 @@ TEST_CASE("Allocator fallbacks")
         cstr_reset_allocator_to_default_();
     }
 
+    // NOTE: no longer offering this functionality
+#if 0
     SECTION("No reallocarray")
     {
         cstr_set_allocator(cstr_alloc_t{ &calloc, NULL, my_free });
@@ -579,6 +632,7 @@ TEST_CASE("Allocator fallbacks")
 
         cstr_reset_allocator_to_default_();
     }
+#endif
 }
 
 TEST_CASE("Substr")

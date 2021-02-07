@@ -70,17 +70,13 @@ cstrview cstrview_drop(cstrview v, size_t n);
 // Comparisons:
 int cstrview_startswith(cstrview v, cstrview prefix);
 int cstrview_endswith(cstrview v, cstrview postfix);
-
-// TODO: need to decide how to handle differing lengths
-#if 0
 int cstrview_cmp(cstrview v1, cstrview v2);
 int cstrview_eq(cstrview v1, cstrview v2);
-int cstrview_ne(cstrview v1, cstrview v2);
+int cstrview_neq(cstrview v1, cstrview v2);
 int cstrview_gt(cstrview v1, cstrview v2);
 int cstrview_lt(cstrview v1, cstrview v2);
 int cstrview_gte(cstrview v1, cstrview v2);
 int cstrview_lte(cstrview v1, cstrview v2);
-#endif
 
 //------------------------------------------------------------------------------
 // cstr
