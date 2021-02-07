@@ -54,6 +54,7 @@ cstrview    cstrview_init(const char* s, size_t len);
 cstrview    cstrview_fromrange(const char* begin, const char* end);
 const char* cstrview_str(cstrview v);
 const char* cstrview_data(cstrview v);
+const char* cstrview_end(cstrview v);
 size_t      cstrview_len(cstrview v);
 size_t      cstrview_size(cstrview v);
 size_t      cstrview_length(cstrview v);
@@ -62,10 +63,10 @@ cstr        cstrview_tostr(cstrview v);
 char*       cstrview_to_cstring(cstrview v); // caller takes ownership
 
 // Mutators
-cstrview cstrview_take(cstrview v, size_t n);
-cstrview cstrview_drop(cstrview v, size_t n);
+cstrview cstrview_take(cstrview v, size_t n); // take up to n from front
+cstrview cstrview_drop(cstrview v, size_t n); // drop up to n from front
 cstrview cstrview_substr(cstrview v, size_t pos, size_t len);
-// cstrview cstrview_split(cstrview v, char c);
+cstrview cstrview_split(cstrview v, char c);
 
 // Comparisons:
 int cstrview_startswith(cstrview v, cstrview prefix);
@@ -77,6 +78,21 @@ int cstrview_gt(cstrview v1, cstrview v2);
 int cstrview_lt(cstrview v1, cstrview v2);
 int cstrview_gte(cstrview v1, cstrview v2);
 int cstrview_lte(cstrview v1, cstrview v2);
+
+//------------------------------------------------------------------------------
+// split iterator API (experimental):
+//------------------------------------------------------------------------------
+struct cstrview_split_iter_t
+{
+    cstrview data;
+    cstrview value;
+};
+typedef struct cstrview_split_iter_t cstrview_split_iter;
+
+cstrview_split_iter cstrview_split_start(cstrview v, char c);
+cstrview_split_iter cstrview_split_next(cstrview_split_iter iter, char c);
+int                 cstrview_split_stop(cstrview_split_iter iter);
+cstrview            cstrview_split_deref(cstrview_split_iter iter);
 
 //------------------------------------------------------------------------------
 // cstr

@@ -763,3 +763,95 @@ TEST_CASE("Endswith")
         cstr_destroy(&p2);
     }
 }
+
+TEST_CASE("Split API")
+{
+    const std::string value = "a,b,c,d,e,ff,ggg,hhhh,iiii,,,,Last";
+    const std::vector<std::string> expects = {
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "ff",
+        "ggg",
+        "hhhh",
+        "iiii",
+        "",
+        "",
+        "",
+        "Last"
+    };
+
+    cstrview v = cstrview_init(value.c_str(), value.size());
+    size_t i = 0;
+    for (
+        cstrview_split_iter it = cstrview_split_start(v, ',');
+        !cstrview_split_stop(it);
+        it = cstrview_split_next(it, ',')
+    ) {
+        REQUIRE(i < expects.size());
+        const cstrview value = cstrview_split_deref(it);
+        const auto& expect = expects[i];
+        INFO("i = " << i << " expecting \"" << expect << "\"");
+        CHECK(cstrview_len(value) == expect.size());
+        CHECK(to_string(value)    == expect);
+        ++i;
+    }
+    CHECK(i == expects.size());
+}
+
+TEST_CASE("Split")
+{
+    const std::string value = "a,b,c,d,e,ff,ggg,hhhh,iiii,,Last";
+
+    cstrview v = cstrview_init(value.c_str(), value.size());
+    CHECK(cstrview_len(v) == value.size());
+    CHECK(to_string(v) == value);
+
+    cstrview v1 = cstrview_split(v, ',');
+    CHECK(to_string(v1) == "a");
+
+    v = cstrview_drop(v, cstrview_len(v1) + 1);
+    cstrview v2 = cstrview_split(v, ',');
+    CHECK(to_string(v2) == "b");
+
+    v = cstrview_drop(v, cstrview_len(v2) + 1);
+    cstrview v3 = cstrview_split(v, ',');
+    CHECK(to_string(v3) == "c");
+
+    v = cstrview_drop(v, cstrview_len(v3) + 1);
+    cstrview v4 = cstrview_split(v, ',');
+    CHECK(to_string(v4) == "d");
+
+    v = cstrview_drop(v, cstrview_len(v4) + 1);
+    cstrview v5 = cstrview_split(v, ',');
+    CHECK(to_string(v5) == "e");
+
+    v = cstrview_drop(v, cstrview_len(v5) + 1);
+    cstrview v6 = cstrview_split(v, ',');
+    CHECK(to_string(v6) == "ff");
+
+    v = cstrview_drop(v, cstrview_len(v6) + 1);
+    cstrview v7 = cstrview_split(v, ',');
+    CHECK(to_string(v7) == "ggg");
+
+    v = cstrview_drop(v, cstrview_len(v7) + 1);
+    cstrview v8 = cstrview_split(v, ',');
+    CHECK(to_string(v8) == "hhhh");
+
+    v = cstrview_drop(v, cstrview_len(v8) + 1);
+    cstrview v9 = cstrview_split(v, ',');
+    CHECK(to_string(v9) == "iiii");
+
+    v = cstrview_drop(v, cstrview_len(v9) + 1);
+    cstrview v10 = cstrview_split(v, ',');
+    CHECK(to_string(v10) == "");
+
+    v = cstrview_drop(v, cstrview_len(v10) + 1);
+    cstrview v11 = cstrview_split(v, ',');
+    CHECK(to_string(v11) == "Last");
+
+    v = cstrview_drop(v, cstrview_len(v11) + 1);
+    CHECK(cstrview_empty(v));
+}

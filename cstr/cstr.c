@@ -141,6 +141,11 @@ const char* cstrview_data(cstrview v)
     return cstrview_str(v);
 }
 
+const char* cstrview_end(cstrview v)
+{
+    return v.end;
+}
+
 size_t cstrview_len(const cstrview v)
 {
     return v.end - v.begin;
@@ -206,6 +211,12 @@ cstrview cstrview_substr(cstrview v, size_t pos, size_t len)
     return cstrview_fromrange(data + i, data + j);
 }
 
+cstrview cstrview_split(const cstrview v, const char c)
+{
+    const char* p = memchr(cstrview_data(v), c, cstrview_len(v));
+    return cstrview_fromrange(cstrview_data(v), p ? p : cstrview_end(v));
+}
+
 int cstrview_startswith(cstrview v, cstrview prefix)
 {
     size_t len1 = cstrview_len(v);
@@ -261,6 +272,34 @@ int cstrview_gte(const cstrview v1, const cstrview v2)
 int cstrview_lte(const cstrview v1, const cstrview v2)
 {
     return cstrview_cmp(v1, v2) <= 0;
+}
+
+//------------------------------------------------------------------------------
+// cstrview split api:
+//------------------------------------------------------------------------------
+cstrview_split_iter cstrview_split_start(cstrview v, char c)
+{
+    cstrview_split_iter it;
+    it.data = v;
+    it.value = cstrview_split(it.data, c);
+    return it;
+}
+
+cstrview_split_iter cstrview_split_next(cstrview_split_iter it, char c)
+{
+    it.data  = cstrview_drop(it.data, cstrview_len(it.value) + 1);
+    it.value = cstrview_split(it.data, c);
+    return it;
+}
+
+int cstrview_split_stop(cstrview_split_iter it)
+{
+    return cstrview_empty(it.data);
+}
+
+cstrview cstrview_split_deref(cstrview_split_iter it)
+{
+    return it.value;
 }
 
 //------------------------------------------------------------------------------
