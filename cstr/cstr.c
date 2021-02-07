@@ -189,6 +189,53 @@ cstrview cstrview_drop(cstrview v, size_t n)
     return v;
 }
 
+int cstrview_startswith(cstrview v, cstrview prefix)
+{
+    size_t len1 = cstrview_len(v);
+    size_t len2 = cstrview_len(prefix);
+    return len2 <= len1
+        && memcmp(cstrview_data(v), cstrview_data(prefix), len2) == 0;
+}
+
+int cstrview_endswith(cstrview v, cstrview postfix)
+{
+    size_t len1 = cstrview_len(v);
+    size_t len2 = cstrview_len(postfix);
+    size_t pos = len1 - len2;
+    return len2 <= len1
+        && memcmp(cstrview_data(v) + pos, cstrview_data(postfix), len2) == 0;
+}
+
+#if 0
+int cstrview_cmp(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_eq(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_ne(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_gt(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_lt(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_gte(cstrview v1, cstrview v2)
+{
+}
+
+int cstrview_lte(cstrview v1, cstrview v2)
+{
+}
+#endif
+
 //------------------------------------------------------------------------------
 // cstr
 //------------------------------------------------------------------------------

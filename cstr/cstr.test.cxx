@@ -588,7 +588,7 @@ TEST_CASE("Substr")
         const std::string a = "Hello, World";
         cstr a2 = cstr_make(a.c_str(), a.size());
         for (std::size_t pos = 0; pos <= a.size(); ++pos) {
-            for (std::size_t len = 0; len <= a.size(); ++len) {
+            for (std::size_t len = 0; len <= a.size() + 5; ++len) {
                 cstrview v = cstr_substr(&a2, pos, len);
                 auto v2 = a.substr(pos, len);
                 CHECK(cstrview_len(v) == v2.size());
@@ -603,7 +603,7 @@ TEST_CASE("Substr")
         const std::string a = "Hello, World -- this is a long string that won't be SSO";
         cstr a2 = cstr_make(a.c_str(), a.size());
         for (std::size_t pos = 0; pos <= a.size(); ++pos) {
-            for (std::size_t len = 0; len <= a.size(); ++len) {
+            for (std::size_t len = 0; len <= a.size() + 5; ++len) {
                 cstrview v = cstr_substr(&a2, pos, len);
                 auto v2 = a.substr(pos, len);
                 CHECK(cstrview_len(v) == v2.size());
@@ -611,5 +611,61 @@ TEST_CASE("Substr")
             }
         }
         cstr_destroy(&a2);
+    }
+}
+
+TEST_CASE("Startswith")
+{
+    std::vector<std::tuple<std::string, std::string, bool>> cases = {
+        { "Hello, World", "Hello", true   },
+        { "Hello, World", "HelloX", false },
+        { "Hello, World", "Hello, World", true },
+        { "Hello, World", "Hello, Worlj", false },
+        { "Hello, World", "Hello, World2", false },
+        { "Hello, World", "Hello,XWorld", false },
+        { "Hello, World", "", true },
+        { "Hello, World", "H", true },
+        { "Hello, World", "He", true },
+        { "Hello, World", "Hel", true },
+        { "Hello, World", "Hello", true },
+        { "Hello, World", "Hello, World Way Too Long String", false },
+    };
+
+    for (auto&& [val, prefix, expect] : cases) {
+        INFO("value=\"" << val << "\" prefix=\"" << prefix << "\"");
+        const cstrview v = cstrview_init(val.c_str(), val.size());
+        CHECK(cstrview_len(v) == val.size());
+        const cstrview p = cstrview_init(prefix.c_str(), prefix.size());
+        CHECK(cstrview_len(p) == prefix.size());
+        int actual = cstrview_startswith(v, p);
+        CHECK(actual == expect);
+    }
+}
+
+TEST_CASE("Endswith")
+{
+    std::vector<std::tuple<std::string, std::string, bool>> cases = {
+        { "Hello, World", "World", true },
+        { "Hello, World", "orld", true },
+        { "Hello, World", "rld", true },
+        { "Hello, World", "ld", true },
+        { "Hello, World", "d", true },
+        { "Hello, World", "", true },
+        { "Hello, World", "Hello, World", true },
+        { "Hello, World", "Hello, World2", false },
+        { "Hello, World", "Hello, World Way too Long String", false },
+        { "Hello, World", "Hello, ", false },
+        { "Hello, World", "Hello, Worl", false },
+        { "file.txt", ".txt", true },
+    };
+
+    for (auto&& [val, postfix, expect] : cases) {
+        INFO("value=\"" << val << "\" postfix=\"" << postfix << "\"");
+        const cstrview v = cstrview_init(val.c_str(), val.size());
+        CHECK(cstrview_len(v) == val.size());
+        const cstrview p = cstrview_init(postfix.c_str(), postfix.size());
+        CHECK(cstrview_len(p) == postfix.size());
+        int actual = cstrview_endswith(v, p);
+        CHECK(actual == expect);
     }
 }

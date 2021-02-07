@@ -48,6 +48,7 @@ struct cstr_alloc_t
 //------------------------------------------------------------------------------
 // cstrview
 //------------------------------------------------------------------------------
+
 cstrview    cstrview_make(const char* s);
 cstrview    cstrview_init(const char* s, size_t len);
 cstrview    cstrview_fromrange(const char* begin, const char* end);
@@ -61,8 +62,25 @@ cstr        cstrview_tostr(cstrview v);
 char*       cstrview_to_cstring(cstrview v); // caller takes ownership
 
 // Mutators
-cstrview    cstrview_take(cstrview v, size_t n);
-cstrview    cstrview_drop(cstrview v, size_t n);
+cstrview cstrview_take(cstrview v, size_t n);
+cstrview cstrview_drop(cstrview v, size_t n);
+// cstrview cstrview_substr(cstrview v, size_t pos, size_t len);
+// cstrview cstrview_split(cstrview v, char c);
+
+// Comparisons:
+int cstrview_startswith(cstrview v, cstrview prefix);
+int cstrview_endswith(cstrview v, cstrview postfix);
+
+// TODO: need to decide how to handle differing lengths
+#if 0
+int cstrview_cmp(cstrview v1, cstrview v2);
+int cstrview_eq(cstrview v1, cstrview v2);
+int cstrview_ne(cstrview v1, cstrview v2);
+int cstrview_gt(cstrview v1, cstrview v2);
+int cstrview_lt(cstrview v1, cstrview v2);
+int cstrview_gte(cstrview v1, cstrview v2);
+int cstrview_lte(cstrview v1, cstrview v2);
+#endif
 
 //------------------------------------------------------------------------------
 // cstr
