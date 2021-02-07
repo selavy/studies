@@ -65,6 +65,11 @@ const char* cstrview_str(const cstrview v)
     return v.begin;
 }
 
+const char* cstrview_data(cstrview v)
+{
+    return cstrview_str(v);
+}
+
 size_t cstrview_len(const cstrview v)
 {
     return v.end - v.begin;
@@ -338,7 +343,7 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
     const int    isinline = cstr_isinline_(s);
     if (newsize <= capacity) {
         char* data = isinline ? s->data : s->o.data;
-        memcpy(&data[cursize], cstrview_str(v), addsize);
+        memcpy(&data[cursize], cstrview_data(v), addsize);
         data[newsize] = '\0';
     } else {
         char* data;
@@ -354,7 +359,7 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
                 return NULL;
             }
         }
-        memcpy(&data[cursize], cstrview_str(v), addsize);
+        memcpy(&data[cursize], cstrview_data(v), addsize);
         data[newsize] = '\0';
         s->o.data     = data;
         s->o.capacity = newsize;
@@ -367,6 +372,47 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
 cstr* cstr_append(cstr* s, const cstr* s2)
 {
     return cstr_appendv(s, cstr_view(s2));
+}
+
+cstr* cstr_prependv(cstr* s, cstrview v)
+{
+    size_t oldsize = cstr_len(s);
+    size_t addsize = cstrview_len(v);
+    size_t newsize = oldsize + addsize; // TODO: potential overflow
+
+    if (newsize <= cstr_capacity(s)) {
+        char* data = cstr_data(s);
+        memmove(&data[addsize], &data[0], oldsize);
+        memcpy(&data[0], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+    } else {
+        char* data;
+        if (cstr_isinline_(s)) {
+            data = calloc_(newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memcpy(&data[addsize], &s->data[0], oldsize);
+        } else {
+            data = realloc_(s->o.data, (newsize + 1) * sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memmove(&data[addsize], &data[0], oldsize);
+        }
+        memcpy(&data[0], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+        s->o.data = data;
+        s->o.capacity = newsize;
+        *cstr_inline_mark_(s) = 1;
+    }
+    s->size = newsize;
+    return s;
+}
+
+cstr* cstr_prepend(cstr* s, const cstr* s2)
+{
+    return cstr_prependv(s, cstr_view(s2));
 }
 
 cstr* cstr_take(cstr* s, size_t n)

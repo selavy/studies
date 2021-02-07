@@ -52,6 +52,7 @@ cstrview    cstrview_make(const char* s);
 cstrview    cstrview_init(const char* s, size_t len);
 cstrview    cstrview_fromrange(const char* begin, const char* end);
 const char* cstrview_str(cstrview v);
+const char* cstrview_data(cstrview v);
 size_t      cstrview_len(cstrview v);
 size_t      cstrview_size(cstrview v);
 size_t      cstrview_length(cstrview v);
@@ -105,6 +106,10 @@ cstr* cstr_copy(const cstr* s);
 cstr* cstr_shrink_to_fit(cstr* s);
 cstr* cstr_appendv(cstr* s, cstrview v);
 cstr* cstr_append(cstr* s, const cstr* s2);
+
+// TODO: implement
+cstr* cstr_prependv(cstr* s, cstrview v);
+cstr* cstr_prepend(cstr* s, const cstr* s2);
 
 cstr* cstr_take(cstr* s, size_t n); // take up to n from front
 cstr* cstr_drop(cstr* s, size_t n); // drop up to n from front

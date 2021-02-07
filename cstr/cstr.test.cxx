@@ -153,9 +153,6 @@ TEST_CASE("SSO")
 
 TEST_CASE("Append")
 {
-    std::string expect  = "Hello";
-    const std::string b = ", World";
-
     std::vector<std::string> cases = {
         "Hello",
         "World",
@@ -184,6 +181,38 @@ TEST_CASE("Append")
             CHECK(cstr_len(actual)  == expect.size());
             CHECK(to_string(actual) == expect);
 
+            cstr_destroy(&b2);
+            cstr_destroy(&a2);
+        }
+    }
+
+}
+
+TEST_CASE("Prepend")
+{
+    std::vector<std::string> cases = {
+        "Hello",
+        "World",
+        "a",
+        "1234",
+        "asdf;lkajsdf",
+        "\001FIX4.2\001",
+        "This is a VerY LoNG STRING With Some \001 Embeeded stuff \004!!!",
+        "Anothasdefl;k;lkj asd;fklja;slkdjf;lkasjdf;lkj asl;df lkjq23r-09127u35knvzsxlckn asdf'piojas'dfkljas[df9ohnknzxcvl'kjzxcdfzXCLfkjas'dlfjas'iodfjasdf]9823489-71280612349076123496812349-6123-498123-4987612-98347-8917234-9871234-9876y2134-98712395478612-93456-986123-4987612-394876123-9846y12038746890-7y",
+        "",
+        "1",
+    };
+
+    for (const auto a : cases) {
+        for (const auto b : cases) {
+            cstr a2 = cstr_make(a.c_str(), a.size());
+            cstr b2 = cstr_make(b.c_str(), b.size());
+            auto expect = b + a;
+            INFO("a=\"" << a << "\" b=\"" << b << "\" expect=\"" << expect << '"');
+            cstr* actual = cstr_prepend(&a2, &b2);
+            REQUIRE(actual != NULL);
+            CHECK(cstr_len(actual)  == expect.size());
+            CHECK(to_string(actual) == expect);
             cstr_destroy(&b2);
             cstr_destroy(&a2);
         }
