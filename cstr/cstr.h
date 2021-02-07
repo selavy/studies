@@ -106,10 +106,10 @@ cstr* cstr_copy(const cstr* s);
 cstr* cstr_shrink_to_fit(cstr* s);
 cstr* cstr_appendv(cstr* s, cstrview v);
 cstr* cstr_append(cstr* s, const cstr* s2);
-
-// TODO: implement
 cstr* cstr_prependv(cstr* s, cstrview v);
 cstr* cstr_prepend(cstr* s, const cstr* s2);
+cstr* cstr_insertv(cstr* s, size_t pos, cstrview v); // insert `v` at position `pos`
+cstr* cstr_insert(cstr* s, size_t pos, const cstr* s2);
 
 cstr* cstr_take(cstr* s, size_t n); // take up to n from front
 cstr* cstr_drop(cstr* s, size_t n); // drop up to n from front

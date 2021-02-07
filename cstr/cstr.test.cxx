@@ -426,3 +426,87 @@ TEST_CASE("Drop")
         cstr_destroy(&a);
     }
 }
+
+TEST_CASE("Insert")
+{
+    SECTION("SSO")
+    {
+        const std::string a = "Hello";
+        const std::string b = ", World!";
+        cstr b2 = cstr_make(b.c_str(), b.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            INFO("a = \"" << a << "\" pos=" << pos);
+            std::string expect = a;
+            cstr        actual = cstr_make(a.c_str(), a.size());
+
+            CHECK(cstr_isinline_(&actual));
+            CHECK(cstr_isinline_(&b2));
+
+            expect.insert(pos, b);
+            cstr* r = cstr_insert(&actual, pos, &b2);
+            REQUIRE(r != nullptr);
+
+            CHECK(cstr_isinline_(&actual));
+
+            CHECK(cstr_len(&actual)  == expect.size());
+            CHECK(to_string(&actual) == expect);
+
+            cstr_destroy(&actual);
+        }
+        cstr_destroy(&b2);
+    }
+
+    SECTION("SSO string with long string")
+    {
+        const std::string a = "Hello";
+        const std::string b = "This is a very long string that won't fit in SSO";
+        cstr b2 = cstr_make(b.c_str(), b.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            INFO("a = \"" << a << "\" pos=" << pos);
+            std::string expect = a;
+            cstr        actual = cstr_make(a.c_str(), a.size());
+
+            CHECK(cstr_isinline_(&actual));
+            CHECK(!cstr_isinline_(&b2));
+
+            expect.insert(pos, b);
+            cstr* r = cstr_insert(&actual, pos, &b2);
+            REQUIRE(r != nullptr);
+
+            CHECK(!cstr_isinline_(&actual));
+
+            CHECK(cstr_len(&actual)  == expect.size());
+            CHECK(to_string(&actual) == expect);
+
+            cstr_destroy(&actual);
+        }
+        cstr_destroy(&b2);
+    }
+
+    SECTION("Long string with long string")
+    {
+        const std::string a = "Hello, this is also a very long string !!!!!";
+        const std::string b = "This is a very long string that won't fit in SSO";
+        cstr b2 = cstr_make(b.c_str(), b.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            INFO("a = \"" << a << "\" pos=" << pos);
+            std::string expect = a;
+            cstr        actual = cstr_make(a.c_str(), a.size());
+
+            CHECK(!cstr_isinline_(&actual));
+            CHECK(!cstr_isinline_(&b2));
+
+            expect.insert(pos, b);
+            cstr* r = cstr_insert(&actual, pos, &b2);
+            REQUIRE(r != nullptr);
+
+            CHECK(!cstr_isinline_(&actual));
+
+            CHECK(cstr_len(&actual)  == expect.size());
+            CHECK(to_string(&actual) == expect);
+
+            cstr_destroy(&actual);
+        }
+        cstr_destroy(&b2);
+    }
+}

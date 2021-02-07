@@ -391,7 +391,7 @@ cstr* cstr_shink_to_fit(cstr* s)
         size_t cap = s->o.capacity;
         memset(&s->data[0], '\0', CSTR_INLINE_SIZE + 1);
         memcpy(&s->data[0], str, size);
-        free_(str, s->o.capacity);
+        free_(str, s->o.capacity + 1);
         return s;
     }
 
@@ -486,6 +486,53 @@ cstr* cstr_prependv(cstr* s, cstrview v)
 cstr* cstr_prepend(cstr* s, const cstr* s2)
 {
     return cstr_prependv(s, cstr_view(s2));
+}
+
+cstr* cstr_insertv(cstr* s, const size_t pos, cstrview v)
+{
+    size_t oldsize = cstr_len(s);
+    size_t addsize = cstrview_len(v);
+    size_t newsize = oldsize + addsize; // TODO: potential overflow
+    if (pos > oldsize) {
+        // TODO: need a better way to communicate this failure
+        errno = ERANGE;
+        return NULL;
+    }
+    size_t rest = oldsize - pos;
+    if (newsize <= cstr_capacity(s)) {
+        char* data = cstr_data(s);
+        memmove(&data[pos+addsize], &data[pos], rest);
+        memcpy(&data[pos], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+    } else {
+        char* data;
+        if (cstr_isinline_(s)) {
+            data = calloc_(newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memcpy(&data[0], &s->data[0], pos);
+            memcpy(&data[pos+addsize], &s->data[pos], rest);
+        } else {
+            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memmove(&data[pos+addsize], &data[pos], rest);
+        }
+        memcpy(&data[pos], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+        s->o.data = data;
+        s->o.capacity = newsize + 1;
+        *cstr_inline_mark_(s) = 1;
+    }
+    s->size = newsize;
+    return s;
+}
+
+cstr* cstr_insert(cstr* s, const size_t pos, const cstr* s2)
+{
+    return cstr_insertv(s, pos, cstr_view(s2));
 }
 
 cstr* cstr_take(cstr* s, size_t n)
