@@ -64,7 +64,7 @@ char*       cstrview_to_cstring(cstrview v); // caller takes ownership
 // Mutators
 cstrview cstrview_take(cstrview v, size_t n);
 cstrview cstrview_drop(cstrview v, size_t n);
-// cstrview cstrview_substr(cstrview v, size_t pos, size_t len);
+cstrview cstrview_substr(cstrview v, size_t pos, size_t len);
 // cstrview cstrview_split(cstrview v, char c);
 
 // Comparisons:

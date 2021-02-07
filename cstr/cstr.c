@@ -194,6 +194,18 @@ cstrview cstrview_drop(cstrview v, size_t n)
     return v;
 }
 
+cstrview cstrview_substr(cstrview v, size_t pos, size_t len)
+{
+    size_t size = cstrview_len(v);
+    size_t i = pos < size ? pos : size;
+    size_t j = i + len < size ? i + len : size;
+    const char* data = cstrview_data(v);
+    assert(0 <= i && i <= size);
+    assert(0 <= j && j <= size);
+    assert(i <= j);
+    return cstrview_fromrange(data + i, data + j);
+}
+
 int cstrview_startswith(cstrview v, cstrview prefix)
 {
     size_t len1 = cstrview_len(v);
