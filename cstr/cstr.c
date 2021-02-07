@@ -2,6 +2,31 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
+
+// TODO: figure out how to use the feature test macros to see if this function
+//       is available
+#if 0
+#ifndef _GNU_SOURCE
+#ifndef reallocarray
+
+#define MUL_NO_OVERFLOW (1UL << (sizeof(size_t) * 4))
+
+static void* reallocarray(void *optr, size_t nmemb, size_t size)
+{
+    if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+        nmemb > 0 && SIZE_MAX / nmemb < size) {
+            errno = ENOMEM;
+            return NULL;
+    }
+    return realloc(optr, size * nmemb);
+}
+
+#undef MUL_NO_OVERFLOW
+
+#endif
+#endif
+#endif
 
 //------------------------------------------------------------------------------
 // cstr_alloc_t
@@ -13,9 +38,9 @@ static void cstr_free_(void* p, size_t size)
 
 static const struct cstr_alloc_t malloc_allocator_ =
 {
-    .calloc  = &calloc,
-    .realloc = &realloc,
-    .free    = &cstr_free_,
+    .calloc       = &calloc,
+    .reallocarray = &reallocarray,
+    .free         = &cstr_free_,
 };
 
 static struct cstr_alloc_t cstr_allocator_ = malloc_allocator_;
@@ -25,10 +50,10 @@ static void* calloc_(size_t nmemb, size_t size)
     return cstr_allocator_.calloc(nmemb, size);
 }
 
-static void* realloc_(void* p, size_t size)
+static void* reallocarray_(void* p, size_t nmemb, size_t size)
 {
     // TODO: fall back to calloc if no realloc provided
-    return cstr_allocator_.realloc(p, size);
+    return cstr_allocator_.reallocarray(p, nmemb, size);
 }
 
 static void free_(void* p, size_t size)
@@ -198,9 +223,9 @@ void cstr_set_allocator(struct cstr_alloc_t a)
     // TODO: provide fallback functions if only one of either calloc
     //       or realloc is provided.
     cstr_allocator_ = a;
-    assert(cstr_allocator_.calloc  != NULL);
-    assert(cstr_allocator_.realloc != NULL);
-    assert(cstr_allocator_.free    != NULL);
+    assert(cstr_allocator_.calloc       != NULL);
+    assert(cstr_allocator_.reallocarray != NULL);
+    assert(cstr_allocator_.free         != NULL);
 }
 
 void cstr_reset_allocator_to_default_()
@@ -324,7 +349,7 @@ cstr* cstr_shink_to_fit(cstr* s)
 
     const size_t capacity = cstr_capacity(s);
     if (capacity > size) {
-        char* p = realloc_(s->o.data, size + 1);
+        char* p = reallocarray_(s->o.data, size + 1, sizeof(char));
         if (p != NULL) {
             s->o.data = p;
             s->o.capacity = size;
@@ -354,7 +379,7 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
             }
             memcpy(&data[0], &s->data[0], cursize);
         } else {
-            data = realloc_(s->o.data, (newsize + 1) * sizeof(char));
+            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
@@ -394,7 +419,7 @@ cstr* cstr_prependv(cstr* s, cstrview v)
             }
             memcpy(&data[addsize], &s->data[0], oldsize);
         } else {
-            data = realloc_(s->o.data, (newsize + 1) * sizeof(char));
+            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }

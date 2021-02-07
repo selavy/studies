@@ -40,9 +40,9 @@ CSTR_STATIC_ASSERT(sizeof(cstrview) == 2*sizeof(void*));
 
 struct cstr_alloc_t
 {
-    void* (*calloc )(size_t nmemb, size_t size);
-    void* (*realloc)(void* p, size_t size);
-    void  (*free   )(void* p, size_t size);
+    void* (*calloc      )(size_t nmemb, size_t size);
+    void* (*reallocarray)(void* p, size_t nmemb, size_t size);
+    void  (*free        )(void* p, size_t size);
 };
 
 //------------------------------------------------------------------------------

@@ -117,9 +117,9 @@ TEST_CASE("SSO")
         CHECK(false);
         return nullptr;
     };
-    auto* no_realloc = +[](void*, size_t size) -> void*
+    auto* no_realloc = +[](void*, size_t nmemb, size_t size) -> void*
     {
-        INFO("Tried to call realloc with size=" << size);
+        INFO("Tried to call realloc with nmemb=" << nmemb << " size=" << size);
         CHECK(false);
         return nullptr;
     };
@@ -230,9 +230,9 @@ TEST_CASE("Take")
             CHECK(false);
             return nullptr;
         };
-        auto* no_realloc = +[](void*, size_t size) -> void*
+        auto* no_realloc = +[](void*, size_t nmemb, size_t size) -> void*
         {
-            INFO("Tried to call realloc with size=" << size);
+            INFO("Tried to call realloc with nmemb=" << nmemb << " size=" << size);
             CHECK(false);
             return nullptr;
         };
@@ -321,9 +321,9 @@ TEST_CASE("Drop")
             CHECK(false);
             return nullptr;
         };
-        auto* no_realloc = +[](void*, size_t size) -> void*
+        auto* no_realloc = +[](void*, size_t nmemb, size_t size) -> void*
         {
-            INFO("Tried to call realloc with size=" << size);
+            INFO("Tried to call realloc with nmemb=" << nmemb << " size=" << size);
             CHECK(false);
             return nullptr;
         };
