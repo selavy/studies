@@ -151,6 +151,11 @@ size_t cstrview_length(const cstrview v)
     return cstrview_len(v);
 }
 
+int cstrview_empty(const cstrview v)
+{
+    return v.begin == v.end;
+}
+
 cstr cstrview_tostr(cstrview v)
 {
     return cstr_make(cstrview_str(v), cstrview_len(v));
@@ -317,11 +322,6 @@ char* cstr_mstr(cstr* s)
 char* cstr_data(cstr* s)
 {
     return cstr_mstr(s);
-}
-
-cstrview cstr_view(const cstr* s)
-{
-    return cstrview_init(cstr_str(s), cstr_len(s));
 }
 
 int cstr_isinline_(const cstr* s)
@@ -555,4 +555,21 @@ cstr* cstr_drop(cstr* s, size_t n)
     data[newsize] = '\0';
     s->size = newsize;
     return s;
+}
+
+cstrview cstr_view(const cstr* s)
+{
+    return cstrview_init(cstr_str(s), cstr_len(s));
+}
+
+cstrview cstr_substr(const cstr* s, const size_t pos, const size_t len)
+{
+    size_t size = cstr_len(s);
+    size_t i = pos < size ? pos : size;
+    size_t j = i + len < size ? i + len : size;
+    const char* data = cstr_str(s);
+    assert(0 <= i && i <= size);
+    assert(0 <= j && j <= size);
+    assert(i <= j);
+    return cstrview_fromrange(data + i, data + j);
 }

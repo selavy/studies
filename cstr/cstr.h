@@ -56,6 +56,7 @@ const char* cstrview_data(cstrview v);
 size_t      cstrview_len(cstrview v);
 size_t      cstrview_size(cstrview v);
 size_t      cstrview_length(cstrview v);
+int         cstrview_empty(cstrview v);
 cstr        cstrview_tostr(cstrview v);
 char*       cstrview_to_cstring(cstrview v); // caller takes ownership
 
@@ -90,7 +91,6 @@ size_t cstr_capacity(const cstr* s);
 const char* cstr_str(const cstr* s);
       char* cstr_mstr(cstr* s);
       char* cstr_data(cstr* s);
-cstrview    cstr_view(const cstr* s);
 
 // Comparison Functions:
 int cstr_cmp(const cstr* s1, const cstr* s2);
@@ -110,9 +110,12 @@ cstr* cstr_prependv(cstr* s, cstrview v);
 cstr* cstr_prepend(cstr* s, const cstr* s2);
 cstr* cstr_insertv(cstr* s, size_t pos, cstrview v); // insert `v` at position `pos`
 cstr* cstr_insert(cstr* s, size_t pos, const cstr* s2);
-
 cstr* cstr_take(cstr* s, size_t n); // take up to n from front
 cstr* cstr_drop(cstr* s, size_t n); // drop up to n from front
+
+// Views:
+cstrview cstr_view(const cstr* s);
+cstrview cstr_substr(const cstr* s, size_t pos, size_t len);
 
 // Private Functions:
 char*  cstr_inline_mark_(cstr* s);

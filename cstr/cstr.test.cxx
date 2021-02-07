@@ -580,3 +580,36 @@ TEST_CASE("Allocator fallbacks")
         cstr_reset_allocator_to_default_();
     }
 }
+
+TEST_CASE("Substr")
+{
+    SECTION("SSO")
+    {
+        const std::string a = "Hello, World";
+        cstr a2 = cstr_make(a.c_str(), a.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            for (std::size_t len = 0; len <= a.size(); ++len) {
+                cstrview v = cstr_substr(&a2, pos, len);
+                auto v2 = a.substr(pos, len);
+                CHECK(cstrview_len(v) == v2.size());
+                CHECK(to_string(v)    == v2);
+            }
+        }
+        cstr_destroy(&a2);
+    }
+
+    SECTION("Long string")
+    {
+        const std::string a = "Hello, World -- this is a long string that won't be SSO";
+        cstr a2 = cstr_make(a.c_str(), a.size());
+        for (std::size_t pos = 0; pos <= a.size(); ++pos) {
+            for (std::size_t len = 0; len <= a.size(); ++len) {
+                cstrview v = cstr_substr(&a2, pos, len);
+                auto v2 = a.substr(pos, len);
+                CHECK(cstrview_len(v) == v2.size());
+                CHECK(to_string(v)    == v2);
+            }
+        }
+        cstr_destroy(&a2);
+    }
+}
