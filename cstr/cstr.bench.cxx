@@ -34,7 +34,8 @@ static void BM_AppendSmallStrings(benchmark::State& state) {
     int64_t count = 0;
 
     for (auto _ : state) {
-        String result = make<String>("");
+        // String result = make<String>("");
+        String result = {};
         for (auto&& s : strings) {
             StringAppend(result, s);
         }

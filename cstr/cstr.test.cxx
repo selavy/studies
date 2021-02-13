@@ -924,7 +924,7 @@ TEST_CASE("Verify BM_AppendSmallStrings")
             make<String>("cc"),
             make<String>("dd"),
         };
-        String result;
+        String result = make<String>("");
         for (auto&& s : strings) {
             StringAppend(result, s);
         }
@@ -933,7 +933,7 @@ TEST_CASE("Verify BM_AppendSmallStrings")
     }();
 
     auto result2 = []() {
-        using String = std::string;
+        using String = cstr;
         int64_t count = 0;
         std::vector<String> strings = {
             make<String>("a"),
@@ -941,9 +941,11 @@ TEST_CASE("Verify BM_AppendSmallStrings")
             make<String>("cc"),
             make<String>("dd"),
         };
-        String result;
+        // String result = make<String>("");
+        String result = {};
         for (auto&& s : strings) {
             StringAppend(result, s);
+            // CHECK(cstr_isinline_(&result));
         }
         count += StringSize(result);
         return count;
