@@ -907,6 +907,9 @@ void StringAppend(cstr& a, const cstr& b) { cstr_append(&a, &b); }
 void StringPrepend(std::string& a, const std::string& b) { a.insert(0, b); }
 void StringPrepend(cstr& a, const cstr& b) { cstr_prepend(&a, &b); }
 
+void StringInsert(std::string& a, std::size_t index, const std::string& b) { a.insert(index, b); }
+void StringInsert(cstr& a, std::size_t index, const cstr& b) { cstr_insert(&a, index, &b); }
+
 auto StringSize(const std::string& a) { return a.size(); }
 auto StringSize(const cstr&        a) { return cstr_size(&a); }
 
@@ -1008,4 +1011,32 @@ TEST_CASE("Verify BM_PrependSmallStrings")
     auto actual = to_string(&cstr_result);
     CHECK(expect.size() == actual.size());
     CHECK(expect == actual);
+}
+
+TEST_CASE("Verify BM_InsertSmallStrings")
+{
+    auto expect = []() {
+        using String = std::string;
+        String a = make<String>("Helld");
+        String b = make<String>("lo, r");
+        String c = make<String>("Wo");
+        StringInsert(a, 3, b);
+        StringInsert(a, 7, c);
+        return a;
+    }();
+
+    auto cstr_result = []() {
+        using String = cstr;
+        String a = make<String>("Helld");
+        String b = make<String>("lo, r");
+        String c = make<String>("Wo");
+        StringInsert(a, 3, b);
+        StringInsert(a, 7, c);
+        return a;
+    }();
+
+    auto actual = to_string(&cstr_result);
+    CHECK(expect.size() == actual.size());
+    CHECK(expect == actual);
+    CHECK(actual == "Hello, World");
 }
