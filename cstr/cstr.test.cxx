@@ -897,10 +897,15 @@ TEST_CASE("Split on")
     }
 }
 
-
+//------------------------------------------------------------------------------
+// Verify benchmark code
+//------------------------------------------------------------------------------
 
 void StringAppend(std::string& a, const std::string& b) { a += b; }
 void StringAppend(cstr& a, const cstr& b) { cstr_append(&a, &b); }
+
+void StringPrepend(std::string& a, const std::string& b) { a.insert(0, b); }
+void StringPrepend(cstr& a, const cstr& b) { cstr_prepend(&a, &b); }
 
 auto StringSize(const std::string& a) { return a.size(); }
 auto StringSize(const cstr&        a) { return cstr_size(&a); }
@@ -915,9 +920,9 @@ template <> cstr make<cstr>(const char* const s)
 
 TEST_CASE("Verify BM_AppendSmallStrings")
 {
-    auto result1 = []() {
+    auto expect = []() {
         using String = std::string;
-        int64_t count = 0;
+        // int64_t count = 0;
         std::vector<String> strings = {
             make<String>("a"),
             make<String>("e"),
@@ -928,13 +933,14 @@ TEST_CASE("Verify BM_AppendSmallStrings")
         for (auto&& s : strings) {
             StringAppend(result, s);
         }
-        count += StringSize(result);
-        return count;
+        // count += StringSize(result);
+        // return count;
+        return result;
     }();
 
-    auto result2 = []() {
+    auto cstr_result = []() {
         using String = cstr;
-        int64_t count = 0;
+        // int64_t count = 0;
         std::vector<String> strings = {
             make<String>("a"),
             make<String>("e"),
@@ -948,9 +954,58 @@ TEST_CASE("Verify BM_AppendSmallStrings")
             StringAppend(result, s);
             CHECK(cstr_isinline_(&result));
         }
-        count += StringSize(result);
-        return count;
+        // count += StringSize(result);
+        // return count;
+        return result;
     }();
 
-    CHECK(result1 == result2);
+    auto actual = to_string(&cstr_result);
+    CHECK(expect.size() == actual.size());
+    CHECK(expect == actual);
+}
+
+TEST_CASE("Verify BM_PrependSmallStrings")
+{
+    auto expect = []() {
+        using String = std::string;
+        // int64_t count = 0;
+        std::vector<String> strings = {
+            make<String>("a"),
+            make<String>("e"),
+            make<String>("cc"),
+            make<String>("dd"),
+        };
+        String result{};
+        for (auto&& s : strings) {
+            StringPrepend(result, s);
+        }
+        // count += StringSize(result);
+        // return count;
+        return result;
+    }();
+
+    auto cstr_result = []() {
+        using String = cstr;
+        // int64_t count = 0;
+        std::vector<String> strings = {
+            make<String>("a"),
+            make<String>("e"),
+            make<String>("cc"),
+            make<String>("dd"),
+        };
+        String result{};
+        CHECK(cstr_isinline_(&result));
+        CHECK(cstr_empty(&result));
+        for (auto&& s : strings) {
+            StringPrepend(result, s);
+            CHECK(cstr_isinline_(&result));
+        }
+        // count += StringSize(result);
+        // return count;
+        return result;
+    }();
+
+    auto actual = to_string(&cstr_result);
+    CHECK(expect.size() == actual.size());
+    CHECK(expect == actual);
 }

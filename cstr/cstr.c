@@ -611,7 +611,6 @@ cstr* cstr_prependv(cstr* s, cstrview v)
     size_t oldsize = cstr_len(s);
     size_t addsize = cstrview_len(v);
     size_t newsize = oldsize + addsize; // TODO: potential overflow
-
     if (newsize <= cstr_capacity(s)) {
         char* data = cstr_data(s);
         memmove(&data[addsize], &data[0], oldsize);

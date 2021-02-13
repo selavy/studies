@@ -61,6 +61,9 @@ CSTR_FORCE_INLINE int      cstr_isinline_(const cstr* s) noexcept;
 CSTR_FORCE_INLINE const char* cstrview_data(cstrview v) noexcept;
 // TODO: mark contexpr
 CSTR_FORCE_INLINE const char* cstr_str(const cstr* s) noexcept;
+CSTR_FORCE_INLINE cstr* cstr_prependv(cstr* s, cstrview v) noexcept;
+CSTR_FORCE_INLINE cstr* cstr_prepend(cstr* s, const cstr* s2) noexcept;
+CSTR_FORCE_INLINE char* cstr_data(cstr* s) noexcept;
 
 //------------------------------------------------------------------------------
 // Implementation
@@ -201,6 +204,52 @@ const char* cstrview_data(cstrview v) noexcept
 }
 
 const char* cstr_str(const cstr* s) noexcept
+{
+    return cstr_isinline_(s) != 0 ?
+        s->data : s->o.data;
+}
+
+cstr* cstr_prepend(cstr* s, const cstr* s2) noexcept
+{
+    return cstr_prependv(s, cstr_view(s2));
+}
+
+cstr* cstr_prependv(cstr* s, cstrview v) noexcept
+{
+    size_t oldsize = cstr_len(s);
+    size_t addsize = cstrview_len(v);
+    size_t newsize = oldsize + addsize; // TODO: potential overflow
+    if (newsize <= cstr_capacity(s)) {
+        char* data = cstr_data(s);
+        memmove(&data[addsize], &data[0], oldsize);
+        memcpy(&data[0], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+    } else {
+        char* data;
+        if (cstr_isinline_(s)) {
+            data = (char*)calloc_(newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memcpy(&data[addsize], &s->data[0], oldsize);
+        } else {
+            data = (char*)reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            if (!data) {
+                return NULL;
+            }
+            memmove(&data[addsize], &data[0], oldsize);
+        }
+        memcpy(&data[0], cstrview_data(v), addsize);
+        data[newsize] = '\0';
+        s->o.data = data;
+        s->o.capacity = newsize;
+        *cstr_inline_mark_(s) = 1;
+    }
+    s->size = newsize;
+    return s;
+}
+
+char* cstr_data(cstr* s) noexcept
 {
     return cstr_isinline_(s) != 0 ?
         s->data : s->o.data;
