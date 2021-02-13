@@ -896,3 +896,58 @@ TEST_CASE("Split on")
         CHECK(to_string(r2) == "");
     }
 }
+
+
+
+void StringAppend(std::string& a, const std::string& b) { a += b; }
+void StringAppend(cstr& a, const cstr& b) { cstr_append(&a, &b); }
+
+auto StringSize(const std::string& a) { return a.size(); }
+auto StringSize(const cstr&        a) { return cstr_size(&a); }
+
+template <class T>
+T make(const char* const s) { return T{s, strlen(s)}; };
+
+template <> cstr make<cstr>(const char* const s)
+{
+    return cstr_make(s, strlen(s));
+}
+
+TEST_CASE("Verify BM_AppendSmallStrings")
+{
+    auto result1 = []() {
+        using String = std::string;
+        int64_t count = 0;
+        std::vector<String> strings = {
+            make<String>("a"),
+            make<String>("e"),
+            make<String>("cc"),
+            make<String>("dd"),
+        };
+        String result;
+        for (auto&& s : strings) {
+            StringAppend(result, s);
+        }
+        count += StringSize(result);
+        return count;
+    }();
+
+    auto result2 = []() {
+        using String = std::string;
+        int64_t count = 0;
+        std::vector<String> strings = {
+            make<String>("a"),
+            make<String>("e"),
+            make<String>("cc"),
+            make<String>("dd"),
+        };
+        String result;
+        for (auto&& s : strings) {
+            StringAppend(result, s);
+        }
+        count += StringSize(result);
+        return count;
+    }();
+
+    CHECK(result1 == result2);
+}
