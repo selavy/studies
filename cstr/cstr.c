@@ -175,7 +175,7 @@ cstr cstrview_tostr(cstrview v)
 char* cstrview_to_cstring(cstrview v)
 {
     size_t size = cstrview_len(v);
-    char* s = calloc(size + 1, sizeof(char));
+    char* s = (char*)calloc(size + 1, sizeof(char));
     if (!s) {
         return NULL;
     }
@@ -214,15 +214,15 @@ cstrview cstrview_substr(cstrview v, size_t pos, size_t len)
 
 cstrview cstrview_split(const cstrview v, const char c)
 {
-    const char* p = memchr(cstrview_data(v), c, cstrview_len(v));
+    const char* p = (const char*)memchr(cstrview_data(v), c, cstrview_len(v));
     return cstrview_fromrange(cstrview_data(v), p ? p : cstrview_end(v));
 }
 
 cstrview cstrview_split_on(cstrview v, cstrview v2)
 {
     // TODO: Do I need to provide a backup implementation of memmem()?
-    const char* p = memmem(cstrview_data(v), cstrview_len(v),
-            cstrview_data(v2), cstrview_len(v2));
+    const char* p = (const char*)memmem(cstrview_data(v), cstrview_len(v),
+                                        cstrview_data(v2), cstrview_len(v2));
     return cstrview_fromrange(cstrview_data(v), p ? p : cstrview_end(v));
 }
 
@@ -316,7 +316,7 @@ cstrview cstrview_split_deref(cstrview_split_iter it)
 //------------------------------------------------------------------------------
 cstr* cstr_new(const char* const s, const size_t len)
 {
-    cstr* str = calloc_(1, sizeof(*str));
+    cstr* str = (cstr*)calloc_(1, sizeof(*str));
     if (!str) {
         return NULL;
     }
@@ -365,7 +365,7 @@ cstr* cstr_init(cstr* str, const char* const s, size_t len)
         memset(&str->data[0], '\0', sizeof(str->data));
         memcpy(&str->data[0], s, len);
     } else {                          // out of line:
-        str->o.data = calloc_(len + 1, sizeof(*str->o.data));
+        str->o.data = (char*)calloc_(len + 1, sizeof(*str->o.data));
         if (!str->o.data) {
             return NULL;
         }
@@ -541,7 +541,7 @@ cstr* cstr_shink_to_fit(cstr* s)
 
     const size_t capacity = cstr_capacity(s);
     if (capacity > size) {
-        char* p = reallocarray_(s->o.data, size + 1, sizeof(char));
+        char* p = (char*)reallocarray_(s->o.data, size + 1, sizeof(char));
         if (p != NULL) {
             s->o.data = p;
             s->o.capacity = size;
@@ -565,13 +565,13 @@ cstr* cstr_appendv(cstr* s, const cstrview v)
     } else {
         char* data;
         if (isinline) {
-            data = calloc_(newsize + 1, sizeof(char));
+            data = (char*)calloc_(newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
             memcpy(&data[0], &s->data[0], cursize);
         } else {
-            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            data = (char*)reallocarray_(s->o.data, newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
@@ -605,13 +605,13 @@ cstr* cstr_prependv(cstr* s, cstrview v)
     } else {
         char* data;
         if (cstr_isinline_(s)) {
-            data = calloc_(newsize + 1, sizeof(char));
+            data = (char*)calloc_(newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
             memcpy(&data[addsize], &s->data[0], oldsize);
         } else {
-            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            data = (char*)reallocarray_(s->o.data, newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
@@ -651,14 +651,14 @@ cstr* cstr_insertv(cstr* s, const size_t pos, cstrview v)
     } else {
         char* data;
         if (cstr_isinline_(s)) {
-            data = calloc_(newsize + 1, sizeof(char));
+            data = (char*)calloc_(newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
             memcpy(&data[0], &s->data[0], pos);
             memcpy(&data[pos+addsize], &s->data[pos], rest);
         } else {
-            data = reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            data = (char*)reallocarray_(s->o.data, newsize + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
