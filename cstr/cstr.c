@@ -162,9 +162,14 @@ size_t cstrview_length(const cstrview v)
     return cstrview_len(v);
 }
 
-int cstrview_empty(const cstrview v)
+bool cstrview_empty(const cstrview v)
 {
     return v.begin == v.end;
+}
+
+bool cstrview_is_empty(const cstrview v)
+{
+    return cstrview_empty(v);
 }
 
 cstr cstrview_tostr(cstrview v)
@@ -301,7 +306,7 @@ cstrview_split_iter cstrview_split_next(cstrview_split_iter it, char c)
     return it;
 }
 
-int cstrview_split_stop(cstrview_split_iter it)
+bool cstrview_split_stop(cstrview_split_iter it)
 {
     return cstrview_empty(it.data);
 }
@@ -423,6 +428,16 @@ size_t cstr_len(const cstr* s)
 size_t cstr_length(const cstr* s)
 {
     return cstr_size(s);
+}
+
+bool cstr_empty(const cstr* s)
+{
+    return cstr_len(s) == 0;
+}
+
+bool cstr_is_empty(const cstr* s)
+{
+    return cstr_empty(s);
 }
 
 size_t cstr_capacity(const cstr* s)

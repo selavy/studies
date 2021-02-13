@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +59,8 @@ const char* cstrview_end(cstrview v);
 size_t      cstrview_len(cstrview v);
 size_t      cstrview_size(cstrview v);
 size_t      cstrview_length(cstrview v);
-int         cstrview_empty(cstrview v);
+bool        cstrview_empty(cstrview v);
+bool        cstrview_is_empty(cstrview v);
 cstr        cstrview_tostr(cstrview v);
 char*       cstrview_to_cstring(cstrview v); // caller takes ownership
 
@@ -92,7 +94,7 @@ typedef struct cstrview_split_iter_t cstrview_split_iter;
 
 cstrview_split_iter cstrview_split_start(cstrview v, char c);
 cstrview_split_iter cstrview_split_next(cstrview_split_iter iter, char c);
-int                 cstrview_split_stop(cstrview_split_iter iter);
+bool                cstrview_split_stop(cstrview_split_iter iter);
 cstrview            cstrview_split_deref(cstrview_split_iter iter);
 
 //------------------------------------------------------------------------------
@@ -115,6 +117,8 @@ void  cstr_set_allocator(struct cstr_alloc_t a);
 size_t cstr_size(const cstr* s);
 size_t cstr_len(const cstr* s);
 size_t cstr_length(const cstr* s);
+bool   cstr_empty(const cstr* s);
+bool   cstr_is_empty(const cstr* s);
 // NOTE: does not include NULL terminator. i.e. capacity available for chars
 size_t cstr_capacity(const cstr* s);
 

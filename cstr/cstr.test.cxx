@@ -924,7 +924,7 @@ TEST_CASE("Verify BM_AppendSmallStrings")
             make<String>("cc"),
             make<String>("dd"),
         };
-        String result = make<String>("");
+        String result{};
         for (auto&& s : strings) {
             StringAppend(result, s);
         }
@@ -941,11 +941,12 @@ TEST_CASE("Verify BM_AppendSmallStrings")
             make<String>("cc"),
             make<String>("dd"),
         };
-        // String result = make<String>("");
-        String result = {};
+        String result{};
+        CHECK(cstr_isinline_(&result));
+        CHECK(cstr_empty(&result));
         for (auto&& s : strings) {
             StringAppend(result, s);
-            // CHECK(cstr_isinline_(&result));
+            CHECK(cstr_isinline_(&result));
         }
         count += StringSize(result);
         return count;
