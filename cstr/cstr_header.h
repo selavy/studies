@@ -271,16 +271,17 @@ cstr* cstr_insertv(cstr* s, const size_t pos, cstrview v) noexcept
         memcpy(&data[pos], cstrview_data(v), addsize);
         data[newsize] = '\0';
     } else {
+        size_t newcapacity = 2*newsize;
         char* data;
         if (cstr_isinline_(s)) {
-            data = (char*)calloc_(newsize + 1, sizeof(char));
+            data = (char*)calloc_(newcapacity + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
             memcpy(&data[0], &s->data[0], pos);
             memcpy(&data[pos+addsize], &s->data[pos], rest);
         } else {
-            data = (char*)reallocarray_(s->o.data, newsize + 1, sizeof(char));
+            data = (char*)reallocarray_(s->o.data, newcapacity + 1, sizeof(char));
             if (!data) {
                 return NULL;
             }
@@ -289,7 +290,7 @@ cstr* cstr_insertv(cstr* s, const size_t pos, cstrview v) noexcept
         memcpy(&data[pos], cstrview_data(v), addsize);
         data[newsize] = '\0';
         s->o.data = data;
-        s->o.capacity = newsize + 1;
+        s->o.capacity = newcapacity;
         *cstr_inline_mark_(s) = 1;
     }
     s->size = newsize;

@@ -164,4 +164,32 @@ static void BM_CreateSmallStrings_CStr(benchmark::State& state)
 }
 BENCHMARK(BM_CreateSmallStrings_CStr);
 
+template <class String>
+static void BM_InsertLongStrings(benchmark::State& state)
+{
+    int64_t count = 0;
+    for (auto _ : state) {
+        state.PauseTiming();
+        String a = make<String>("This is a very long string that must be allocated on the heap");
+        String b = make<String>("Yet another string that will have to be allocated on the heap because it is also so longgggggg.");
+        String c = make<String>("Yet another string that will have to be allocated on the heap because it is also so longgggggg.");
+        String d = make<String>("0101234890712-39487-9123740[uoaksjdf;lkhjasd;lfkhjas;ldkfj'lkj");
+        String e = make<String>("asldkfja;slkjasdfjjjjjjjjjjjjjjjjj;;;;;;;");
+        String f = make<String>("A small string");
+        state.ResumeTiming();
+        StringInsert(a, 19, b);
+        StringInsert(a, 24, c);
+        StringInsert(a,  1, d);
+        StringInsert(a, 14, e);
+        StringInsert(a, 24, f);
+        count += StringSize(a);
+    }
+
+    if (count == 0) {
+        throw std::runtime_error("invalid!");
+    }
+}
+BENCHMARK_TEMPLATE(BM_InsertLongStrings, cstr);
+BENCHMARK_TEMPLATE(BM_InsertLongStrings, std::string);
+
 BENCHMARK_MAIN();
