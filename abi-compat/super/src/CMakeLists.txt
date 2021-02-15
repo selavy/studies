@@ -5,6 +5,7 @@ set(SOURCE_FILES
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+add_library(Super::Super ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:include>
@@ -13,7 +14,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_PATCH})
-    # SOVERSION 1)
 
 install(TARGETS ${PROJECT_NAME} EXPORT LibSuperConfig
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
