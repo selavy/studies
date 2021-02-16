@@ -5,6 +5,8 @@ project(studies
     LANGUAGES C CXX
     )
 
+cmake_policy(SET CMP0048 NEW)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
 add_library(project_warnings INTERFACE)
