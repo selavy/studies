@@ -43,6 +43,7 @@ add_subdirectory(fp)
 # add_subdirectory(gentable)
 add_subdirectory(cstr)
 add_subdirectory(abi-compat)
+add_subdirectory(vtbl)
 
 # Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
 add_subdirectory(ch32_string_matching)
