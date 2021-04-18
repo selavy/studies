@@ -23,10 +23,7 @@ struct DerivedCxx : BaseCxx
     int  bar() override { std::cout << "DerivedCxx::bar()\n"; return 1; }
 };
 
-struct BaseC    { void* vtbl; };
-struct DerivedC { void* vtbl; };
-
-enum VTableIndex
+enum Index
 {
     DTR = 0,
     FOO,
@@ -34,81 +31,167 @@ enum VTableIndex
     N_ENTRIES,
 };
 
-void BaseC_foo_impl(BaseC* x)
+struct VirtBase { void** vtbl; };
+struct BaseC    { VirtBase v; };
+struct DerivedC { VirtBase v; };
+
+void BaseC_dtr_(BaseC* b);
+void BaseC_foo_(BaseC* b);
+int  BaseC_bar_(BaseC* b);
+
+void DerivedC_dtr_(DerivedC* b);
+void DerivedC_foo_(DerivedC* b);
+int  DerivedC_bar_(DerivedC* b);
+
+void* VTable_BaseC[N_ENTRIES] = {
+    [DTR] = (void*)&BaseC_dtr_,
+    [FOO] = (void*)&BaseC_foo_,
+    [BAR] = (void*)&BaseC_bar_,
+};
+
+void* VTable_DerivedC[N_ENTRIES] = {
+    [DTR] = (void*)&DerivedC_dtr_,
+    [FOO] = (void*)&DerivedC_foo_,
+    [BAR] = (void*)&DerivedC_bar_,
+};
+
+void BaseC_ctr(BaseC* b)
+{
+    b->v.vtbl = VTable_BaseC;
+    std::cout << "BaseC::ctr()\n";
+}
+
+void BaseC_dtr_(BaseC* b)
+{
+    std::cout << "BaseC::dtr()\n";
+}
+
+void BaseC_foo_(BaseC* b)
 {
     std::cout << "BaseC::foo()\n";
 }
 
-int BaseC_bar_impl(BaseC* x)
+int BaseC_bar_(BaseC* b)
 {
     std::cout << "BaseC::bar()\n";
     return 0;
 }
 
-void BaseC_dtor_impl(BaseC* x)
+void DerivedC_ctr(DerivedC* b)
 {
-    std::cout << "~BaseC\n";
+    // Set VTable pointer (so can call virtual functions in initializer list)
+    // Call BaseC constructor
+
+    BaseC_ctr((BaseC*)b);
+    b->v.vtbl = VTable_DerivedC;
+    std::cout << "DerivedC::ctr()\n";
 }
 
-void* BaseC_VTable[N_ENTRIES] = {
-    [DTR] = (void*)&BaseC_dtor_impl,
-    [FOO] = (void*)&BaseC_foo_impl,
-    [BAR] = (void*)&BaseC_bar_impl,
-};
-
-void BaseC_ctor(BaseC* x)
+void DerivedC_dtr_(DerivedC* b)
 {
-    x->vtbl = &BaseC_VTable;
-    std::cout << "BaseC\n";
+    BaseC_dtr_((BaseC*)b);
+    std::cout << "DerivedC::dtr()\n";
 }
 
-void do_dtor(void* x)
+void DerivedC_foo_(DerivedC* b)
 {
-    BaseC* xx = (BaseC*)x;
-    xx->vtbl[DTR](xx);
+    std::cout << "DerivedC::foo()\n";
 }
 
-void do_foo(void* x)
+int DerivedC_bar_(DerivedC* b)
 {
-    BaseC* xx = (BaseC*)x;
-    xx->vtbl[FOO](xx);
+    std::cout << "DerivedC::bar()\n";
+    return 1;
 }
 
-int do_bar(void* x)
+void call_foo(void* x)
 {
-    BaseC* xx = (BaseC*)x;
-    return ((int (*)(BaseC*))xx->vtbl[BAR])(xx);
+    VirtBase* v = (VirtBase*)x;
+    void*     p = v->vtbl[FOO];
+    (*(void (*)())p)();
 }
 
+void call_dtr(void* x)
+{
+    VirtBase* v = (VirtBase*)x;
+    void*     p = v->vtbl[DTR];
+    (*(void (*)(void*))p)(x);
+}
 
 int main(int argc, char** argv)
 {
-    // Base::foo() via base
     {
         std::cout << "---------------------------------------------------\n";
-        std::cout << "| Base::foo() via base pointer\n";
+        std::cout << "| C++ Version\n";
         std::cout << "---------------------------------------------------\n";
-        auto b = std::make_unique<BaseCxx>();
-        b->foo();
+
+        // Base::foo() via base
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Base::foo() via base pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            auto b = std::make_unique<BaseCxx>();
+            b->foo();
+        }
+
+        // Derived::foo() via base
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Derived::foo() via base pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            std::unique_ptr<BaseCxx> b{new DerivedCxx};
+            b->foo();
+        }
+
+        // Derived::foo() via base
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Derived::foo() via derived pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            auto b = std::make_unique<DerivedCxx>();
+            b->foo();
+        }
     }
 
-    // Derived::foo() via base
     {
         std::cout << "---------------------------------------------------\n";
-        std::cout << "| Derived::foo() via base pointer\n";
+        std::cout << "| C Version\n";
         std::cout << "---------------------------------------------------\n";
-        std::unique_ptr<BaseCxx> b{new DerivedCxx};
-        b->foo();
-    }
 
-    // Derived::foo() via base
-    {
-        std::cout << "---------------------------------------------------\n";
-        std::cout << "| Derived::foo() via derived pointer\n";
-        std::cout << "---------------------------------------------------\n";
-        auto b = std::make_unique<DerivedCxx>();
-        b->foo();
-    }
+        // Base::foo() via base
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Base::foo() via base pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            BaseC b;
+            BaseC_ctr(&b);
+            call_foo(&b);
+            call_dtr(&b);
+        }
 
+        // Derived::foo() via base
+#if 1
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Derived::foo() via base pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            DerivedC b;
+            DerivedC_ctr(&b);
+            call_foo(&b);
+            call_dtr(&b);
+        }
+#endif
+
+        // Derived::foo() via base
+#if 0
+        {
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "| Derived::foo() via derived pointer\n";
+            std::cout << "---------------------------------------------------\n";
+            auto b = std::make_unique<DerivedCxx>();
+            b->foo();
+        }
+#endif
+    }
     return 0;
 }
