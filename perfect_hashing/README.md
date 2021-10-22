@@ -1,0 +1,1 @@
+/* Command-line: /home/peter/github.com/neovim/.deps/usr/bin/gperf --output-file=/home/peter/github.com/neovim/build/src/nvim/auto/funcs.generated.h /home/peter/github.com/neovim/build/src/nvim/auto/funcs.generated.h.gperf  */

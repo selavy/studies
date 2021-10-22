@@ -44,8 +44,11 @@ add_subdirectory(fp)
 add_subdirectory(cstr)
 add_subdirectory(abi-compat)
 add_subdirectory(vtbl)
+add_subdirectory(idvec)
+add_subdirectory(perfect_hashing)
 
 # Introduction To Algorithms - Cormen, Leiserson, Rivest, Stein
 add_subdirectory(ch32_string_matching)
 add_subdirectory(gentable)
 add_subdirectory(linalg)
+add_subdirectory(any)
