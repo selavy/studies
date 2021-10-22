@@ -6,20 +6,27 @@
 
 struct bad_any_cast : std::runtime_error
 {
-    bad_any_cast() noexcept = default;
+    bad_any_cast() noexcept : runtime_error("bad any cast") {}
 };
 
 struct AnyBase
 {
     virtual ~AnyBase() noexcept = default;
+    virtual std::unique_ptr<AnyBase> clone() const = 0;
 };
 
 template <class T>
 struct AnyImpl : AnyBase
 {
-    explicit AnyImpl(T&& t) : t_(std::forward<T>(t)) {}
+    explicit AnyImpl(T t) : t_(std::move(t)) {}
 
-    T* get() noexcept { return &t_; }
+    std::unique_ptr<AnyBase> clone() const override
+    {
+        return std::unique_ptr<AnyBase>{new AnyImpl<T>(t_)};
+    }
+
+          T* get()       noexcept { return &t_; }
+    const T* get() const noexcept { return &t_; }
 
     T t_;
 };
@@ -29,9 +36,11 @@ struct Any
     Any() noexcept = default;
 
     template <class T>
-    Any(T&& t) : val_(std::make_unique<AnyImpl<T>>(std::forward<T>(t))) {}
+    Any(T t) : val_(std::make_unique<AnyImpl<T>>(std::move(t))) {}
 
-    bool has_value() noexcept { return val_ != nullptr; }
+    Any(const Any& other) : val_{std::move(other.clone())} {}
+
+    bool has_value() const noexcept { return val_ != nullptr; }
 
     void reset() noexcept { val_.reset(); }
 
@@ -42,6 +51,11 @@ struct Any
 
 
 private:
+    std::unique_ptr<AnyBase> clone() const
+    {
+        return val_ ? val_->clone() : nullptr;
+    }
+
     template <class T>
     T* cast() noexcept
     {
@@ -100,26 +114,7 @@ const T* any_cast(const Any* operand)
 #if 0
 namespace sbo {
 
-struct SmallStorage
-{
-    constexpr static std::size_t kMaxSize = 32;
 
-    constexpr SmallStorage() noexcept {}
-
-    template <class T>
-    explicit SmallStorage(T t) noexcept(std::is_nothrow_move_constructible_v<T>)
-    {
-        new (&buf[0]) T{std::move(t)};
-    }
-
-    std::array<char, kMaxSize> buf = {};
-
-};
-
-struct LargeStorage
-{
-
-}
 
 } // ~sbo
 #endif
@@ -149,6 +144,13 @@ int main(int argc, const char* argv[]) {
     std::cout << "value<double>: ";
     print(any_cast<double>(&a));
     std::cout << std::endl;
+
+    auto b = a;
+    std::cout << "value<int>: ";
+    print(any_cast<int>(&b));
+    std::cout << std::endl;
+
+    std::cout << "value<int>: " << any_cast<int>(b) << std::endl;
 
     return 0;
 }
