@@ -38,8 +38,45 @@ TEST_CASE("storage_for")
         CHECK(sizeof(storage_for<D5>) == sizeof(D5));
         CHECK(alignof(storage_for<D5>) == alignof(D5));
     }
+
+    SECTION("array")
+    {
+        storage_for<int[5]> s;
+        CHECK(sizeof(s)  == sizeof(int)*5);
+        CHECK(alignof(s) == alignof(int));
+    }
 }
 
-TEST_CASE("storage")
+struct Pair {
+    Pair(int x_, int y_) : x{x_}, y{y_} {}
+
+    int x;
+    int y;
+};
+
+TEST_CASE("optional")
 {
+
+    SECTION("default construct is not engaged")
+    {
+        pl::optional<int> o;
+        CHECK(!o);
+    }
+
+    SECTION("construct with value is engaged")
+    {
+        pl::optional<int> o = 1;
+        CHECK(o);
+        CHECK(*o == 1);
+    }
+
+    SECTION("var args construction")
+    {
+        pl::optional<Pair> o{1, 2};
+        CHECK(o);
+        CHECK((*o).x == 1);
+        CHECK((*o).y == 2);
+        CHECK(o->x == 1);
+        CHECK(o->y == 2);
+    }
 }

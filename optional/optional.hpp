@@ -17,12 +17,12 @@ T* construct_at(void* p, Args&&... args)
 template <class T, std::size_t N = alignof(T)>
 struct storage_for
 {
-    char* operator[](std::size_t n) {
-        return &buf[n];
+    char& operator[](std::size_t n) {
+        return buf[n];
     }
 
-    const char* operator[](std::size_t n) const {
-        return &buf[n];
+    const char& operator[](std::size_t n) const {
+        return buf[n];
     }
 
     char buf[sizeof(T)] alignas(N);
@@ -34,6 +34,17 @@ struct storage
 {
     storage() = default;
 
+    storage(T t)
+    {
+        emplace(std::move(t));
+    }
+
+    template <class... Args>
+    explicit storage(Args&&... args)
+    {
+        emplace(std::forward<Args>(args)...);
+    }
+
     ~storage() noexcept
     {
         destroy_if_engaged();
@@ -42,7 +53,7 @@ struct storage
     template <class... Args>
     auto emplace(Args&&... args) -> void
     {
-        construct_at(&buf, std::forward<Args>(args)...);
+        construct_at<T>(&buf[0], std::forward<Args>(args)...);
         engaged = true;
     }
 
@@ -82,19 +93,47 @@ struct storage
 
 } // namespace detail
 
-#if 0
 template <class T>
-struct optional
+class optional
 {
-    optional();
+public:
+    optional() noexcept : impl{} {}
 
-    explicit optional(T t);
+    optional(T t) : impl{std::move(t)} {}
 
     template <class... Args>
-    optional(Args&&... args);
+    explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
 
+    explicit operator bool() const noexcept { return impl.is_engaged(); }
 
+    auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
+
+    auto operator*() noexcept -> T&
+    {
+        assert(is_engaged());
+        return *impl.ptr();
+    }
+
+    auto operator*() const noexcept -> T const&
+    {
+        assert(is_engaged());
+        return *impl.ptr();
+    }
+
+    auto operator->() noexcept -> T*
+    {
+        assert(is_engaged());
+        return impl.ptr();
+    }
+
+    auto operator->() const noexcept -> T const*
+    {
+        assert(is_engaged());
+        return impl.ptr();
+    }
+
+private:
+    detail::storage<T> impl;
 };
-#endif
 
 }  // namespace pl
