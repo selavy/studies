@@ -1,5 +1,6 @@
 #include "mafsa2.h"
 #include "iconv.h"
+#include <iostream>
 #include <cassert>
 #include "tarray_util.h"
 #include "mafsa_generated.h"

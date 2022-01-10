@@ -1,4 +1,5 @@
 #include <benchmark/benchmark.h>
+#include <stdexcept>
 
 // TODO: package cstr correctly
 // #include "cstr.h"
