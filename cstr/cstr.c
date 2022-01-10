@@ -45,7 +45,14 @@ static const struct cstr_alloc_t malloc_allocator_ =
     .free         = &cstr_free_,
 };
 
-static struct cstr_alloc_t cstr_allocator_ = malloc_allocator_;
+// TODO(peter): for some reason getting an error about initializer
+//              not being static
+// static struct cstr_alloc_t cstr_allocator_ = malloc_allocator_;
+static struct cstr_alloc_t cstr_allocator_ = {
+    .calloc       = &calloc,
+    .reallocarray = &reallocarray,
+    .free         = &cstr_free_,
+};
 
 static void* calloc_(size_t nmemb, size_t size)
 {
