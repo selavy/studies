@@ -136,4 +136,10 @@ private:
     detail::storage<T> impl;
 };
 
+template <class T, class... Args>
+auto make_optional(Args&&... args) -> optional<T>
+{
+    return optional<T>(std::forward<Args>(args)...);
+}
+
 }  // namespace pl

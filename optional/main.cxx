@@ -79,4 +79,25 @@ TEST_CASE("optional")
         CHECK(o->x == 1);
         CHECK(o->y == 2);
     }
+
+    SECTION("var args with make_optional")
+    {
+        auto o = pl::make_optional<Pair>(1, 2);
+        CHECK(o);
+        CHECK((*o).x == 1);
+        CHECK((*o).y == 2);
+    }
+}
+
+template <class T>
+auto default_size()
+{
+    return sizeof(T) + std::max(sizeof(bool), alignof(T));
+}
+
+TEST_CASE("default sizes")
+{
+    CHECK(sizeof(pl::optional<int>) == default_size<int>());
+    CHECK(sizeof(pl::optional<double>) == default_size<double>());
+    CHECK(sizeof(pl::optional<char>) == default_size<char>());
 }
