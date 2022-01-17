@@ -91,6 +91,44 @@ struct storage
     storage_for<T> buf = {};
 };
 
+template <>
+struct storage<void>
+{
+    storage() = default;
+
+    ~storage() noexcept = default;
+
+    template <class... Args>
+    auto emplace(Args&&... args) -> void
+    {
+        engaged = true;
+    }
+
+    auto destroy() noexcept -> void
+    {
+        engaged = false;
+    }
+
+    auto ptr() noexcept -> void*
+    {
+        assert(engaged);
+        return nullptr;
+    }
+
+    auto ptr() const noexcept -> void const*
+    {
+        assert(engaged);
+        return nullptr;
+    }
+
+    auto is_engaged() const noexcept -> bool
+    {
+        return engaged;
+    }
+
+    bool engaged = false;
+};
+
 } // namespace detail
 
 template <class T>
@@ -99,7 +137,10 @@ class optional
 public:
     optional() noexcept : impl{} {}
 
-    optional(T t) : impl{std::move(t)} {}
+    // TODO(peter): constrain `V`
+    template <class V>
+    optional(V t, std::enable_if_t<!std::is_void_v<V>, int*> = nullptr)
+        : impl{std::move(t)} {}
 
     template <class... Args>
     explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
@@ -134,6 +175,19 @@ public:
 
 private:
     detail::storage<T> impl;
+};
+
+// TODO(plesslie): this is kind of a cop out implementing it this way
+template <>
+class optional<void>
+{
+public:
+    optional() noexcept = default;
+    explicit operator bool() const noexcept { return engaged_; }
+    auto is_engaged() const noexcept -> bool { return engaged_; }
+
+private:
+    bool engaged_ = false;
 };
 
 template <class T, class... Args>
