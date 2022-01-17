@@ -51,7 +51,7 @@ struct storage
     }
 
     template <class... Args>
-    auto emplace(Args&&... args) -> void
+    void emplace(Args&&... args)
     {
         construct_at<T>(&buf[0], std::forward<Args>(args)...);
         engaged = true;
@@ -137,15 +137,20 @@ class optional
 public:
     optional() noexcept : impl{} {}
 
-    // TODO(peter): constrain `V`
-    template <class V>
-    optional(V t, std::enable_if_t<!std::is_void_v<V>, int*> = nullptr)
-        : impl{std::move(t)} {}
+    optional(T t) : impl(std::move(t)) {}
 
-    template <class... Args>
+    template <class... Args,
+             typename = std::enable_if_t<std::is_constructible_v<T, Args...>>>
     explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
 
     explicit operator bool() const noexcept { return impl.is_engaged(); }
+
+    template <class... Args,
+             typename = std::enable_if_t<std::is_constructible_v<T, Args...>>>
+    auto emplace(Args&&... args) -> void
+    {
+        impl.emplace(std::forward<Args>(args)...);
+    }
 
     auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
 
@@ -185,6 +190,7 @@ public:
     optional() noexcept = default;
     explicit operator bool() const noexcept { return engaged_; }
     auto is_engaged() const noexcept -> bool { return engaged_; }
+    auto emplace() noexcept -> void { engaged_ = true; }
 
 private:
     bool engaged_ = false;

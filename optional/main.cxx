@@ -61,6 +61,10 @@ TEST_CASE("optional")
     {
         pl::optional<int> o;
         CHECK(!o);
+
+        o.emplace(1);
+        CHECK(!!o);
+        CHECK(*o == 1);
     }
 
     SECTION("construct with value is engaged")
@@ -101,4 +105,15 @@ TEST_CASE("default sizes")
     CHECK(sizeof(pl::optional<double>) == default_size<double>());
     CHECK(sizeof(pl::optional<char>) == default_size<char>());
     CHECK(sizeof(pl::optional<void>) == sizeof(bool));
+}
+
+TEST_CASE("optional<void>")
+{
+    pl::optional<void> o1;
+    CHECK(o1.is_engaged() == false);
+    CHECK(!!o1 == false);
+
+    o1.emplace();
+    CHECK(o1.is_engaged() == true);
+    CHECK(!!o1 == true);
 }
