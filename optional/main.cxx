@@ -117,3 +117,11 @@ TEST_CASE("optional<void>")
     CHECK(o1.is_engaged() == true);
     CHECK(!!o1 == true);
 }
+
+TEST_CASE("value_or")
+{
+    pl::optional<int> o1;
+    CHECK(o1.value_or(42) == 42);
+    o1 = 55;
+    CHECK(o1.value_or(42) == 55);
+}

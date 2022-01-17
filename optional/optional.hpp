@@ -178,6 +178,11 @@ public:
         return impl.ptr();
     }
 
+    auto value_or(T val) const noexcept -> T
+    {
+        return is_engaged() ? *impl.ptr() : val;
+    }
+
 private:
     detail::storage<T> impl;
 };
