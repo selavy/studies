@@ -3,6 +3,9 @@
 #include <cstddef>
 #include <memory>
 
+// TODO(peter): use a different name
+#define REQUIRES(...) typename std::enable_if_t<(__VA_ARGS__), bool> = true
+
 namespace pl {
 
 namespace detail {
@@ -140,13 +143,13 @@ public:
     optional(T t) : impl(std::move(t)) {}
 
     template <class... Args,
-             typename = std::enable_if_t<std::is_constructible_v<T, Args...>>>
+             REQUIRES(std::is_constructible_v<T, Args...>)>
     explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
 
     explicit operator bool() const noexcept { return impl.is_engaged(); }
 
     template <class... Args,
-             typename = std::enable_if_t<std::is_constructible_v<T, Args...>>>
+             REQUIRES(std::is_constructible_v<T, Args...>)>
     auto emplace(Args&&... args) -> void
     {
         impl.emplace(std::forward<Args>(args)...);
@@ -208,3 +211,5 @@ auto make_optional(Args&&... args) -> optional<T>
 }
 
 }  // namespace pl
+
+#undef REQUIRES

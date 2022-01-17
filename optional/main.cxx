@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 #include "optional.hpp"
+#include <iostream>
 
 template <std::size_t N>
 struct Data
