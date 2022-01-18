@@ -132,11 +132,57 @@ struct storage<void>
     bool engaged = false;
 };
 
+template <class T>
+struct storage<T&>
+{
+    using U = std::remove_reference_t<T>;
+
+    storage() = default;
+
+    storage(T t)
+    {
+        emplace(t);
+    }
+
+    ~storage() = default;
+
+    void emplace(T t)
+    {
+        ptr_ = &t;
+    }
+
+    auto destroy() noexcept -> void
+    {
+        ptr_ = nullptr;
+    }
+
+    auto ptr() noexcept -> U*
+    {
+        assert(is_engaged());
+        return ptr_;
+    }
+
+    auto ptr() const noexcept -> U const*
+    {
+        assert(is_engaged());
+        return ptr_;
+    }
+
+    auto is_engaged() const noexcept -> bool
+    {
+        return ptr_ != nullptr;
+    }
+
+    U* ptr_;
+};
+
 } // namespace detail
 
 template <class T>
 class optional
 {
+    using U = std::remove_reference_t<T>;
+
 public:
     optional() noexcept : impl{} {}
 
@@ -157,25 +203,25 @@ public:
 
     auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
 
-    auto operator*() noexcept -> T&
+    auto operator*() noexcept -> U&
     {
         assert(is_engaged());
         return *impl.ptr();
     }
 
-    auto operator*() const noexcept -> T const&
+    auto operator*() const noexcept -> U const&
     {
         assert(is_engaged());
         return *impl.ptr();
     }
 
-    auto operator->() noexcept -> T*
+    auto operator->() noexcept -> U*
     {
         assert(is_engaged());
         return impl.ptr();
     }
 
-    auto operator->() const noexcept -> T const*
+    auto operator->() const noexcept -> U const*
     {
         assert(is_engaged());
         return impl.ptr();

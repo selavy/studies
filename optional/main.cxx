@@ -102,7 +102,8 @@ auto default_size()
 
 TEST_CASE("default sizes")
 {
-    CHECK(sizeof(pl::optional<int>) == default_size<int>());
+    CHECK(sizeof(pl::optional<int> ) == default_size<int>());
+    CHECK(sizeof(pl::optional<int&>) == sizeof(int*));
     CHECK(sizeof(pl::optional<double>) == default_size<double>());
     CHECK(sizeof(pl::optional<char>) == default_size<char>());
     CHECK(sizeof(pl::optional<void>) == sizeof(bool));
