@@ -10,6 +10,15 @@ namespace pl {
 
 namespace detail {
 
+struct Void
+{
+    Void() noexcept = default;
+    Void(const Void&) noexcept = default;
+    Void(Void&&) noexcept = default;
+    Void& operator=(const Void&) noexcept = default;
+    Void& operator=(Void&&) noexcept = default;
+};
+
 // TODO: use std::construct_at if available
 template <class T, class... Args>
 T* construct_at(void* p, Args&&... args)
@@ -28,75 +37,63 @@ struct storage_for
         return buf[n];
     }
 
+    auto ptr()       noexcept -> T*       { return reinterpret_cast<T*>(&buf[0]); }
+    auto ptr() const noexcept -> T const* { return reinterpret_cast<T*>(&buf[0]); }
+
     char buf[sizeof(T)] alignas(N);
 };
+
+
+// struct storage
+// {
+//     template <class... Args> auto construct(Args&&... args) -> void;
+//     auto destroy() -> void;
+//     auto lvalue() -> T&;
+//     auto lvalue() -> T const&;
+//     auto rvalue() -> T&&;
+//     auto is_engaged() -> bool;
+// }
 
 // TODO(peter): test this as a customization point, e.g. for optional<T&>
 template <class T>
 struct storage
 {
-    storage() = default;
-
-    storage(T t)
-    {
-        emplace(std::move(t));
-    }
-
-    template <class... Args>
-    explicit storage(Args&&... args)
-    {
-        emplace(std::forward<Args>(args)...);
-    }
-
     ~storage() noexcept
     {
-        destroy_if_engaged();
+        destroy();
+    }
+
+    auto destroy() noexcept -> void
+    {
+        if (engaged) {
+            std::destroy_at(buf.ptr());
+            engaged = false;
+        }
     }
 
     template <class... Args>
-    void emplace(Args&&... args)
+    void construct(Args&&... args)
     {
         construct_at<T>(&buf[0], std::forward<Args>(args)...);
         engaged = true;
     }
 
-    auto destroy_if_engaged() noexcept -> void
-    {
-        if (engaged) {
-            destroy();
-        }
-    }
-
-    auto destroy() noexcept -> void
-    {
-        std::destroy_at(ptr());
-        engaged = false;
-    }
-
-    auto ptr() noexcept -> T*
-    {
-        assert(engaged);
-        return reinterpret_cast<T*>(&buf[0]);
-    }
-
-    auto ptr() const noexcept -> T const*
-    {
-        assert(engaged);
-        return reinterpret_cast<T const*>(&buf[0]);
-    }
-
-    auto is_engaged() const noexcept -> bool
-    {
-        return engaged;
-    }
+    auto lvalue()       noexcept -> T&        { return *buf.ptr(); }
+    auto lvalue() const noexcept -> T const&  { return *buf.ptr(); }
+    auto rvalue()       noexcept -> T&&       { return *buf.ptr(); }
+    auto is_engaged() const noexcept -> bool  { return engaged; }
 
     bool engaged = false;
     storage_for<T> buf = {};
 };
 
+// TODO: implement storage<void>
+#if 0
 template <>
 struct storage<void>
 {
+    using value_type = Void;
+
     storage() = default;
 
     ~storage() noexcept = default;
@@ -131,10 +128,13 @@ struct storage<void>
 
     bool engaged = false;
 };
+#endif
 
+#if 0
 template <class T>
 struct storage<T&>
 {
+    using value_type = T&;
     using U = std::remove_reference_t<T>;
 
     storage() = default;
@@ -175,22 +175,30 @@ struct storage<T&>
 
     U* ptr_;
 };
+#endif
 
 } // namespace detail
 
 template <class T>
 class optional
 {
-    using U = std::remove_reference_t<T>;
+    using storage = detail::storage<T>;
 
 public:
     optional() noexcept : impl{} {}
 
-    optional(T t) : impl(std::move(t)) {}
+    template <class U,
+             REQUIRES(std::is_constructible_v<U, T> && !std::is_void_v<T>)>
+    // optional(U t) : impl(std::move(t)) {}
+    optional(U t)
+    {
+        impl.construct(t);
+    }
 
     template <class... Args,
              REQUIRES(std::is_constructible_v<T, Args...>)>
-    explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
+    // explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
+    explicit optional(Args&&... args) { impl.construct(std::forward<Args>(args)...); }
 
     explicit operator bool() const noexcept { return impl.is_engaged(); }
 
@@ -198,44 +206,46 @@ public:
              REQUIRES(std::is_constructible_v<T, Args...>)>
     auto emplace(Args&&... args) -> void
     {
-        impl.emplace(std::forward<Args>(args)...);
+        impl.destroy();
+        impl.construct(std::forward<Args>(args)...);
     }
 
     auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
 
-    auto operator*() noexcept -> U&
+    auto operator*() noexcept -> T&
     {
         assert(is_engaged());
-        return *impl.ptr();
+        return impl.lvalue();
     }
 
-    auto operator*() const noexcept -> U const&
+    auto operator*() const noexcept -> T const&
     {
         assert(is_engaged());
-        return *impl.ptr();
+        return impl.lvalue();
     }
 
-    auto operator->() noexcept -> U*
+    auto operator->() noexcept -> T*
     {
         assert(is_engaged());
-        return impl.ptr();
+        return &impl.lvalue();
     }
 
-    auto operator->() const noexcept -> U const*
+    auto operator->() const noexcept -> T const*
     {
         assert(is_engaged());
-        return impl.ptr();
+        return &impl.lvalue();
     }
 
-    auto value_or(T val) const noexcept -> T
-    {
-        return is_engaged() ? *impl.ptr() : val;
-    }
+    // auto value_or(U val) const noexcept -> U
+    // {
+    //     return is_engaged() ? *impl.ptr() : val;
+    // }
 
 private:
-    detail::storage<T> impl;
+    storage impl;
 };
 
+#if 0
 // TODO(plesslie): this is kind of a cop out implementing it this way
 template <>
 class optional<void>
@@ -246,9 +256,12 @@ public:
     auto is_engaged() const noexcept -> bool { return engaged_; }
     auto emplace() noexcept -> void { engaged_ = true; }
 
+    // TODO(peter): implement copy + move ctor/assignment
+
 private:
     bool engaged_ = false;
 };
+#endif
 
 template <class T, class... Args>
 auto make_optional(Args&&... args) -> optional<T>
