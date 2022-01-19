@@ -43,10 +43,14 @@ struct storage_for
     char buf[sizeof(T)] alignas(N);
 };
 
-
+// -----------------------------------------------------------------------------
+// Storage Requirements:
+// -----------------------------------------------------------------------------
+//
 // struct storage
 // {
-//     template <class... Args> auto construct(Args&&... args) -> void;
+//     template <class... Args>
+//     auto construct(Args&&... args) -> void;
 //     auto destroy() -> void;
 //     auto lvalue() -> T&;
 //     auto lvalue() -> T const&;
@@ -54,10 +58,11 @@ struct storage_for
 //     auto is_engaged() -> bool;
 // }
 
-// TODO(peter): test this as a customization point, e.g. for optional<T&>
 template <class T>
 struct storage
 {
+    storage() noexcept = default;
+
     ~storage() noexcept
     {
         destroy();
@@ -87,95 +92,40 @@ struct storage
     storage_for<T> buf = {};
 };
 
-// TODO: implement storage<void>
-#if 0
 template <>
-struct storage<void>
+struct storage<void> : Void
 {
-    using value_type = Void;
-
     storage() = default;
 
     ~storage() noexcept = default;
 
+    auto destroy() noexcept -> void { engaged = false; }
+
     template <class... Args>
-    auto emplace(Args&&... args) -> void
-    {
-        engaged = true;
-    }
+    void construct(Args&&... args) { engaged = true; }
 
-    auto destroy() noexcept -> void
-    {
-        engaged = false;
-    }
-
-    auto ptr() noexcept -> void*
-    {
-        assert(engaged);
-        return nullptr;
-    }
-
-    auto ptr() const noexcept -> void const*
-    {
-        assert(engaged);
-        return nullptr;
-    }
-
-    auto is_engaged() const noexcept -> bool
-    {
-        return engaged;
-    }
+    auto lvalue()       noexcept -> Void&       { return *this; }
+    auto lvalue() const noexcept -> Void const& { return *this; }
+    auto rvalue()       noexcept -> Void&       { return *this; }
+    auto is_engaged() const noexcept -> bool    { return engaged; }
 
     bool engaged = false;
 };
-#endif
 
-#if 0
 template <class T>
 struct storage<T&>
 {
-    using value_type = T&;
-    using U = std::remove_reference_t<T>;
-
     storage() = default;
+    ~storage() noexcept = default;
+    auto destroy() noexcept -> void { ptr_ = nullptr; }
+    void construct(T& t) { ptr_ = &t; }
+    auto lvalue()       noexcept -> T&       { return *ptr_; }
+    auto lvalue() const noexcept -> T const& { return *ptr_; }
+    auto rvalue()       noexcept -> T&       { return *ptr_; }
+    auto is_engaged() const noexcept -> bool { return ptr_ != nullptr; }
 
-    storage(T t)
-    {
-        emplace(t);
-    }
-
-    ~storage() = default;
-
-    void emplace(T t)
-    {
-        ptr_ = &t;
-    }
-
-    auto destroy() noexcept -> void
-    {
-        ptr_ = nullptr;
-    }
-
-    auto ptr() noexcept -> U*
-    {
-        assert(is_engaged());
-        return ptr_;
-    }
-
-    auto ptr() const noexcept -> U const*
-    {
-        assert(is_engaged());
-        return ptr_;
-    }
-
-    auto is_engaged() const noexcept -> bool
-    {
-        return ptr_ != nullptr;
-    }
-
-    U* ptr_;
+    T* ptr_;
 };
-#endif
 
 } // namespace detail
 
@@ -195,6 +145,8 @@ public:
         impl.construct(t);
     }
 
+    // optional& operator=()
+
     template <class... Args,
              REQUIRES(std::is_constructible_v<T, Args...>)>
     // explicit optional(Args&&... args) : impl{std::forward<Args>(args)...} {}
@@ -202,8 +154,7 @@ public:
 
     explicit operator bool() const noexcept { return impl.is_engaged(); }
 
-    template <class... Args,
-             REQUIRES(std::is_constructible_v<T, Args...>)>
+    template <class... Args>
     auto emplace(Args&&... args) -> void
     {
         impl.destroy();
@@ -212,25 +163,25 @@ public:
 
     auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
 
-    auto operator*() noexcept -> T&
+    decltype(auto) operator*() noexcept
     {
         assert(is_engaged());
         return impl.lvalue();
     }
 
-    auto operator*() const noexcept -> T const&
+    decltype(auto) operator*() const noexcept
     {
         assert(is_engaged());
         return impl.lvalue();
     }
 
-    auto operator->() noexcept -> T*
+    auto operator->() noexcept
     {
         assert(is_engaged());
         return &impl.lvalue();
     }
 
-    auto operator->() const noexcept -> T const*
+    auto operator->() const noexcept
     {
         assert(is_engaged());
         return &impl.lvalue();
