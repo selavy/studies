@@ -145,7 +145,18 @@ public:
         impl.construct(t);
     }
 
-    // optional& operator=()
+    optional& operator=(std::conditional_t<std::is_void_v<T>, pl::detail::Void, T> t)
+    {
+        impl.destroy();
+        impl.construct(std::move(t));
+        return *this;
+    }
+
+    optional& operator=(const optional<T>& other)
+    {
+        impl = other.impl;
+        return *this;
+    }
 
     template <class... Args,
              REQUIRES(std::is_constructible_v<T, Args...>)>
@@ -162,6 +173,8 @@ public:
     }
 
     auto is_engaged() const noexcept -> bool { return impl.is_engaged(); }
+
+    auto discard() -> void { impl.destroy(); }
 
     decltype(auto) operator*() noexcept
     {

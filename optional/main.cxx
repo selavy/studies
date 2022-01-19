@@ -112,12 +112,85 @@ TEST_CASE("default sizes")
 TEST_CASE("optional<void>")
 {
     pl::optional<void> o1;
-    CHECK(o1.is_engaged() == false);
-    CHECK(!!o1 == false);
+    CHECK(!o1.is_engaged());
+    CHECK(!o1);
 
     o1.emplace();
-    CHECK(o1.is_engaged() == true);
-    CHECK(!!o1 == true);
+    CHECK(o1.is_engaged());
+    CHECK(!!o1);
+
+    pl::optional<void> o2;
+    CHECK(!o2.is_engaged());
+
+    o2 = o1;
+    CHECK(!!o1);
+    CHECK(!!o2);
+}
+
+TEST_CASE("copy assignment")
+{
+    SECTION("optional<int>")
+    {
+        pl::optional<int> o1;
+        pl::optional<int> o2(42);
+        pl::optional<int> o3(77);
+        CHECK(!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(*o2 == 42);
+        CHECK(*o3 == 77);
+
+        o3 = o1 = o2;
+        CHECK(!!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(*o1 == 42);
+        CHECK(*o2 == 42);
+        CHECK(*o3 == 42);
+    }
+
+    SECTION("optional<void>")
+    {
+        pl::optional<void> o1;
+        // TODO: make a better interface for constructing an optional<void> that is engaged
+        pl::optional<void> o2;
+        o2.emplace();
+        pl::optional<void> o3;
+        o3.emplace();
+        CHECK(!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+
+        o3 = o1 = o2;
+        CHECK(!!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+    }
+
+    SECTION("optional<S>")
+    {
+        pl::optional<Pair> o1;
+        pl::optional<Pair> o2(42, 56);
+        pl::optional<Pair> o3(77, 12);
+        CHECK(!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(o2->x == 42);
+        CHECK(o2->y == 56);
+        CHECK(o3->x == 77);
+        CHECK(o3->y == 12);
+
+        o3 = o1 = o2;
+        CHECK(!!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(o1->x == 42);
+        CHECK(o2->x == 42);
+        CHECK(o3->x == 42);
+        CHECK(o1->y == 56);
+        CHECK(o2->y == 56);
+        CHECK(o3->y == 56);
+    }
 }
 
 TEST_CASE("optional<T&>")
@@ -133,6 +206,9 @@ TEST_CASE("optional<T&>")
         CHECK(o.is_engaged());
         CHECK(!!o);
         CHECK(*o == x);
+
+        o.discard();
+        CHECK(!o);
     }
 }
 
