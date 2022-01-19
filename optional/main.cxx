@@ -191,6 +191,29 @@ TEST_CASE("copy assignment")
         CHECK(o2->y == 56);
         CHECK(o3->y == 56);
     }
+
+    SECTION("optional<int&>")
+    {
+        int x = 42;
+        int y = 77;
+
+        pl::optional<int> o1;
+        pl::optional<int> o2(x);
+        pl::optional<int> o3(y);
+        CHECK(!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(*o2 == 42);
+        CHECK(*o3 == 77);
+
+        o3 = o1 = o2;
+        CHECK(!!o1);
+        CHECK(!!o2);
+        CHECK(!!o3);
+        CHECK(*o1 == 42);
+        CHECK(*o2 == 42);
+        CHECK(*o3 == 42);
+    }
 }
 
 TEST_CASE("optional<T&>")
